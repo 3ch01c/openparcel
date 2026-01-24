@@ -6,7 +6,7 @@ import { StatsCard } from "@/components/StatsCard";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Loader2, Map as MapIcon, Layers, Filter, DollarSign, TrendingUp, Home } from "lucide-react";
+import { Loader2, Map as MapIcon, Layers, Filter, DollarSign, TrendingUp, Home, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 // Los Alamos County Center (calculated from actual data bounds)
@@ -51,6 +51,35 @@ export default function Dashboard() {
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+
+  const downloadCSV = () => {
+    if (!properties || properties.length === 0) return;
+    
+    const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
+    const rows = properties.map(p => [
+      p.parcelId,
+      `"${(p.address || '').replace(/"/g, '""')}"`,
+      `"${(p.owner || '').replace(/"/g, '""')}"`,
+      p.assessedValue,
+      p.landValue,
+      p.improvementValue,
+      p.parcelArea?.toFixed(4) || '',
+      p.lat,
+      p.lng,
+      p.assessmentYear
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `los_alamos_parcels_${year}_${valueRange[0]}-${valueRange[1]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   if (isError) {
     return (
