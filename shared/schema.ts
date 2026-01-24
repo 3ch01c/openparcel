@@ -1,18 +1,27 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const properties = pgTable("properties", {
+  id: serial("id").primaryKey(),
+  parcelId: text("parcel_id").notNull().unique(),
+  address: text("address").notNull(),
+  owner: text("owner").notNull(),
+  assessedValue: integer("assessed_value").notNull(),
+  lat: doublePrecision("lat").notNull(),
+  lng: doublePrecision("lng").notNull(),
+  assessmentYear: integer("assessment_year").notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
+export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type Property = typeof properties.$inferSelect;
+export type InsertProperty = z.infer<typeof insertPropertySchema>;
+
+export type PropertyResponse = Property;
+
+export interface PropertyQueryParams {
+  minValue?: number;
+  maxValue?: number;
+  year?: number;
+}
