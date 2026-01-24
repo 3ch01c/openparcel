@@ -66,7 +66,8 @@ async function fetchBatch(offset: number): Promise<{ features: ArcGISFeature[]; 
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.VETEXEMPTION",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXYEAR",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LANDSQFT",
-      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT"
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXAREALEVY"
     ].join(","),
     outSR: "4326",
     resultOffset: offset.toString(),
@@ -123,8 +124,7 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   const taxYear = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXYEAR"] || 2025;
   const landSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LANDSQFT"] || 0;
   const buildingSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT"] || 0;
-  // Mill levy is not available in ArcGIS data - will need to be set manually or from another source
-  const millLevy = null;
+  const millLevy = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXAREALEVY"] || null;
   
   // Convert square feet to acres (1 acre = 43,560 sq ft)
   const parcelArea = landSqFt / 43560;
