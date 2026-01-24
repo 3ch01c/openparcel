@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { HeatmapLayer } from "@/components/MapController";
+import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,7 +48,20 @@ export default function Dashboard() {
       count
     }));
 
-    return { totalValue, avgValue, count: properties.length, chartData };
+    // Calculate total taxes
+    const millLevy = 28.714;
+    const totalTaxes = properties.reduce((sum, p) => {
+      const totalTaxable = p.totalTaxable || 0;
+      const hhExempt = p.hhExemption || 0;
+      const vetExempt = p.vetExemption || 0;
+      const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
+      return sum + (netTaxable * millLevy) / 1000;
+    }, 0);
+    const avgTaxes = properties.length > 0 ? totalTaxes / properties.length : 0;
+    const taxPctOfTotal = totalValue > 0 ? (totalTaxes / totalValue) * 100 : 0;
+    const taxPctOfAvg = avgValue > 0 ? (avgTaxes / avgValue) * 100 : 0;
+
+    return { totalValue, avgValue, count: properties.length, chartData, totalTaxes, avgTaxes, taxPctOfTotal, taxPctOfAvg };
   }, [properties]);
 
   const formatCurrency = (val: number) => 
@@ -58,6 +72,15 @@ export default function Dashboard() {
   
   // Los Alamos County 2025 Mill Levy (Tax Area 1N - most common residential area)
   const MILL_LEVY = 28.714;
+  
+  // Calculate property tax for a single property
+  const calculatePropertyTax = (property: PropertyResponse) => {
+    const totalTaxable = property.totalTaxable || 0;
+    const hhExempt = property.hhExemption || 0;
+    const vetExempt = property.vetExemption || 0;
+    const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
+    return (netTaxable * MILL_LEVY) / 1000;
+  };
 
   const downloadData = () => {
     if (!properties || properties.length === 0) return;
@@ -266,6 +289,12 @@ export default function Dashboard() {
                 icon={DollarSign}
                 description="Cumulative value of filtered properties"
               />
+              <StatsCard 
+                title="Total Taxes Paid" 
+                value={`${formatCurrencyShort(stats.totalTaxes)} (${stats.taxPctOfTotal.toFixed(2)}%)`} 
+                icon={DollarSign}
+                description="Total property taxes of filtered properties"
+              />
               <div className="grid grid-cols-2 gap-4">
                 <StatsCard 
                   title="Avg. Value" 
@@ -273,11 +302,16 @@ export default function Dashboard() {
                   icon={TrendingUp}
                 />
                 <StatsCard 
-                  title="Properties" 
-                  value={stats.count.toLocaleString()} 
-                  icon={Home}
+                  title="Avg. Taxes" 
+                  value={`${formatCurrencyShort(stats.avgTaxes)} (${stats.taxPctOfAvg.toFixed(2)}%)`} 
+                  icon={TrendingUp}
                 />
               </div>
+              <StatsCard 
+                title="Properties" 
+                value={stats.count.toLocaleString()} 
+                icon={Home}
+              />
 
               {/* Chart */}
               <div className="h-48 pt-4">
