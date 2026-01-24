@@ -55,8 +55,11 @@ Preferred communication style: Simple, everyday language.
 
 ### External APIs
 - **Los Alamos ArcGIS REST Services**: Primary data source for property information
-  - Primary: `https://gis.losalamosnm.us/arcgis/rest/services/parcelviewer/ParcelViewerBaseLayers/MapServer/3/query`
-  - Fallback: `https://services.arcgis.com/89S7Bf6Y8Y750C0C/arcgis/rest/services/Parcel_Viewer_Base_Layers/FeatureServer/3/query`
+  - Endpoint: `https://gis.losalamosnm.us/securegis/rest/services/parcelviewer/ParcelViewerBaseLayers_AGOL/MapServer/2/query`
+  - Layer 2 contains parcel data with assessment values joined from Eagle_PARCEL_2025_SUM table
+  - Field prefixes: `LAC_GIS.LACGIS.Parcels.*` and `LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.*`
+  - Pagination: 1000 records per batch with resultOffset parameter
+  - Data includes ~8,400 parcels covering Los Alamos and White Rock areas
 
 ### Map Services
 - **OpenStreetMap**: Tile layer provider for base map imagery
