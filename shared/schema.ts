@@ -21,6 +21,7 @@ export const properties = pgTable("properties", {
   vetExemption: doublePrecision("vet_exemption"),
   landSqft: doublePrecision("land_sqft"),
   buildingSqft: doublePrecision("building_sqft"),
+  millLevy: doublePrecision("mill_levy"),
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });

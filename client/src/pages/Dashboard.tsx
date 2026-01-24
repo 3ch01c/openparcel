@@ -48,14 +48,14 @@ export default function Dashboard() {
       count
     }));
 
-    // Calculate total taxes
-    const millLevy = 28.714;
+    // Calculate total taxes using per-parcel mill levy
     const totalTaxes = properties.reduce((sum, p) => {
       const totalTaxable = p.totalTaxable || 0;
       const hhExempt = p.hhExemption || 0;
       const vetExempt = p.vetExemption || 0;
+      const parcelMillLevy = p.millLevy || 28.714; // Default fallback if not available
       const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
-      return sum + (netTaxable * millLevy) / 1000;
+      return sum + (netTaxable * parcelMillLevy) / 1000;
     }, 0);
     const avgTaxes = properties.length > 0 ? totalTaxes / properties.length : 0;
     const taxPctOfTotal = totalValue > 0 ? (totalTaxes / totalValue) * 100 : 0;
@@ -70,16 +70,14 @@ export default function Dashboard() {
   const formatCurrencyShort = (val: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
   
-  // Los Alamos County 2025 Mill Levy (Tax Area 1N - most common residential area)
-  const MILL_LEVY = 28.714;
-  
-  // Calculate property tax for a single property
+  // Calculate property tax for a single property using its mill levy
   const calculatePropertyTax = (property: PropertyResponse) => {
     const totalTaxable = property.totalTaxable || 0;
     const hhExempt = property.hhExemption || 0;
     const vetExempt = property.vetExemption || 0;
+    const millLevy = property.millLevy || 28.714; // Default fallback
     const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
-    return (netTaxable * MILL_LEVY) / 1000;
+    return (netTaxable * millLevy) / 1000;
   };
 
   const downloadData = () => {
@@ -104,6 +102,7 @@ export default function Dashboard() {
         vetExemption: p.vetExemption,
         landSqft: p.landSqft,
         buildingSqft: p.buildingSqft,
+        millLevy: p.millLevy,
         parcelAreaAcres: p.parcelArea,
         latitude: p.lat,
         longitude: p.lng,
@@ -113,7 +112,7 @@ export default function Dashboard() {
       mimeType = 'application/json';
       extension = 'json';
     } else {
-      const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Land Taxable', 'Building Taxable', 'Total Taxable', 'HH Exemption', 'Vet Exemption', 'Land Sqft', 'Building Sqft', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
+      const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Land Taxable', 'Building Taxable', 'Total Taxable', 'HH Exemption', 'Vet Exemption', 'Land Sqft', 'Building Sqft', 'Mill Levy', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
       const rows = properties.map(p => [
         p.parcelId,
         `"${(p.address || '').replace(/"/g, '""')}"`,
@@ -128,6 +127,7 @@ export default function Dashboard() {
         p.vetExemption || 0,
         p.landSqft || 0,
         p.buildingSqft || 0,
+        p.millLevy || '',
         p.parcelArea?.toFixed(4) || '',
         p.lat,
         p.lng,
@@ -395,8 +395,9 @@ export default function Dashboard() {
                 : null;
               
               // Property taxes: (Total Taxable - HH Exemption - Vet Exemption) * Mill Levy / 1000
+              const parcelMillLevy = property.millLevy || 28.714;
               const netTaxable = Math.max(0, totalTaxableVal - hhExemptVal - vetExemptVal);
-              const propertyTax = (netTaxable * MILL_LEVY) / 1000;
+              const propertyTax = (netTaxable * parcelMillLevy) / 1000;
               const taxPerSqft = landSqftVal > 0 ? (propertyTax / landSqftVal).toFixed(4) : null;
               
               const hasHhExemption = hhExemptVal > 0;
