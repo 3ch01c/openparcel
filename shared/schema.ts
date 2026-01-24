@@ -14,6 +14,13 @@ export const properties = pgTable("properties", {
   parcelArea: doublePrecision("parcel_area"),
   landValue: doublePrecision("land_value"),
   improvementValue: doublePrecision("improvement_value"),
+  landTaxable: doublePrecision("land_taxable"),
+  buildingTaxable: doublePrecision("building_taxable"),
+  totalTaxable: doublePrecision("total_taxable"),
+  hhExemption: doublePrecision("hh_exemption"),
+  vetExemption: doublePrecision("vet_exemption"),
+  landSqft: doublePrecision("land_sqft"),
+  buildingSqft: doublePrecision("building_sqft"),
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });

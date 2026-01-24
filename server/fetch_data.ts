@@ -59,8 +59,14 @@ async function fetchBatch(offset: number): Promise<{ features: ArcGISFeature[]; 
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BUILDING_ACTUAL",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LAND_ACTUAL",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TOTAL_ACTUAL",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BUILDING_TAXABLE",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LAND_TAXABLE",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TOTAL_TAXABLE",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.HHEXEMPTION",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.VETEXEMPTION",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXYEAR",
-      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LANDSQFT"
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LANDSQFT",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT"
     ].join(","),
     outSR: "4326",
     resultOffset: offset.toString(),
@@ -109,8 +115,14 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   const buildingValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BUILDING_ACTUAL"] || 0;
   const landValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LAND_ACTUAL"] || 0;
   const totalValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TOTAL_ACTUAL"] || buildingValue + landValue;
+  const buildingTaxable = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BUILDING_TAXABLE"] || 0;
+  const landTaxable = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LAND_TAXABLE"] || 0;
+  const totalTaxable = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TOTAL_TAXABLE"] || 0;
+  const hhExemption = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.HHEXEMPTION"] || 0;
+  const vetExemption = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.VETEXEMPTION"] || 0;
   const taxYear = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXYEAR"] || 2025;
   const landSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LANDSQFT"] || 0;
+  const buildingSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT"] || 0;
   
   // Convert square feet to acres (1 acre = 43,560 sq ft)
   const parcelArea = landSqFt / 43560;
@@ -125,7 +137,14 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
     assessmentYear: taxYear,
     parcelArea,
     landValue,
-    improvementValue: buildingValue
+    improvementValue: buildingValue,
+    landTaxable,
+    buildingTaxable,
+    totalTaxable,
+    hhExemption,
+    vetExemption,
+    landSqft: landSqFt,
+    buildingSqft: buildingSqFt
   };
 }
 

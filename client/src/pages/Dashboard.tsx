@@ -68,6 +68,13 @@ export default function Dashboard() {
         assessedValue: p.assessedValue,
         landValue: p.landValue,
         improvementValue: p.improvementValue,
+        landTaxable: p.landTaxable,
+        buildingTaxable: p.buildingTaxable,
+        totalTaxable: p.totalTaxable,
+        hhExemption: p.hhExemption,
+        vetExemption: p.vetExemption,
+        landSqft: p.landSqft,
+        buildingSqft: p.buildingSqft,
         parcelAreaAcres: p.parcelArea,
         latitude: p.lat,
         longitude: p.lng,
@@ -77,7 +84,7 @@ export default function Dashboard() {
       mimeType = 'application/json';
       extension = 'json';
     } else {
-      const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
+      const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Land Taxable', 'Building Taxable', 'Total Taxable', 'HH Exemption', 'Vet Exemption', 'Land Sqft', 'Building Sqft', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
       const rows = properties.map(p => [
         p.parcelId,
         `"${(p.address || '').replace(/"/g, '""')}"`,
@@ -85,6 +92,13 @@ export default function Dashboard() {
         p.assessedValue,
         p.landValue,
         p.improvementValue,
+        p.landTaxable || 0,
+        p.buildingTaxable || 0,
+        p.totalTaxable || 0,
+        p.hhExemption || 0,
+        p.vetExemption || 0,
+        p.landSqft || 0,
+        p.buildingSqft || 0,
         p.parcelArea?.toFixed(4) || '',
         p.lat,
         p.lng,
