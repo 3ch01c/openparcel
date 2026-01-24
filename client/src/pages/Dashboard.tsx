@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [viewMode, setViewMode] = useState<"heat" | "points">("heat");
+  const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
 
   // Fetch properties based on filters
   const { data: properties, isLoading, isError } = useProperties({
@@ -52,29 +53,53 @@ export default function Dashboard() {
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
-  const downloadCSV = () => {
+  const downloadData = () => {
     if (!properties || properties.length === 0) return;
     
-    const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
-    const rows = properties.map(p => [
-      p.parcelId,
-      `"${(p.address || '').replace(/"/g, '""')}"`,
-      `"${(p.owner || '').replace(/"/g, '""')}"`,
-      p.assessedValue,
-      p.landValue,
-      p.improvementValue,
-      p.parcelArea?.toFixed(4) || '',
-      p.lat,
-      p.lng,
-      p.assessmentYear
-    ]);
+    let content: string;
+    let mimeType: string;
+    let extension: string;
     
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (exportFormat === 'json') {
+      const jsonData = properties.map(p => ({
+        parcelId: p.parcelId,
+        address: p.address,
+        owner: p.owner,
+        assessedValue: p.assessedValue,
+        landValue: p.landValue,
+        improvementValue: p.improvementValue,
+        parcelAreaAcres: p.parcelArea,
+        latitude: p.lat,
+        longitude: p.lng,
+        assessmentYear: p.assessmentYear
+      }));
+      content = JSON.stringify(jsonData, null, 2);
+      mimeType = 'application/json';
+      extension = 'json';
+    } else {
+      const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
+      const rows = properties.map(p => [
+        p.parcelId,
+        `"${(p.address || '').replace(/"/g, '""')}"`,
+        `"${(p.owner || '').replace(/"/g, '""')}"`,
+        p.assessedValue,
+        p.landValue,
+        p.improvementValue,
+        p.parcelArea?.toFixed(4) || '',
+        p.lat,
+        p.lng,
+        p.assessmentYear
+      ]);
+      content = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      mimeType = 'text/csv;charset=utf-8;';
+      extension = 'csv';
+    }
+    
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `los_alamos_parcels_${year}_${valueRange[0]}-${valueRange[1]}.csv`;
+    link.download = `los_alamos_parcels_${year}_${valueRange[0]}-${valueRange[1]}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -162,6 +187,7 @@ export default function Dashboard() {
                       size="sm"
                       onClick={() => setViewMode("heat")}
                       className="w-full"
+                      data-testid="button-heatmap"
                     >
                       <Layers className="w-4 h-4 mr-2" /> Heatmap
                     </Button>
@@ -170,10 +196,38 @@ export default function Dashboard() {
                       size="sm"
                       onClick={() => setViewMode("points")}
                       className="w-full"
+                      data-testid="button-markers"
                     >
                       <MapIcon className="w-4 h-4 mr-2" /> Markers
                     </Button>
                   </div>
+              </div>
+
+              <div className="pt-4 border-t border-border/50">
+                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-2">
+                  Export Data
+                </label>
+                <div className="space-y-2">
+                  <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as "csv" | "json")}>
+                    <SelectTrigger className="w-full bg-background/50 border-border" data-testid="select-export-format">
+                      <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="csv">CSV (Spreadsheet)</SelectItem>
+                      <SelectItem value="json">JSON (Data)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={downloadData}
+                    disabled={!properties || properties.length === 0 || isLoading}
+                    className="w-full"
+                    size="sm"
+                    data-testid="button-download"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download {properties?.length || 0} Properties
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
