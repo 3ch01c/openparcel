@@ -51,7 +51,13 @@ export default function Dashboard() {
   }, [properties]);
 
   const formatCurrency = (val: number) => 
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+  
+  const formatCurrencyShort = (val: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+  
+  // Los Alamos County 2025 Mill Levy (Tax Area 1N - most common residential area)
+  const MILL_LEVY = 28.714;
 
   const downloadData = () => {
     if (!properties || properties.length === 0) return;
@@ -177,7 +183,7 @@ export default function Dashboard() {
                     Assessed Value Range
                   </label>
                   <span className="text-xs text-primary font-mono">
-                    {formatCurrency(valueRange[0])} - {valueRange[1] >= 5000000 ? "5M+" : formatCurrency(valueRange[1])}
+                    {formatCurrencyShort(valueRange[0])} - {valueRange[1] >= 5000000 ? "5M+" : formatCurrencyShort(valueRange[1])}
                   </span>
                 </div>
                 <Slider
@@ -256,14 +262,14 @@ export default function Dashboard() {
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <StatsCard 
                 title="Total Assessed Value" 
-                value={formatCurrency(stats.totalValue)} 
+                value={formatCurrencyShort(stats.totalValue)} 
                 icon={DollarSign}
                 description="Cumulative value of filtered properties"
               />
               <div className="grid grid-cols-2 gap-4">
                 <StatsCard 
                   title="Avg. Value" 
-                  value={formatCurrency(stats.avgValue)} 
+                  value={formatCurrencyShort(stats.avgValue)} 
                   icon={TrendingUp}
                 />
                 <StatsCard 
@@ -335,17 +341,32 @@ export default function Dashboard() {
             )}
 
             {properties && viewMode === "points" && properties.map(property => {
-              const landTaxPct = property.landValue && property.landTaxable 
-                ? ((property.landTaxable / property.landValue) * 100).toFixed(1) 
+              const landVal = property.landValue || 0;
+              const improvVal = property.improvementValue || 0;
+              const landTaxableVal = property.landTaxable || 0;
+              const bldgTaxableVal = property.buildingTaxable || 0;
+              const totalTaxableVal = property.totalTaxable || 0;
+              const hhExemptVal = property.hhExemption || 0;
+              const vetExemptVal = property.vetExemption || 0;
+              const landSqftVal = property.landSqft || 0;
+              
+              const landTaxPct = landVal > 0 && landTaxableVal > 0 
+                ? ((landTaxableVal / landVal) * 100).toFixed(1) 
                 : null;
-              const bldgTaxPct = property.improvementValue && property.buildingTaxable 
-                ? ((property.buildingTaxable / property.improvementValue) * 100).toFixed(1) 
+              const bldgTaxPct = improvVal > 0 && bldgTaxableVal > 0 
+                ? ((bldgTaxableVal / improvVal) * 100).toFixed(1) 
                 : null;
-              const pricePerSqft = property.landSqft && property.landValue 
-                ? (property.landValue / property.landSqft).toFixed(2) 
+              const pricePerSqft = landSqftVal > 0 && landVal > 0 
+                ? (landVal / landSqftVal).toFixed(2) 
                 : null;
-              const hasHhExemption = property.hhExemption && property.hhExemption > 0;
-              const hasVetExemption = property.vetExemption && property.vetExemption > 0;
+              
+              // Property taxes: (Total Taxable * Mill Levy / 1000) - exemptions
+              const grossTax = (totalTaxableVal * MILL_LEVY) / 1000;
+              const propertyTax = Math.max(0, grossTax - hhExemptVal - vetExemptVal);
+              const taxPerSqft = landSqftVal > 0 ? (propertyTax / landSqftVal).toFixed(4) : null;
+              
+              const hasHhExemption = hhExemptVal > 0;
+              const hasVetExemption = vetExemptVal > 0;
               
               return (
                 <Marker 
@@ -353,19 +374,21 @@ export default function Dashboard() {
                   position={[property.lat, property.lng]}
                 >
                   <Popup className="bg-transparent border-none shadow-none">
-                    <div className="p-1 min-w-[240px]">
+                    <div className="p-1 min-w-[260px]">
                       <h3 className="font-bold text-sm mb-1">{property.address}</h3>
                       <div className="text-xs space-y-1 text-muted-foreground">
                         <p>Owner: <span className="text-foreground">{property.owner}</span></p>
                         <p>Total Value: <span className="text-primary font-bold">{formatCurrency(property.assessedValue)}</span></p>
-                        <p>Land: {formatCurrency(property.landValue)} {landTaxPct && <span className="text-muted-foreground">({landTaxPct}% taxable)</span>}</p>
-                        <p>Improvements: {formatCurrency(property.improvementValue)} {bldgTaxPct && <span className="text-muted-foreground">({bldgTaxPct}% taxable)</span>}</p>
+                        <p>Land: {formatCurrency(landVal)} {landTaxPct && <span className="text-muted-foreground">({landTaxPct}% taxable)</span>}</p>
+                        <p>Improvements: {formatCurrency(improvVal)} {bldgTaxPct && <span className="text-muted-foreground">({bldgTaxPct}% taxable)</span>}</p>
                         {pricePerSqft && <p>Land $/sqft: <span className="text-foreground">${pricePerSqft}</span></p>}
                         {(hasHhExemption || hasVetExemption) && (
                           <p className="text-green-500">
-                            Exemptions: {hasHhExemption && `HH ${formatCurrency(property.hhExemption || 0)}`}{hasHhExemption && hasVetExemption && ', '}{hasVetExemption && `Vet ${formatCurrency(property.vetExemption || 0)}`}
+                            Exemptions: {hasHhExemption && `HH ${formatCurrency(hhExemptVal)}`}{hasHhExemption && hasVetExemption && ', '}{hasVetExemption && `Vet ${formatCurrency(vetExemptVal)}`}
                           </p>
                         )}
+                        <p className="font-semibold text-amber-500">Property Tax: {formatCurrency(propertyTax)}</p>
+                        {taxPerSqft && <p>Tax/sqft: <span className="text-foreground">${taxPerSqft}</span></p>}
                         <p>Year: {property.assessmentYear}</p>
                       </div>
                     </div>
@@ -373,16 +396,18 @@ export default function Dashboard() {
                   <Tooltip permanent={false} sticky>
                     <div className="text-xs">
                       <div className="font-bold">{formatCurrency(property.assessedValue)}</div>
-                      <div>Land: {formatCurrency(property.landValue)} {landTaxPct && `(${landTaxPct}%)`}</div>
-                      <div>Bldg: {formatCurrency(property.improvementValue)} {bldgTaxPct && `(${bldgTaxPct}%)`}</div>
-                      {pricePerSqft && <div>${pricePerSqft}/sqft</div>}
+                      <div>Land: {formatCurrency(landVal)} {landTaxPct && `(${landTaxPct}%)`}</div>
+                      <div>Bldg: {formatCurrency(improvVal)} {bldgTaxPct && `(${bldgTaxPct}%)`}</div>
+                      {pricePerSqft && <div>${pricePerSqft}/sqft land</div>}
                       {(hasHhExemption || hasVetExemption) && (
                         <div className="text-green-600">
-                          {hasHhExemption && `HH: ${formatCurrency(property.hhExemption || 0)}`}
+                          {hasHhExemption && `HH: ${formatCurrency(hhExemptVal)}`}
                           {hasHhExemption && hasVetExemption && ' '}
-                          {hasVetExemption && `Vet: ${formatCurrency(property.vetExemption || 0)}`}
+                          {hasVetExemption && `Vet: ${formatCurrency(vetExemptVal)}`}
                         </div>
                       )}
+                      <div className="font-semibold text-amber-500">Tax: {formatCurrency(propertyTax)}</div>
+                      {taxPerSqft && <div>${taxPerSqft}/sqft tax</div>}
                     </div>
                   </Tooltip>
                 </Marker>
