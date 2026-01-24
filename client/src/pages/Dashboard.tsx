@@ -221,7 +221,7 @@ export default function Dashboard() {
         <div className="absolute inset-0 z-0">
           <MapContainer 
             center={[CENTER_LAT, CENTER_LNG]} 
-            zoom={13} 
+            zoom={12} 
             scrollWheelZoom={true} 
             className="h-full w-full"
           >

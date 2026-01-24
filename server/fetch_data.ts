@@ -2,14 +2,14 @@ import axios from "axios";
 import { storage } from "./storage";
 
 async function fetchArcGISData() {
-  // Primary Los Alamos ArcGIS REST endpoint
-  const url = "https://gis.losalamosnm.us/arcgis/rest/services/parcelviewer/ParcelViewerBaseLayers/MapServer/3/query";
+  // Use the public ArcGIS Online hosted service as primary - it has standard field names
+  const url = "https://services.arcgis.com/89S7Bf6Y8Y750C0C/arcgis/rest/services/Parcel_Viewer_Base_Layers/FeatureServer/3/query";
   const params = {
     where: "1=1",
-    outFields: "PARCELNUMBER,SITUS_ADDRESS_HOUSENUMBER,SITUS_ADDRESS_STREETNAME,OWNER_NAME,LAND_ACTUAL,BUILDING_ACTUAL,TAXYEAR,LANDSQFT",
+    outFields: "PARCEL_ID,Situs_Address,Owner_Name,AssessedValue,AssessmentYear,ParcelArea,LandValue,ImprovementValue",
     returnGeometry: "true",
     f: "json",
-    resultRecordCount: 500, 
+    resultRecordCount: 4000, 
     outSR: "4326" 
   };
   
@@ -18,13 +18,7 @@ async function fetchArcGISData() {
     const features = response.data?.features;
     
     if (!features) {
-      console.log("Primary service failed or required token, trying ArcGIS Online fallback...");
-      const agolUrl = "https://services.arcgis.com/89S7Bf6Y8Y750C0C/arcgis/rest/services/Parcel_Viewer_Base_Layers/FeatureServer/3/query";
-      const agolResponse = await axios.get(agolUrl, { params });
-      if (!agolResponse.data?.features) {
-        throw new Error(`ArcGIS Error: ${agolResponse.data?.error?.message || "Unknown error"}`);
-      }
-      return processFeatures(agolResponse.data.features);
+      throw new Error(`ArcGIS Error: ${response.data?.error?.message || "No features returned"}`);
     }
     
     return processFeatures(features);
@@ -42,15 +36,11 @@ async function processFeatures(features: any[]) {
     
     if (!geom || !geom.x || !geom.y) continue;
 
-    // Field mapping for Los Alamos schema variants
-    const parcelId = attrs.PARCELNUMBER || attrs.PARCEL_ID || `REAL-${Math.random().toString(36).substr(2, 9)}`;
-    const address = attrs.SITUS_ADDRESS_HOUSENUMBER 
-      ? `${attrs.SITUS_ADDRESS_HOUSENUMBER} ${attrs.SITUS_ADDRESS_STREETNAME}`.trim() 
-      : (attrs.Situs_Address || "Unknown Address");
-    const owner = attrs.OWNER_NAME || attrs.Owner_Name || "Unknown Owner";
-    const landVal = attrs.LAND_ACTUAL || attrs.LandValue || 0;
-    const impVal = attrs.BUILDING_ACTUAL || attrs.ImprovementValue || 0;
-    const assessedValue = landVal + impVal || attrs.AssessedValue || 0;
+    // Standard field mapping
+    const parcelId = attrs.PARCEL_ID || attrs.PARCELNUMBER || `REAL-${Math.random().toString(36).substr(2, 9)}`;
+    const address = attrs.Situs_Address || "Unknown Address";
+    const owner = attrs.Owner_Name || "Unknown Owner";
+    const assessedValue = attrs.AssessedValue || 0;
 
     await storage.createProperty({
       parcelId,
@@ -59,10 +49,10 @@ async function processFeatures(features: any[]) {
       assessedValue,
       lat: geom.y,
       lng: geom.x,
-      assessmentYear: attrs.TAXYEAR || attrs.AssessmentYear || 2024,
-      parcelArea: attrs.LANDSQFT || attrs.ParcelArea,
-      landValue: landVal,
-      improvementValue: impVal
+      assessmentYear: attrs.AssessmentYear || 2024,
+      parcelArea: attrs.ParcelArea,
+      landValue: attrs.LandValue || (assessedValue * 0.4),
+      improvementValue: attrs.ImprovementValue || (assessedValue * 0.6)
     });
   }
   console.log("Data import complete.");
