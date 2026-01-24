@@ -334,24 +334,60 @@ export default function Dashboard() {
               <HeatmapLayer points={properties} />
             )}
 
-            {properties && viewMode === "points" && properties.map(property => (
-              <Marker 
-                key={property.id} 
-                position={[property.lat, property.lng]}
-              >
-                <Popup className="bg-transparent border-none shadow-none">
-                  <div className="p-1 min-w-[200px]">
-                    <h3 className="font-bold text-sm mb-1">{property.address}</h3>
-                    <div className="text-xs space-y-1 text-muted-foreground">
-                      <p>Owner: <span className="text-foreground">{property.owner}</span></p>
-                      <p>Value: <span className="text-primary font-bold">{formatCurrency(property.assessedValue)}</span></p>
-                      <p>Year: {property.assessmentYear}</p>
+            {properties && viewMode === "points" && properties.map(property => {
+              const landTaxPct = property.landValue && property.landTaxable 
+                ? ((property.landTaxable / property.landValue) * 100).toFixed(1) 
+                : null;
+              const bldgTaxPct = property.improvementValue && property.buildingTaxable 
+                ? ((property.buildingTaxable / property.improvementValue) * 100).toFixed(1) 
+                : null;
+              const pricePerSqft = property.landSqft && property.landValue 
+                ? (property.landValue / property.landSqft).toFixed(2) 
+                : null;
+              const hasHhExemption = property.hhExemption && property.hhExemption > 0;
+              const hasVetExemption = property.vetExemption && property.vetExemption > 0;
+              
+              return (
+                <Marker 
+                  key={property.id} 
+                  position={[property.lat, property.lng]}
+                >
+                  <Popup className="bg-transparent border-none shadow-none">
+                    <div className="p-1 min-w-[240px]">
+                      <h3 className="font-bold text-sm mb-1">{property.address}</h3>
+                      <div className="text-xs space-y-1 text-muted-foreground">
+                        <p>Owner: <span className="text-foreground">{property.owner}</span></p>
+                        <p>Total Value: <span className="text-primary font-bold">{formatCurrency(property.assessedValue)}</span></p>
+                        <p>Land: {formatCurrency(property.landValue)} {landTaxPct && <span className="text-muted-foreground">({landTaxPct}% taxable)</span>}</p>
+                        <p>Improvements: {formatCurrency(property.improvementValue)} {bldgTaxPct && <span className="text-muted-foreground">({bldgTaxPct}% taxable)</span>}</p>
+                        {pricePerSqft && <p>Land $/sqft: <span className="text-foreground">${pricePerSqft}</span></p>}
+                        {(hasHhExemption || hasVetExemption) && (
+                          <p className="text-green-500">
+                            Exemptions: {hasHhExemption && `HH ${formatCurrency(property.hhExemption || 0)}`}{hasHhExemption && hasVetExemption && ', '}{hasVetExemption && `Vet ${formatCurrency(property.vetExemption || 0)}`}
+                          </p>
+                        )}
+                        <p>Year: {property.assessmentYear}</p>
+                      </div>
                     </div>
-                  </div>
-                </Popup>
-                <Tooltip>{formatCurrency(property.assessedValue)}</Tooltip>
-              </Marker>
-            ))}
+                  </Popup>
+                  <Tooltip permanent={false} sticky>
+                    <div className="text-xs">
+                      <div className="font-bold">{formatCurrency(property.assessedValue)}</div>
+                      <div>Land: {formatCurrency(property.landValue)} {landTaxPct && `(${landTaxPct}%)`}</div>
+                      <div>Bldg: {formatCurrency(property.improvementValue)} {bldgTaxPct && `(${bldgTaxPct}%)`}</div>
+                      {pricePerSqft && <div>${pricePerSqft}/sqft</div>}
+                      {(hasHhExemption || hasVetExemption) && (
+                        <div className="text-green-600">
+                          {hasHhExemption && `HH: ${formatCurrency(property.hhExemption || 0)}`}
+                          {hasHhExemption && hasVetExemption && ' '}
+                          {hasVetExemption && `Vet: ${formatCurrency(property.vetExemption || 0)}`}
+                        </div>
+                      )}
+                    </div>
+                  </Tooltip>
+                </Marker>
+              );
+            })}
           </MapContainer>
         </div>
 
