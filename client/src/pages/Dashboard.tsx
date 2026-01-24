@@ -218,41 +218,43 @@ export default function Dashboard() {
 
       {/* Map Area */}
       <div className="flex-1 relative h-[50vh] md:h-full w-full bg-slate-900">
-        <MapContainer 
-          center={[CENTER_LAT, CENTER_LNG]} 
-          zoom={13} 
-          scrollWheelZoom={true} 
-          className="h-full w-full z-0"
-        >
-          {/* Dark Mode Map Tiles - CartoDB Dark Matter */}
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          />
-          
-          {properties && viewMode === "heat" && (
-            <HeatmapLayer points={properties} />
-          )}
+        <div className="absolute inset-0 z-0">
+          <MapContainer 
+            center={[CENTER_LAT, CENTER_LNG]} 
+            zoom={13} 
+            scrollWheelZoom={true} 
+            className="h-full w-full"
+          >
+            {/* Dark Mode Map Tiles - CartoDB Dark Matter */}
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+            
+            {properties && viewMode === "heat" && (
+              <HeatmapLayer points={properties} />
+            )}
 
-          {properties && viewMode === "points" && properties.map(property => (
-            <Marker 
-              key={property.id} 
-              position={[property.lat, property.lng]}
-            >
-              <Popup className="bg-transparent border-none shadow-none">
-                <div className="p-1 min-w-[200px]">
-                  <h3 className="font-bold text-sm mb-1">{property.address}</h3>
-                  <div className="text-xs space-y-1 text-muted-foreground">
-                    <p>Owner: <span className="text-foreground">{property.owner}</span></p>
-                    <p>Value: <span className="text-primary font-bold">{formatCurrency(property.assessedValue)}</span></p>
-                    <p>Year: {property.assessmentYear}</p>
+            {properties && viewMode === "points" && properties.map(property => (
+              <Marker 
+                key={property.id} 
+                position={[property.lat, property.lng]}
+              >
+                <Popup className="bg-transparent border-none shadow-none">
+                  <div className="p-1 min-w-[200px]">
+                    <h3 className="font-bold text-sm mb-1">{property.address}</h3>
+                    <div className="text-xs space-y-1 text-muted-foreground">
+                      <p>Owner: <span className="text-foreground">{property.owner}</span></p>
+                      <p>Value: <span className="text-primary font-bold">{formatCurrency(property.assessedValue)}</span></p>
+                      <p>Year: {property.assessmentYear}</p>
+                    </div>
                   </div>
-                </div>
-              </Popup>
-              <Tooltip>{formatCurrency(property.assessedValue)}</Tooltip>
-            </Marker>
-          ))}
-        </MapContainer>
+                </Popup>
+                <Tooltip>{formatCurrency(property.assessedValue)}</Tooltip>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
 
         {/* Floating Map Controls overlay if needed (zoom handled by Leaflet default) */}
         <div className="absolute top-4 right-4 z-[400] md:hidden">
