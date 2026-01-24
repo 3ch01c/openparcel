@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Map as MapIcon, Layers, Filter, DollarSign, TrendingUp, Home } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
-// Los Alamos Coordinates
-const CENTER_LAT = 35.8800;
-const CENTER_LNG = -106.3000;
+// Los Alamos County Center (calculated from actual data bounds)
+const CENTER_LAT = 35.875;
+const CENTER_LNG = -106.295;
 
 export default function Dashboard() {
-  const [year, setYear] = useState<number>(2024);
-  const [valueRange, setValueRange] = useState<[number, number]>([0, 2000000]);
+  const [year, setYear] = useState<number>(2025);
+  const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [viewMode, setViewMode] = useState<"heat" | "points">("heat");
 
   // Fetch properties based on filters
@@ -92,13 +92,13 @@ export default function Dashboard() {
                   Assessment Year
                 </label>
                 <Select value={year.toString()} onValueChange={(v) => setYear(Number(v))}>
-                  <SelectTrigger className="w-full bg-background/50 border-border">
+                  <SelectTrigger className="w-full bg-background/50 border-border" data-testid="select-year">
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="2025">2025</SelectItem>
                     <SelectItem value="2024">2024</SelectItem>
                     <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2022">2022</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -109,16 +109,17 @@ export default function Dashboard() {
                     Assessed Value Range
                   </label>
                   <span className="text-xs text-primary font-mono">
-                    {formatCurrency(valueRange[0])} - {valueRange[1] >= 2000000 ? "2M+" : formatCurrency(valueRange[1])}
+                    {formatCurrency(valueRange[0])} - {valueRange[1] >= 5000000 ? "5M+" : formatCurrency(valueRange[1])}
                   </span>
                 </div>
                 <Slider
-                  defaultValue={[0, 2000000]}
-                  max={2000000}
+                  defaultValue={[0, 5000000]}
+                  max={5000000}
                   step={50000}
                   value={valueRange}
                   onValueChange={(val) => setValueRange(val as [number, number])}
                   className="py-2"
+                  data-testid="slider-value-range"
                 />
               </div>
 
@@ -221,9 +222,10 @@ export default function Dashboard() {
         <div className="absolute inset-0 z-0">
           <MapContainer 
             center={[CENTER_LAT, CENTER_LNG]} 
-            zoom={12} 
+            zoom={11} 
             scrollWheelZoom={true} 
             className="h-full w-full"
+            data-testid="map-container"
           >
             {/* Dark Mode Map Tiles - CartoDB Dark Matter */}
             <TileLayer

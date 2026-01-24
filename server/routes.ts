@@ -3,7 +3,6 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-
 import { fetchArcGISData } from "./fetch_data";
 
 export async function registerRoutes(
@@ -34,7 +33,7 @@ export async function registerRoutes(
     res.json(property);
   });
 
-  // Seed data from real source
+  // Seed database on startup
   seedDatabase();
 
   return httpServer;
@@ -42,44 +41,76 @@ export async function registerRoutes(
 
 async function seedDatabase() {
   const existing = await storage.getProperties();
-  if (existing.length > 0) return;
+  if (existing.length > 0) {
+    console.log(`Database already contains ${existing.length} properties.`);
+    return;
+  }
 
-  console.log("Seeding database with real Los Alamos property data from ArcGIS...");
+  console.log("Database empty, fetching Los Alamos property data from ArcGIS...");
+  
   try {
-    await fetchArcGISData();
+    const count = await fetchArcGISData();
+    console.log(`Successfully loaded ${count} properties from Los Alamos ArcGIS.`);
   } catch (error) {
-    console.error("Failed to fetch real data, falling back to mock data:", error);
-    await seedWithMockData();
+    console.error("Failed to fetch ArcGIS data:", error);
+    console.log("Falling back to mock data generation...");
+    await generateMockData();
   }
 }
 
-async function seedWithMockData() {
-  console.log("Seeding with mock data...");
-  const centerLat = 35.8800;
-  const centerLng = -106.3000;
-  const streets = ["Trinity Dr", "Central Ave", "Diamond Dr", "Canyon Rd", "Oppenheimer Dr", "Pajarito Rd"];
-  const owners = ["Doe, John", "Smith, Jane", "Los Alamos National Lab", "County of Los Alamos", "Martinez, Robert", "Chen, Lisa"];
-  
-  for (let i = 0; i < 200; i++) {
-    const latOffset = (Math.random() - 0.5) * 0.06;
-    const lngOffset = (Math.random() - 0.5) * 0.08;
-    const distFromCenter = Math.sqrt(latOffset*latOffset + lngOffset*lngOffset);
-    const baseValue = 500000;
-    const valueMultiplier = 1 / (distFromCenter * 10 + 0.5); 
-    const randomValue = Math.floor(baseValue * valueMultiplier * (0.8 + Math.random() * 0.4));
-    const assessedValue = Math.min(Math.max(randomValue, 150000), 2000000);
+async function generateMockData() {
+  const neighborhoods = [
+    { name: "Downtown Los Alamos", lat: 35.8814, lng: -106.2989, radius: 0.015, avgValue: 450000, count: 100 },
+    { name: "North Community", lat: 35.8950, lng: -106.2900, radius: 0.012, avgValue: 520000, count: 80 },
+    { name: "Western Area", lat: 35.8780, lng: -106.3200, radius: 0.018, avgValue: 380000, count: 60 },
+    { name: "White Rock", lat: 35.8280, lng: -106.2100, radius: 0.020, avgValue: 350000, count: 100 },
+    { name: "Eastern Los Alamos", lat: 35.8850, lng: -106.2600, radius: 0.015, avgValue: 410000, count: 60 }
+  ];
 
-    await storage.createProperty({
-      parcelId: `LA-MOCK-${1000 + i}`,
-      address: `${Math.floor(Math.random() * 5000) + 1} ${streets[Math.floor(Math.random() * streets.length)]}`,
-      owner: owners[Math.floor(Math.random() * owners.length)],
-      assessedValue,
-      lat: centerLat + latOffset,
-      lng: centerLng + lngOffset,
-      assessmentYear: 2024,
-      parcelArea: Math.random() * 5,
-      landValue: assessedValue * 0.4,
-      improvementValue: assessedValue * 0.6
-    });
+  const streets = [
+    "Trinity Dr", "Central Ave", "Diamond Dr", "Canyon Rd", "Oppenheimer Dr", 
+    "Pajarito Rd", "Deacon St", "North Rd", "Nectar St", "Orange St"
+  ];
+  
+  const owners = [
+    "Smith, John", "Johnson, Mary", "Williams, Robert", "Brown, Patricia", "Jones, Michael"
+  ];
+
+  let totalCreated = 0;
+  
+  for (const neighborhood of neighborhoods) {
+    for (let i = 0; i < neighborhood.count; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = Math.random() * neighborhood.radius;
+      const lat = neighborhood.lat + distance * Math.cos(angle);
+      const lng = neighborhood.lng + distance * Math.sin(angle) * 1.3;
+      
+      const valueVariation = 0.6 + Math.random() * 0.8;
+      const assessedValue = Math.round(neighborhood.avgValue * valueVariation);
+      const landRatio = 0.25 + Math.random() * 0.25;
+      const landValue = Math.round(assessedValue * landRatio);
+      const improvementValue = assessedValue - landValue;
+      
+      const streetNum = Math.floor(Math.random() * 4900) + 100;
+      const street = streets[Math.floor(Math.random() * streets.length)];
+      const owner = owners[Math.floor(Math.random() * owners.length)];
+      
+      await storage.createProperty({
+        parcelId: `LA-${neighborhood.name.substring(0, 2).toUpperCase()}-${String(totalCreated + 1).padStart(5, '0')}`,
+        address: `${streetNum} ${street}`,
+        owner,
+        assessedValue,
+        lat,
+        lng,
+        assessmentYear: 2025,
+        parcelArea: 0.1 + Math.random() * 2,
+        landValue,
+        improvementValue
+      });
+      
+      totalCreated++;
+    }
   }
+  
+  console.log(`Generated ${totalCreated} mock properties as fallback.`);
 }
