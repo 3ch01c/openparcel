@@ -360,9 +360,9 @@ export default function Dashboard() {
                 ? (landVal / landSqftVal).toFixed(2) 
                 : null;
               
-              // Property taxes: (Total Taxable * Mill Levy / 1000) - exemptions
-              const grossTax = (totalTaxableVal * MILL_LEVY) / 1000;
-              const propertyTax = Math.max(0, grossTax - hhExemptVal - vetExemptVal);
+              // Property taxes: (Total Taxable - HH Exemption - Vet Exemption) * Mill Levy / 1000
+              const netTaxable = Math.max(0, totalTaxableVal - hhExemptVal - vetExemptVal);
+              const propertyTax = (netTaxable * MILL_LEVY) / 1000;
               const taxPerSqft = landSqftVal > 0 ? (propertyTax / landSqftVal).toFixed(4) : null;
               
               const hasHhExemption = hhExemptVal > 0;
