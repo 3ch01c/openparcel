@@ -410,6 +410,8 @@ export default function Dashboard() {
       avgValue,
       count: properties.length,
       chartData,
+      minAssessedValue: minVal,
+      maxAssessedValue: maxVal,
       totalTaxes,
       avgTaxes,
       taxPctOfTotal,
@@ -654,7 +656,7 @@ export default function Dashboard() {
                         className="text-primary hover:underline cursor-pointer"
                         data-testid="button-edit-min"
                       >
-                        {formatCurrencyShort(valueRange[0])}
+                        {formatCurrencyShort(stats?.minAssessedValue ?? valueRange[0])}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -677,9 +679,9 @@ export default function Dashboard() {
                         className="text-primary hover:underline cursor-pointer"
                         data-testid="button-edit-max"
                       >
-                        {valueRange[1] >= 5000000
+                        {(stats?.maxAssessedValue ?? valueRange[1]) >= 5000000
                           ? "5M+"
-                          : formatCurrencyShort(valueRange[1])}
+                          : formatCurrencyShort(stats?.maxAssessedValue ?? valueRange[1])}
                       </button>
                     )}
                   </div>
