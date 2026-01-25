@@ -393,6 +393,10 @@ export default function Dashboard() {
     // Total land square footage
     const totalLandSqft = properties.reduce((sum, p) => sum + (p.landSqft || 0), 0);
     const avgLandSqft = properties.length > 0 ? totalLandSqft / properties.length : 0;
+    
+    // Total land value and avg per sqft
+    const totalLandValue = properties.reduce((sum, p) => sum + (p.landValue || 0), 0);
+    const avgLandValuePerSqft = totalLandSqft > 0 ? totalLandValue / totalLandSqft : 0;
 
     return {
       totalValue,
@@ -409,6 +413,8 @@ export default function Dashboard() {
       totalLandOnlySqft,
       totalLandSqft,
       avgLandSqft,
+      totalLandValue,
+      avgLandValuePerSqft,
       exemptionsChartData,
       totalTaxExemptions,
       accountTypesChartData,
@@ -1093,6 +1099,12 @@ export default function Dashboard() {
                 value={stats.totalLandSqft.toLocaleString()}
                 icon={TrendingUp}
                 description={`Avg: ${Math.round(stats.avgLandSqft).toLocaleString()} sqft`}
+              />
+              <StatsCard
+                title="Total Land Value"
+                value={formatCurrencyShort(stats.totalLandValue)}
+                icon={DollarSign}
+                description={`Avg: $${stats.avgLandValuePerSqft.toFixed(2)}/sqft`}
               />
               <StatsCard
                 title="Total Taxes Paid"
