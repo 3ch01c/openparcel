@@ -281,41 +281,37 @@ export default function Dashboard() {
       if (isExemptAccount) return 0;
       return Math.max(0, totalTaxable - hhExempt - vetExempt) * parcelMillLevy / 1000;
     });
-    // Tax histogram uses filter range as bounds
-    const taxMin = taxRange[0];
-    const taxMax = taxRange[1];
+    // Tax histogram uses actual min/max from filtered data
+    const actualTaxMin = taxValues.length > 0 ? Math.min(...taxValues) : 0;
+    const actualTaxMax = taxValues.length > 0 ? Math.max(...taxValues) : 1;
     const taxDistribution = [0, 0, 0, 0, 0];
-    const taxStep = (taxMax - taxMin) / 5;
+    const taxStep = (actualTaxMax - actualTaxMin) / 5;
     taxValues.forEach(tax => {
-      if (tax >= taxMin && tax <= taxMax) {
-        const bucket = taxStep > 0 ? Math.min(Math.floor((tax - taxMin) / taxStep), 4) : 0;
-        taxDistribution[bucket]++;
-      }
+      const bucket = taxStep > 0 ? Math.min(Math.floor((tax - actualTaxMin) / taxStep), 4) : 0;
+      taxDistribution[bucket]++;
     });
     const taxChartData = taxDistribution.map((count, i) => ({
-      range: `$${((taxMin + i * taxStep) / 1000).toFixed(1)}k - $${((taxMin + (i + 1) * taxStep) / 1000).toFixed(1)}k`,
+      range: `$${((actualTaxMin + i * taxStep) / 1000).toFixed(1)}k - $${((actualTaxMin + (i + 1) * taxStep) / 1000).toFixed(1)}k`,
       count,
-      binMin: Math.round(taxMin + i * taxStep),
-      binMax: Math.round(taxMin + (i + 1) * taxStep),
+      binMin: Math.round(actualTaxMin + i * taxStep),
+      binMax: Math.round(actualTaxMin + (i + 1) * taxStep),
     }));
 
-    // Land sqft histogram uses filter range as bounds
+    // Land sqft histogram uses actual min/max from filtered data
     const landValues = properties.map(p => p.landSqft || 0);
-    const landMin = landSqftRange[0];
-    const landMax = landSqftRange[1];
+    const actualLandMin = landValues.length > 0 ? Math.min(...landValues) : 0;
+    const actualLandMax = landValues.length > 0 ? Math.max(...landValues) : 1;
     const landDistribution = [0, 0, 0, 0, 0];
-    const landStep = (landMax - landMin) / 5;
+    const landStep = (actualLandMax - actualLandMin) / 5;
     landValues.forEach(sqft => {
-      if (sqft >= landMin && sqft <= landMax) {
-        const bucket = landStep > 0 ? Math.min(Math.floor((sqft - landMin) / landStep), 4) : 0;
-        landDistribution[bucket]++;
-      }
+      const bucket = landStep > 0 ? Math.min(Math.floor((sqft - actualLandMin) / landStep), 4) : 0;
+      landDistribution[bucket]++;
     });
     const landChartData = landDistribution.map((count, i) => ({
-      range: `${((landMin + i * landStep) / 1000).toFixed(0)}k - ${((landMin + (i + 1) * landStep) / 1000).toFixed(0)}k`,
+      range: `${((actualLandMin + i * landStep) / 1000).toFixed(0)}k - ${((actualLandMin + (i + 1) * landStep) / 1000).toFixed(0)}k`,
       count,
-      binMin: Math.round(landMin + i * landStep),
-      binMax: Math.round(landMin + (i + 1) * landStep),
+      binMin: Math.round(actualLandMin + i * landStep),
+      binMax: Math.round(actualLandMin + (i + 1) * landStep),
     }));
 
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
@@ -430,7 +426,7 @@ export default function Dashboard() {
       taxChartData,
       landChartData,
     };
-  }, [properties, taxRange, landSqftRange]);
+  }, [properties]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {
