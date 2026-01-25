@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 50000]);
+  const [landSqftRange, setLandSqftRange] = useState<[number, number]>([0, 100000]);
   const [viewMode, setViewMode] = useState<"heat" | "points">("heat");
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [editingMin, setEditingMin] = useState(false);
@@ -51,10 +52,16 @@ export default function Dashboard() {
   const [editingTaxMax, setEditingTaxMax] = useState(false);
   const [tempTaxMin, setTempTaxMin] = useState("");
   const [tempTaxMax, setTempTaxMax] = useState("");
+  const [editingLandMin, setEditingLandMin] = useState(false);
+  const [editingLandMax, setEditingLandMax] = useState(false);
+  const [tempLandMin, setTempLandMin] = useState("");
+  const [tempLandMax, setTempLandMax] = useState("");
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
   const taxMinInputRef = useRef<HTMLInputElement>(null);
   const taxMaxInputRef = useRef<HTMLInputElement>(null);
+  const landMinInputRef = useRef<HTMLInputElement>(null);
+  const landMaxInputRef = useRef<HTMLInputElement>(null);
 
   const handleMinClick = () => {
     setTempMin(String(valueRange[0]));
@@ -116,6 +123,36 @@ export default function Dashboard() {
     setEditingTaxMax(false);
   };
 
+  const handleLandMinClick = () => {
+    setTempLandMin(String(landSqftRange[0]));
+    setEditingLandMin(true);
+    setTimeout(() => landMinInputRef.current?.select(), 0);
+  };
+
+  const handleLandMaxClick = () => {
+    setTempLandMax(landSqftRange[1] >= 100000 ? "100000" : String(landSqftRange[1]));
+    setEditingLandMax(true);
+    setTimeout(() => landMaxInputRef.current?.select(), 0);
+  };
+
+  const handleLandMinSubmit = () => {
+    const val = parseInt(tempLandMin.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, landSqftRange[1]));
+      setLandSqftRange([clamped, landSqftRange[1]]);
+    }
+    setEditingLandMin(false);
+  };
+
+  const handleLandMaxSubmit = () => {
+    const val = parseInt(tempLandMax.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(landSqftRange[0], Math.min(val, 100000));
+      setLandSqftRange([landSqftRange[0], clamped]);
+    }
+    setEditingLandMax(false);
+  };
+
   // Calculate property tax for a single property
   const getPropertyTax = (p: PropertyResponse) => {
     const totalTaxable = p.totalTaxable || 0;
@@ -139,14 +176,20 @@ export default function Dashboard() {
     maxValue: valueRange[1],
   });
 
-  // Filter properties by tax range (client-side since tax is calculated)
+  // Filter properties by tax range and land sqft (client-side)
   const properties = useMemo(() => {
     if (!rawProperties) return [];
     return rawProperties.filter((p) => {
       const tax = getPropertyTax(p);
-      return tax >= taxRange[0] && tax <= taxRange[1];
+      const landSqft = p.landSqft || 0;
+      return (
+        tax >= taxRange[0] &&
+        tax <= taxRange[1] &&
+        landSqft >= landSqftRange[0] &&
+        landSqft <= landSqftRange[1]
+      );
     });
-  }, [rawProperties, taxRange]);
+  }, [rawProperties, taxRange, landSqftRange]);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -578,6 +621,75 @@ export default function Dashboard() {
                   }
                   className="py-2"
                   data-testid="slider-tax-range"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Land Square Footage
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingLandMin ? (
+                      <input
+                        ref={landMinInputRef}
+                        type="text"
+                        value={tempLandMin}
+                        onChange={(e) => setTempLandMin(e.target.value)}
+                        onBlur={handleLandMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandMinSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        data-testid="input-land-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandMinClick}
+                        className="text-primary hover:underline cursor-pointer"
+                        data-testid="button-edit-land-min"
+                      >
+                        {landSqftRange[0].toLocaleString()}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingLandMax ? (
+                      <input
+                        ref={landMaxInputRef}
+                        type="text"
+                        value={tempLandMax}
+                        onChange={(e) => setTempLandMax(e.target.value)}
+                        onBlur={handleLandMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandMaxSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        data-testid="input-land-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandMaxClick}
+                        className="text-primary hover:underline cursor-pointer"
+                        data-testid="button-edit-land-max"
+                      >
+                        {landSqftRange[1] >= 100000
+                          ? "100k+"
+                          : landSqftRange[1].toLocaleString()}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground text-[10px]">sqft</span>
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 100000]}
+                  max={100000}
+                  step={1000}
+                  value={landSqftRange}
+                  onValueChange={(val) =>
+                    setLandSqftRange(val as [number, number])
+                  }
+                  className="py-2"
+                  data-testid="slider-land-sqft"
                 />
               </div>
 
