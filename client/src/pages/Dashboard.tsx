@@ -272,6 +272,19 @@ export default function Dashboard() {
     const totalExemptAccountValue = Object.values(exemptAccountExemptions).reduce((sum, v) => sum + v, 0);
     const totalTaxExemptions = totalHhExemption + totalVetExemption + totalExemptAccountValue;
 
+    // Aggregate account types
+    const accountTypeCounts: Record<string, number> = {};
+    properties.forEach(p => {
+      const acctType = p.accountType || "Unknown";
+      accountTypeCounts[acctType] = (accountTypeCounts[acctType] || 0) + 1;
+    });
+    
+    // Build account types chart data (sorted by count descending)
+    const accountTypesChartData = Object.entries(accountTypeCounts)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10 account types
+
     // Count properties with no improvement value (land only)
     const landOnlyProps = properties.filter(p => (p.improvementValue || 0) === 0);
     const noImprovementCount = landOnlyProps.length;
@@ -298,6 +311,7 @@ export default function Dashboard() {
       avgLandSqft,
       exemptionsChartData,
       totalTaxExemptions,
+      accountTypesChartData,
     };
   }, [properties]);
 
@@ -847,6 +861,46 @@ export default function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Account Types Chart */}
+              {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
+                <div className="h-64 pt-4">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
+                    Properties by Account Type
+                  </label>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={stats.accountTypesChartData} 
+                      layout="vertical"
+                      margin={{ left: 10, right: 10 }}
+                    >
+                      <XAxis type="number" hide />
+                      <YAxis 
+                        type="category" 
+                        dataKey="type" 
+                        width={100}
+                        tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(222 47% 11%)",
+                          borderColor: "hsl(217 33% 17%)",
+                          borderRadius: "8px",
+                        }}
+                        itemStyle={{ color: "white" }}
+                        formatter={(value: number) => [value.toLocaleString(), "Properties"]}
+                        labelFormatter={(label) => label}
+                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                      />
+                      <Bar
+                        dataKey="count"
+                        fill="hsl(271 81% 56%)"
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
 
               {/* Tax Exemptions Chart */}
               {stats.exemptionsChartData && stats.exemptionsChartData.length > 0 && (
