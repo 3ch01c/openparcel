@@ -71,17 +71,21 @@ export default function Dashboard() {
     const avgValue = totalValue / properties.length;
     const maxVal = Math.max(...properties.map(p => p.assessedValue));
 
-    // Simple distribution for chart
+    // Simple distribution for chart - start from current filter min
+    const minVal = Math.min(...properties.map(p => p.assessedValue));
     const distribution = [0, 0, 0, 0, 0];
-    const step = maxVal / 5;
+    const rangeSpan = maxVal - minVal;
+    const step = rangeSpan / 5;
     properties.forEach(p => {
-      const bucket = Math.min(Math.floor(p.assessedValue / step), 4);
+      const bucket = step > 0 ? Math.min(Math.floor((p.assessedValue - minVal) / step), 4) : 0;
       distribution[bucket]++;
     });
 
     const chartData = distribution.map((count, i) => ({
-      range: `$${(i * step / 1000).toFixed(0)}k - $${((i + 1) * step / 1000).toFixed(0)}k`,
-      count
+      range: `$${((minVal + i * step) / 1000).toFixed(0)}k - $${((minVal + (i + 1) * step) / 1000).toFixed(0)}k`,
+      count,
+      binMin: Math.round(minVal + i * step),
+      binMax: Math.round(minVal + (i + 1) * step)
     }));
 
     // Calculate total taxes using per-parcel mill levy
@@ -411,7 +415,12 @@ export default function Dashboard() {
                       dataKey="count" 
                       fill="hsl(199 89% 48%)" 
                       radius={[4, 4, 0, 0]} 
-                      className="hover:opacity-80 transition-opacity"
+                      className="cursor-pointer"
+                      onClick={(data) => {
+                        if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                          setValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                        }
+                      }}
                     />
                   </BarChart>
                 </ResponsiveContainer>
