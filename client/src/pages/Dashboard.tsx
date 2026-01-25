@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { HeatmapLayer } from "@/components/MapController";
 import type { PropertyResponse } from "@shared/schema";
@@ -291,9 +291,9 @@ export default function Dashboard() {
               />
               <StatsCard 
                 title="Total Taxes Paid" 
-                value={`${formatCurrencyShort(stats.totalTaxes)} (${stats.taxPctOfTotal.toFixed(2)}%)`} 
+                value={formatCurrencyShort(stats.totalTaxes)} 
                 icon={DollarSign}
-                description="Total property taxes of filtered properties"
+                description={`Effective tax rate: ${stats.taxPctOfTotal.toFixed(2)}%`}
               />
               <div className="grid grid-cols-2 gap-4">
                 <StatsCard 
@@ -303,8 +303,9 @@ export default function Dashboard() {
                 />
                 <StatsCard 
                   title="Avg. Taxes" 
-                  value={`${formatCurrencyShort(stats.avgTaxes)} (${stats.taxPctOfAvg.toFixed(2)}%)`} 
+                  value={formatCurrencyShort(stats.avgTaxes)} 
                   icon={TrendingUp}
+                  description={`Effective tax rate: ${stats.taxPctOfAvg.toFixed(2)}%`}
                 />
               </div>
               <StatsCard 
@@ -414,8 +415,8 @@ export default function Dashboard() {
                       <div className="text-xs space-y-1 text-muted-foreground">
                         <p>Owner: <span className="text-foreground">{property.owner}</span></p>
                         <p>Total Value: <span className="text-primary font-bold">{formatCurrency(property.assessedValue)}</span></p>
-                        <p>Land: {formatCurrency(landVal)} {landTaxPct && <span className="text-muted-foreground">({landTaxPct}% taxable)</span>}</p>
-                        <p>Improvements: {formatCurrency(improvVal)} {bldgTaxPct && <span className="text-muted-foreground">({bldgTaxPct}% taxable)</span>}</p>
+                        <p>Land: {formatCurrency(landVal)}</p>
+                        <p>Improvements: {formatCurrency(improvVal)}</p>
                         {pricePerSqft && <p>Land $/sqft: <span className="text-foreground">${pricePerSqft}</span></p>}
                         {(hasHhExemption || hasVetExemption) && (
                           <p className="text-green-500">
@@ -428,23 +429,6 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </Popup>
-                  <Tooltip permanent={false} sticky>
-                    <div className="text-xs">
-                      <div className="font-bold">{formatCurrency(property.assessedValue)}</div>
-                      <div>Land: {formatCurrency(landVal)} {landTaxPct && `(${landTaxPct}%)`}</div>
-                      <div>Bldg: {formatCurrency(improvVal)} {bldgTaxPct && `(${bldgTaxPct}%)`}</div>
-                      {pricePerSqft && <div>${pricePerSqft}/sqft land</div>}
-                      {(hasHhExemption || hasVetExemption) && (
-                        <div className="text-green-600">
-                          {hasHhExemption && `HH: ${formatCurrency(hhExemptVal)}`}
-                          {hasHhExemption && hasVetExemption && ' '}
-                          {hasVetExemption && `Vet: ${formatCurrency(vetExemptVal)}`}
-                        </div>
-                      )}
-                      <div className="font-semibold text-amber-500">Tax: {formatCurrency(propertyTax)}</div>
-                      {taxPerSqft && <div>${taxPerSqft}/sqft tax</div>}
-                    </div>
-                  </Tooltip>
                 </Marker>
               );
             })}
