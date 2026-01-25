@@ -131,6 +131,7 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   const landSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LANDSQFT"] || 0;
   const buildingSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT"] || 0;
   const millLevy = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXAREALEVY"] || null;
+  const accountType = attrs["LAC_GIS.LACGIS.Parcels.ACCT_TYPE"] || null;
   
   // Convert square feet to acres (1 acre = 43,560 sq ft)
   const parcelArea = landSqFt / 43560;
@@ -156,7 +157,8 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
     vetExemption,
     landSqft: landSqFt,
     buildingSqft: buildingSqFt,
-    millLevy
+    millLevy,
+    accountType
   };
 }
 

@@ -25,6 +25,7 @@ export const properties = pgTable("properties", {
   landSqft: doublePrecision("land_sqft"),
   buildingSqft: doublePrecision("building_sqft"),
   millLevy: doublePrecision("mill_levy"),
+  accountType: text("account_type"),
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });

@@ -138,7 +138,9 @@ export default function Dashboard() {
     const totalHhExemption = properties.reduce((sum, p) => sum + (p.hhExemption || 0), 0);
 
     // Count properties with no improvement value (land only)
-    const noImprovementCount = properties.filter(p => (p.improvementValue || 0) === 0).length;
+    const landOnlyProps = properties.filter(p => (p.improvementValue || 0) === 0);
+    const noImprovementCount = landOnlyProps.length;
+    const totalLandOnlySqft = landOnlyProps.reduce((sum, p) => sum + (p.landSqft || 0), 0);
 
     // Total land square footage
     const totalLandSqft = properties.reduce((sum, p) => sum + (p.landSqft || 0), 0);
@@ -156,6 +158,7 @@ export default function Dashboard() {
       hhExemptionCount,
       totalHhExemption,
       noImprovementCount,
+      totalLandOnlySqft,
       totalLandSqft,
       avgLandSqft,
     };
@@ -509,7 +512,7 @@ export default function Dashboard() {
                 title="Land Only (No Improvements)"
                 value={stats.noImprovementCount.toLocaleString()}
                 icon={Layers}
-                description="Properties with $0 improvement value"
+                description={`${stats.totalLandOnlySqft.toLocaleString()} total sqft`}
               />
 
               {/* Chart */}
@@ -697,6 +700,14 @@ export default function Dashboard() {
                             </p>
                           )}
                           <p>Year: {property.assessmentYear}</p>
+                          {property.accountType && (
+                            <p>
+                              Account Type:{" "}
+                              <span className="text-foreground">
+                                {property.accountType}
+                              </span>
+                            </p>
+                          )}
                           <a
                             href={`https://www.zillow.com/homes/${encodeURIComponent(property.address)}%20${encodeURIComponent(property.city || "Los Alamos")}%20${encodeURIComponent(property.state || "NM")}%20${encodeURIComponent(property.zip || "87544")}_rb/`}
                             target="_blank"
