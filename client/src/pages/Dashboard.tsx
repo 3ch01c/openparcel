@@ -199,24 +199,29 @@ export default function Dashboard() {
     return Array.from(types).sort();
   }, [rawProperties]);
 
-  // Filter properties by tax range, land sqft, and account types (client-side)
-  const properties = useMemo(() => {
+  // Filter properties by value, tax range, and land sqft (without account type filter)
+  // Used to calculate account type counts based on current other filters
+  const propertiesWithoutAccountTypeFilter = useMemo(() => {
     if (!rawProperties) return [];
     return rawProperties.filter((p) => {
       const tax = getPropertyTax(p);
       const landSqft = p.landSqft || 0;
-      const accountTypeMatch =
-        selectedAccountTypes.length === 0 ||
-        (p.accountType && selectedAccountTypes.includes(p.accountType));
       return (
         tax >= taxRange[0] &&
         tax <= taxRange[1] &&
         landSqft >= landSqftRange[0] &&
-        landSqft <= landSqftRange[1] &&
-        accountTypeMatch
+        landSqft <= landSqftRange[1]
       );
     });
-  }, [rawProperties, taxRange, landSqftRange, selectedAccountTypes]);
+  }, [rawProperties, taxRange, landSqftRange]);
+
+  // Filter properties by tax range, land sqft, and account types (client-side)
+  const properties = useMemo(() => {
+    if (selectedAccountTypes.length === 0) return propertiesWithoutAccountTypeFilter;
+    return propertiesWithoutAccountTypeFilter.filter((p) =>
+      p.accountType && selectedAccountTypes.includes(p.accountType)
+    );
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes]);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -911,7 +916,7 @@ export default function Dashboard() {
                 <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
                   {uniqueAccountTypes.map((type) => {
                     const isSelected = selectedAccountTypes.includes(type);
-                    const count = rawProperties?.filter((p) => p.accountType === type).length || 0;
+                    const count = propertiesWithoutAccountTypeFilter.filter((p) => p.accountType === type).length;
                     return (
                       <button
                         key={type}
