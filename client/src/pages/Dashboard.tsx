@@ -40,14 +40,21 @@ const CENTER_LNG = -106.295;
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
+  const [taxRange, setTaxRange] = useState<[number, number]>([0, 50000]);
   const [viewMode, setViewMode] = useState<"heat" | "points">("heat");
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
   const [tempMin, setTempMin] = useState("");
   const [tempMax, setTempMax] = useState("");
+  const [editingTaxMin, setEditingTaxMin] = useState(false);
+  const [editingTaxMax, setEditingTaxMax] = useState(false);
+  const [tempTaxMin, setTempTaxMin] = useState("");
+  const [tempTaxMax, setTempTaxMax] = useState("");
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
+  const taxMinInputRef = useRef<HTMLInputElement>(null);
+  const taxMaxInputRef = useRef<HTMLInputElement>(null);
 
   const handleMinClick = () => {
     setTempMin(String(valueRange[0]));
@@ -79,9 +86,51 @@ export default function Dashboard() {
     setEditingMax(false);
   };
 
+  const handleTaxMinClick = () => {
+    setTempTaxMin(String(taxRange[0]));
+    setEditingTaxMin(true);
+    setTimeout(() => taxMinInputRef.current?.select(), 0);
+  };
+
+  const handleTaxMaxClick = () => {
+    setTempTaxMax(taxRange[1] >= 50000 ? "50000" : String(taxRange[1]));
+    setEditingTaxMax(true);
+    setTimeout(() => taxMaxInputRef.current?.select(), 0);
+  };
+
+  const handleTaxMinSubmit = () => {
+    const val = parseInt(tempTaxMin.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, taxRange[1]));
+      setTaxRange([clamped, taxRange[1]]);
+    }
+    setEditingTaxMin(false);
+  };
+
+  const handleTaxMaxSubmit = () => {
+    const val = parseInt(tempTaxMax.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(taxRange[0], Math.min(val, 50000));
+      setTaxRange([taxRange[0], clamped]);
+    }
+    setEditingTaxMax(false);
+  };
+
+  // Calculate property tax for a single property
+  const getPropertyTax = (p: PropertyResponse) => {
+    const totalTaxable = p.totalTaxable || 0;
+    const hhExempt = p.hhExemption || 0;
+    const vetExempt = p.vetExemption || 0;
+    const millLevy = p.millLevy || 28.714;
+    const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
+    if (isExemptAccount) return 0;
+    const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
+    return (netTaxable * millLevy) / 1000;
+  };
+
   // Fetch properties based on filters
   const {
-    data: properties,
+    data: rawProperties,
     isLoading,
     isError,
   } = useProperties({
@@ -89,6 +138,15 @@ export default function Dashboard() {
     minValue: valueRange[0],
     maxValue: valueRange[1],
   });
+
+  // Filter properties by tax range (client-side since tax is calculated)
+  const properties = useMemo(() => {
+    if (!rawProperties) return [];
+    return rawProperties.filter((p) => {
+      const tax = getPropertyTax(p);
+      return tax >= taxRange[0] && tax <= taxRange[1];
+    });
+  }, [rawProperties, taxRange]);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -452,6 +510,74 @@ export default function Dashboard() {
                   }
                   className="py-2"
                   data-testid="slider-value-range"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Property Taxes Paid
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingTaxMin ? (
+                      <input
+                        ref={taxMinInputRef}
+                        type="text"
+                        value={tempTaxMin}
+                        onChange={(e) => setTempTaxMin(e.target.value)}
+                        onBlur={handleTaxMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleTaxMinSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        data-testid="input-tax-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleTaxMinClick}
+                        className="text-primary hover:underline cursor-pointer"
+                        data-testid="button-edit-tax-min"
+                      >
+                        {formatCurrencyShort(taxRange[0])}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingTaxMax ? (
+                      <input
+                        ref={taxMaxInputRef}
+                        type="text"
+                        value={tempTaxMax}
+                        onChange={(e) => setTempTaxMax(e.target.value)}
+                        onBlur={handleTaxMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleTaxMaxSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        data-testid="input-tax-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleTaxMaxClick}
+                        className="text-primary hover:underline cursor-pointer"
+                        data-testid="button-edit-tax-max"
+                      >
+                        {taxRange[1] >= 50000
+                          ? "$50k+"
+                          : formatCurrencyShort(taxRange[1])}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 50000]}
+                  max={50000}
+                  step={500}
+                  value={taxRange}
+                  onValueChange={(val) =>
+                    setTaxRange(val as [number, number])
+                  }
+                  className="py-2"
+                  data-testid="slider-tax-range"
                 />
               </div>
 
