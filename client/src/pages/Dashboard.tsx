@@ -6,6 +6,11 @@ import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { Slider } from "@/components/ui/slider";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -23,6 +28,8 @@ import {
   Home,
   Download,
   Coffee,
+  ChevronDown,
+  BarChart3,
 } from "lucide-react";
 import {
   BarChart,
@@ -56,6 +63,8 @@ export default function Dashboard() {
   const [editingLandMax, setEditingLandMax] = useState(false);
   const [tempLandMin, setTempLandMin] = useState("");
   const [tempLandMax, setTempLandMax] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [statsOpen, setStatsOpen] = useState(true);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
   const taxMinInputRef = useRef<HTMLInputElement>(null);
@@ -514,14 +523,19 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Controls */}
-          <div className="space-y-6 bg-secondary/30 p-4 rounded-xl border border-white/5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </div>
+          {/* Filters Section - Collapsible */}
+          <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
+              <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-semibold text-primary hover:text-primary/80 transition-colors" data-testid="button-toggle-filters">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  <span>Filters</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
 
-            <div className="space-y-4">
+              <CollapsibleContent className="pt-4">
+                <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Assessment Year
@@ -838,71 +852,89 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-
-              <div className="pt-2">
-                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-2">
-                  Visualization Mode
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant={viewMode === "heat" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("heat")}
-                    className="w-full"
-                    data-testid="button-heatmap"
-                  >
-                    <Layers className="w-4 h-4 mr-2" /> Heatmap
-                  </Button>
-                  <Button
-                    variant={viewMode === "points" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("points")}
-                    className="w-full"
-                    data-testid="button-markers"
-                  >
-                    <MapIcon className="w-4 h-4 mr-2" /> Markers
-                  </Button>
                 </div>
-              </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
 
-              <div className="pt-4 border-t border-border/50">
-                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-2">
-                  Export Data
-                </label>
-                <div className="space-y-2">
-                  <Select
-                    value={exportFormat}
-                    onValueChange={(v) => setExportFormat(v as "csv" | "json")}
-                  >
-                    <SelectTrigger
-                      className="w-full bg-background/50 border-border"
-                      data-testid="select-export-format"
-                    >
-                      <SelectValue placeholder="Select format" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="csv">CSV (Spreadsheet)</SelectItem>
-                      <SelectItem value="json">JSON (Data)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={downloadData}
-                    disabled={
-                      !properties || properties.length === 0 || isLoading
-                    }
-                    className="w-full"
-                    size="sm"
-                    data-testid="button-download"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download {properties?.length || 0} Properties
-                  </Button>
-                </div>
-              </div>
+          {/* Visualization Mode Section */}
+          <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
+              <Layers className="w-4 h-4" />
+              <span>Visualization Mode</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={viewMode === "heat" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("heat")}
+                className="w-full"
+                data-testid="button-heatmap"
+              >
+                <Layers className="w-4 h-4 mr-2" /> Heatmap
+              </Button>
+              <Button
+                variant={viewMode === "points" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("points")}
+                className="w-full"
+                data-testid="button-markers"
+              >
+                <MapIcon className="w-4 h-4 mr-2" /> Markers
+              </Button>
             </div>
           </div>
 
-          {/* Stats Summary */}
+          {/* Export Data Section */}
+          <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
+              <Download className="w-4 h-4" />
+              <span>Export Data</span>
+            </div>
+            <div className="space-y-2">
+              <Select
+                value={exportFormat}
+                onValueChange={(v) => setExportFormat(v as "csv" | "json")}
+              >
+                <SelectTrigger
+                  className="w-full bg-background/50 border-border"
+                  data-testid="select-export-format"
+                >
+                  <SelectValue placeholder="Select format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV (Spreadsheet)</SelectItem>
+                  <SelectItem value="json">JSON (Data)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={downloadData}
+                disabled={
+                  !properties || properties.length === 0 || isLoading
+                }
+                className="w-full"
+                size="sm"
+                data-testid="button-download"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download {properties?.length || 0} Properties
+              </Button>
+            </div>
+          </div>
+
+          {/* Stats Section - Collapsible */}
+          <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
+            <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
+              <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-semibold text-primary hover:text-primary/80 transition-colors" data-testid="button-toggle-stats">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  <span>Statistics</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsOpen ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+
+              <CollapsibleContent className="pt-4">
+                {/* Stats Summary */}
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -1045,6 +1077,9 @@ export default function Dashboard() {
               No data available for selected range.
             </div>
           )}
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         </div>
 
         {/* Footer */}
