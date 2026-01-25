@@ -667,6 +667,15 @@ export default function Dashboard() {
                           >
                             View on Zillow
                           </a>
+                          <a
+                            href="https://eaglerecorderselfservice.losalamosnm.us/web/search/DOCSEARCH138S1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline block mt-1"
+                            data-testid="link-county-clerk"
+                          >
+                            County Clerk Records
+                          </a>
                         </div>
                       </div>
                     </Popup>
