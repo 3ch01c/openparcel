@@ -732,7 +732,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Property Taxes Paid
+                    Tax Assessed
                   </label>
                   <div className="flex items-center gap-1 text-xs font-mono">
                     {editingTaxMin ? (
@@ -1120,7 +1120,7 @@ export default function Dashboard() {
                 description={`Avg: $${stats.avgLandValuePerSqft.toFixed(2)}/sqft`}
               />
               <StatsCard
-                title="Total Taxes Paid"
+                title="Total Tax Assessed"
                 value={formatCurrencyShort(stats.totalTaxes)}
                 icon={DollarSign}
                 description={`Avg: ${formatCurrencyShort(stats.avgTaxes)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`}
@@ -1375,7 +1375,7 @@ export default function Dashboard() {
                             </p>
                           )}
                           <p className="font-semibold text-amber-500">
-                            Property Tax Paid: {formatCurrency(propertyTax)} ({parcelMillLevy.toFixed(3)} mills)
+                            Tax Assessed: {formatCurrency(propertyTax)} ({parcelMillLevy.toFixed(3)} mills)
                           </p>
                           {(landTaxPerSqft || bldgTaxPerSqft) && (
                             <p>
