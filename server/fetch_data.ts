@@ -56,6 +56,9 @@ async function fetchBatch(offset: number): Promise<{ features: ArcGISFeature[]; 
       "LAC_GIS.LACGIS.Parcels.ADDRESS",
       "LAC_GIS.LACGIS.Parcels.ACCT_TYPE",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERNAME",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_CITY",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_STATE",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_ZIP",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BUILDING_ACTUAL",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LAND_ACTUAL",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TOTAL_ACTUAL",
@@ -112,12 +115,9 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   // Extract values with proper field prefixes
   const parcelId = attrs["LAC_GIS.LACGIS.Parcels.PIN"] || attrs["LAC_GIS.LACGIS.Parcels.OBJECTID"]?.toString();
   const address = attrs["LAC_GIS.LACGIS.Parcels.ADDRESS"] || "Unknown";
-  // Determine city based on coordinates - White Rock is south of Los Alamos
-  // White Rock area is roughly south of latitude 35.83 and west of -106.18
-  const isWhiteRock = centroid.lat < 35.83 && centroid.lng > -106.22;
-  const city = isWhiteRock ? "White Rock" : "Los Alamos";
-  const state = "NM";
-  const zip = isWhiteRock ? "87547" : "87544";
+  const city = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_CITY"] || "Los Alamos";
+  const state = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_STATE"] || "NM";
+  const zip = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_ZIP"] || "87544";
   const owner = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERNAME"] || "Unknown";
   const buildingValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BUILDING_ACTUAL"] || 0;
   const landValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LAND_ACTUAL"] || 0;

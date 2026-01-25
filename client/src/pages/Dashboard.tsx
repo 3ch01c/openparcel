@@ -468,31 +468,14 @@ export default function Dashboard() {
                 title="Total Assessed Value"
                 value={formatCurrencyShort(stats.totalValue)}
                 icon={DollarSign}
-                description="Cumulative value of filtered properties"
+                description={`Avg: ${formatCurrencyShort(stats.avgValue)}`}
               />
               <StatsCard
                 title="Total Taxes Paid"
                 value={formatCurrencyShort(stats.totalTaxes)}
                 icon={DollarSign}
+                description={`Avg: ${formatCurrencyShort(stats.avgTaxes)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`}
               />
-              <StatsCard
-                title="Effective Tax Rate"
-                value={`${stats.taxPctOfTotal.toFixed(2)}%`}
-                icon={TrendingUp}
-                description="Total taxes as % of total assessed value"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <StatsCard
-                  title="Avg. Value"
-                  value={formatCurrencyShort(stats.avgValue)}
-                  icon={TrendingUp}
-                />
-                <StatsCard
-                  title="Avg. Taxes"
-                  value={formatCurrencyShort(stats.avgTaxes)}
-                  icon={TrendingUp}
-                />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <StatsCard
                   title="Properties"
@@ -503,7 +486,6 @@ export default function Dashboard() {
                   title="HH Exemptions"
                   value={stats.hhExemptionCount.toLocaleString()}
                   icon={Home}
-                  description={`Total: ${formatCurrencyShort(stats.totalHhExemption)}`}
                 />
               </div>
 
