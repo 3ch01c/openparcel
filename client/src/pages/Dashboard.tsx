@@ -5,10 +5,32 @@ import { HeatmapLayer } from "@/components/MapController";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Loader2, Map as MapIcon, Layers, Filter, DollarSign, TrendingUp, Home, Download } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import {
+  Loader2,
+  Map as MapIcon,
+  Layers,
+  Filter,
+  DollarSign,
+  TrendingUp,
+  Home,
+  Download,
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 // Los Alamos County Center (calculated from actual data bounds)
 const CENTER_LAT = 35.875;
@@ -57,27 +79,37 @@ export default function Dashboard() {
   };
 
   // Fetch properties based on filters
-  const { data: properties, isLoading, isError } = useProperties({
+  const {
+    data: properties,
+    isLoading,
+    isError,
+  } = useProperties({
     year,
     minValue: valueRange[0],
-    maxValue: valueRange[1]
+    maxValue: valueRange[1],
   });
 
   // Derived Stats
   const stats = useMemo(() => {
     if (!properties || properties.length === 0) return null;
-    
-    const totalValue = properties.reduce((acc, curr) => acc + curr.assessedValue, 0);
+
+    const totalValue = properties.reduce(
+      (acc, curr) => acc + curr.assessedValue,
+      0,
+    );
     const avgValue = totalValue / properties.length;
-    const maxVal = Math.max(...properties.map(p => p.assessedValue));
+    const maxVal = Math.max(...properties.map((p) => p.assessedValue));
 
     // Simple distribution for chart - start from current filter min
-    const minVal = Math.min(...properties.map(p => p.assessedValue));
+    const minVal = Math.min(...properties.map((p) => p.assessedValue));
     const distribution = [0, 0, 0, 0, 0];
     const rangeSpan = maxVal - minVal;
     const step = rangeSpan / 5;
-    properties.forEach(p => {
-      const bucket = step > 0 ? Math.min(Math.floor((p.assessedValue - minVal) / step), 4) : 0;
+    properties.forEach((p) => {
+      const bucket =
+        step > 0
+          ? Math.min(Math.floor((p.assessedValue - minVal) / step), 4)
+          : 0;
       distribution[bucket]++;
     });
 
@@ -85,7 +117,7 @@ export default function Dashboard() {
       range: `$${((minVal + i * step) / 1000).toFixed(0)}k - $${((minVal + (i + 1) * step) / 1000).toFixed(0)}k`,
       count,
       binMin: Math.round(minVal + i * step),
-      binMax: Math.round(minVal + (i + 1) * step)
+      binMax: Math.round(minVal + (i + 1) * step),
     }));
 
     // Calculate total taxes using per-parcel mill levy
@@ -101,15 +133,33 @@ export default function Dashboard() {
     const taxPctOfTotal = totalValue > 0 ? (totalTaxes / totalValue) * 100 : 0;
     const taxPctOfAvg = avgValue > 0 ? (avgTaxes / avgValue) * 100 : 0;
 
-    return { totalValue, avgValue, count: properties.length, chartData, totalTaxes, avgTaxes, taxPctOfTotal, taxPctOfAvg };
+    return {
+      totalValue,
+      avgValue,
+      count: properties.length,
+      chartData,
+      totalTaxes,
+      avgTaxes,
+      taxPctOfTotal,
+      taxPctOfAvg,
+    };
   }, [properties]);
 
-  const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
-  
-  const formatCurrencyShort = (val: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
-  
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(val);
+
+  const formatCurrencyShort = (val: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(val);
+
   // Calculate property tax for a single property using its mill levy
   const calculatePropertyTax = (property: PropertyResponse) => {
     const totalTaxable = property.totalTaxable || 0;
@@ -122,13 +172,13 @@ export default function Dashboard() {
 
   const downloadData = () => {
     if (!properties || properties.length === 0) return;
-    
+
     let content: string;
     let mimeType: string;
     let extension: string;
-    
-    if (exportFormat === 'json') {
-      const jsonData = properties.map(p => ({
+
+    if (exportFormat === "json") {
+      const jsonData = properties.map((p) => ({
         parcelId: p.parcelId,
         address: p.address,
         owner: p.owner,
@@ -146,17 +196,36 @@ export default function Dashboard() {
         parcelAreaAcres: p.parcelArea,
         latitude: p.lat,
         longitude: p.lng,
-        assessmentYear: p.assessmentYear
+        assessmentYear: p.assessmentYear,
       }));
       content = JSON.stringify(jsonData, null, 2);
-      mimeType = 'application/json';
-      extension = 'json';
+      mimeType = "application/json";
+      extension = "json";
     } else {
-      const headers = ['Parcel ID', 'Address', 'Owner', 'Assessed Value', 'Land Value', 'Improvement Value', 'Land Taxable', 'Building Taxable', 'Total Taxable', 'HH Exemption', 'Vet Exemption', 'Land Sqft', 'Building Sqft', 'Mill Levy', 'Parcel Area (acres)', 'Latitude', 'Longitude', 'Assessment Year'];
-      const rows = properties.map(p => [
+      const headers = [
+        "Parcel ID",
+        "Address",
+        "Owner",
+        "Assessed Value",
+        "Land Value",
+        "Improvement Value",
+        "Land Taxable",
+        "Building Taxable",
+        "Total Taxable",
+        "HH Exemption",
+        "Vet Exemption",
+        "Land Sqft",
+        "Building Sqft",
+        "Mill Levy",
+        "Parcel Area (acres)",
+        "Latitude",
+        "Longitude",
+        "Assessment Year",
+      ];
+      const rows = properties.map((p) => [
         p.parcelId,
-        `"${(p.address || '').replace(/"/g, '""')}"`,
-        `"${(p.owner || '').replace(/"/g, '""')}"`,
+        `"${(p.address || "").replace(/"/g, '""')}"`,
+        `"${(p.owner || "").replace(/"/g, '""')}"`,
         p.assessedValue,
         p.landValue,
         p.improvementValue,
@@ -167,20 +236,20 @@ export default function Dashboard() {
         p.vetExemption || 0,
         p.landSqft || 0,
         p.buildingSqft || 0,
-        p.millLevy || '',
-        p.parcelArea?.toFixed(4) || '',
+        p.millLevy || "",
+        p.parcelArea?.toFixed(4) || "",
         p.lat,
         p.lng,
-        p.assessmentYear
+        p.assessmentYear,
       ]);
-      content = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      mimeType = 'text/csv;charset=utf-8;';
-      extension = 'csv';
+      content = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      mimeType = "text/csv;charset=utf-8;";
+      extension = "csv";
     }
-    
+
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `los_alamos_parcels_${year}_${valueRange[0]}-${valueRange[1]}.${extension}`;
     document.body.appendChild(link);
@@ -193,8 +262,12 @@ export default function Dashboard() {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-destructive">Error Loading Data</h2>
-          <p className="text-muted-foreground">Could not fetch property assessments.</p>
+          <h2 className="text-2xl font-bold text-destructive">
+            Error Loading Data
+          </h2>
+          <p className="text-muted-foreground">
+            Could not fetch property assessments.
+          </p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
@@ -228,8 +301,14 @@ export default function Dashboard() {
                 <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Assessment Year
                 </label>
-                <Select value={year.toString()} onValueChange={(v) => setYear(Number(v))}>
-                  <SelectTrigger className="w-full bg-background/50 border-border" data-testid="select-year">
+                <Select
+                  value={year.toString()}
+                  onValueChange={(v) => setYear(Number(v))}
+                >
+                  <SelectTrigger
+                    className="w-full bg-background/50 border-border"
+                    data-testid="select-year"
+                  >
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -242,7 +321,7 @@ export default function Dashboard() {
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Assessed Value Range
                   </label>
                   <div className="flex items-center gap-1 text-xs font-mono">
@@ -253,7 +332,9 @@ export default function Dashboard() {
                         value={tempMin}
                         onChange={(e) => setTempMin(e.target.value)}
                         onBlur={handleMinSubmit}
-                        onKeyDown={(e) => e.key === "Enter" && handleMinSubmit()}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleMinSubmit()
+                        }
                         className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
                         data-testid="input-min-value"
                       />
@@ -274,7 +355,9 @@ export default function Dashboard() {
                         value={tempMax}
                         onChange={(e) => setTempMax(e.target.value)}
                         onBlur={handleMaxSubmit}
-                        onKeyDown={(e) => e.key === "Enter" && handleMaxSubmit()}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleMaxSubmit()
+                        }
                         className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
                         data-testid="input-max-value"
                       />
@@ -284,7 +367,9 @@ export default function Dashboard() {
                         className="text-primary hover:underline cursor-pointer"
                         data-testid="button-edit-max"
                       >
-                        {valueRange[1] >= 5000000 ? "5M+" : formatCurrencyShort(valueRange[1])}
+                        {valueRange[1] >= 5000000
+                          ? "5M+"
+                          : formatCurrencyShort(valueRange[1])}
                       </button>
                     )}
                   </div>
@@ -294,36 +379,38 @@ export default function Dashboard() {
                   max={5000000}
                   step={50000}
                   value={valueRange}
-                  onValueChange={(val) => setValueRange(val as [number, number])}
+                  onValueChange={(val) =>
+                    setValueRange(val as [number, number])
+                  }
                   className="py-2"
                   data-testid="slider-value-range"
                 />
               </div>
 
               <div className="pt-2">
-                 <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-2">
-                    Visualization Mode
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button 
-                      variant={viewMode === "heat" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setViewMode("heat")}
-                      className="w-full"
-                      data-testid="button-heatmap"
-                    >
-                      <Layers className="w-4 h-4 mr-2" /> Heatmap
-                    </Button>
-                    <Button 
-                      variant={viewMode === "points" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setViewMode("points")}
-                      className="w-full"
-                      data-testid="button-markers"
-                    >
-                      <MapIcon className="w-4 h-4 mr-2" /> Markers
-                    </Button>
-                  </div>
+                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-2">
+                  Visualization Mode
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={viewMode === "heat" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("heat")}
+                    className="w-full"
+                    data-testid="button-heatmap"
+                  >
+                    <Layers className="w-4 h-4 mr-2" /> Heatmap
+                  </Button>
+                  <Button
+                    variant={viewMode === "points" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("points")}
+                    className="w-full"
+                    data-testid="button-markers"
+                  >
+                    <MapIcon className="w-4 h-4 mr-2" /> Markers
+                  </Button>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-border/50">
@@ -331,8 +418,14 @@ export default function Dashboard() {
                   Export Data
                 </label>
                 <div className="space-y-2">
-                  <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as "csv" | "json")}>
-                    <SelectTrigger className="w-full bg-background/50 border-border" data-testid="select-export-format">
+                  <Select
+                    value={exportFormat}
+                    onValueChange={(v) => setExportFormat(v as "csv" | "json")}
+                  >
+                    <SelectTrigger
+                      className="w-full bg-background/50 border-border"
+                      data-testid="select-export-format"
+                    >
                       <SelectValue placeholder="Select format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -340,9 +433,11 @@ export default function Dashboard() {
                       <SelectItem value="json">JSON (Data)</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button 
+                  <Button
                     onClick={downloadData}
-                    disabled={!properties || properties.length === 0 || isLoading}
+                    disabled={
+                      !properties || properties.length === 0 || isLoading
+                    }
                     className="w-full"
                     size="sm"
                     data-testid="button-download"
@@ -357,68 +452,76 @@ export default function Dashboard() {
 
           {/* Stats Summary */}
           {isLoading ? (
-             <div className="flex flex-col items-center justify-center py-12 space-y-4 text-muted-foreground">
-               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-               <p className="text-sm">Loading assessment data...</p>
-             </div>
+            <div className="flex flex-col items-center justify-center py-12 space-y-4 text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm">Loading assessment data...</p>
+            </div>
           ) : stats ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <StatsCard 
-                title="Total Assessed Value" 
-                value={formatCurrencyShort(stats.totalValue)} 
+              <StatsCard
+                title="Total Assessed Value"
+                value={formatCurrencyShort(stats.totalValue)}
                 icon={DollarSign}
                 description="Cumulative value of filtered properties"
               />
-              <StatsCard 
-                title="Total Taxes Paid" 
-                value={formatCurrencyShort(stats.totalTaxes)} 
+              <StatsCard
+                title="Total Taxes Paid"
+                value={formatCurrencyShort(stats.totalTaxes)}
                 icon={DollarSign}
                 description={`Effective tax rate: ${stats.taxPctOfTotal.toFixed(2)}%`}
               />
               <div className="grid grid-cols-2 gap-4">
-                <StatsCard 
-                  title="Avg. Value" 
-                  value={formatCurrencyShort(stats.avgValue)} 
+                <StatsCard
+                  title="Avg. Value"
+                  value={formatCurrencyShort(stats.avgValue)}
                   icon={TrendingUp}
                 />
-                <StatsCard 
-                  title="Avg. Taxes" 
-                  value={formatCurrencyShort(stats.avgTaxes)} 
+                <StatsCard
+                  title="Avg. Taxes"
+                  value={formatCurrencyShort(stats.avgTaxes)}
                   icon={TrendingUp}
                   description={`Effective tax rate: ${stats.taxPctOfAvg.toFixed(2)}%`}
                 />
               </div>
-              <StatsCard 
-                title="Properties" 
-                value={stats.count.toLocaleString()} 
+              <StatsCard
+                title="Properties"
+                value={stats.count.toLocaleString()}
                 icon={Home}
               />
 
               {/* Chart */}
               <div className="h-48 pt-4">
-                 <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
-                    Value Distribution
-                  </label>
+                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
+                  Value Distribution
+                </label>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stats.chartData}>
-                    <XAxis 
-                      dataKey="range" 
-                      hide 
-                    />
+                    <XAxis dataKey="range" hide />
                     <YAxis hide />
-                    <RechartsTooltip 
-                      contentStyle={{ backgroundColor: 'hsl(222 47% 11%)', borderColor: 'hsl(217 33% 17%)', borderRadius: '8px' }}
-                      itemStyle={{ color: 'white' }}
-                      cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(222 47% 11%)",
+                        borderColor: "hsl(217 33% 17%)",
+                        borderRadius: "8px",
+                      }}
+                      itemStyle={{ color: "white" }}
+                      cursor={{ fill: "rgba(255,255,255,0.05)" }}
                     />
-                    <Bar 
-                      dataKey="count" 
-                      fill="hsl(199 89% 48%)" 
-                      radius={[4, 4, 0, 0]} 
+                    <Bar
+                      dataKey="count"
+                      fill="hsl(199 89% 48%)"
+                      radius={[4, 4, 0, 0]}
                       className="cursor-pointer"
                       onClick={(data) => {
-                        if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                          setValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                        if (
+                          data &&
+                          data.binMin !== undefined &&
+                          data.binMax !== undefined
+                        ) {
+                          setValueRange([
+                            data.binMin,
+                            Math.min(data.binMax, 5000000),
+                          ]);
                         }
                       }}
                     />
@@ -432,7 +535,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="mt-auto p-6 border-t border-border text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Los Alamos Assessment Viz.</p>
@@ -443,10 +546,10 @@ export default function Dashboard() {
       {/* Map Area */}
       <div className="flex-1 relative h-[50vh] md:h-full w-full bg-slate-900">
         <div className="absolute inset-0 z-0">
-          <MapContainer 
-            center={[CENTER_LAT, CENTER_LNG]} 
-            zoom={11} 
-            scrollWheelZoom={true} 
+          <MapContainer
+            center={[CENTER_LAT, CENTER_LNG]}
+            zoom={11}
+            scrollWheelZoom={true}
             className="h-full w-full"
             data-testid="map-container"
           >
@@ -455,68 +558,112 @@ export default function Dashboard() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
-            
+
             {properties && viewMode === "heat" && (
               <HeatmapLayer points={properties} />
             )}
 
-            {properties && viewMode === "points" && properties.map(property => {
-              const landVal = property.landValue || 0;
-              const improvVal = property.improvementValue || 0;
-              const landTaxableVal = property.landTaxable || 0;
-              const bldgTaxableVal = property.buildingTaxable || 0;
-              const totalTaxableVal = property.totalTaxable || 0;
-              const hhExemptVal = property.hhExemption || 0;
-              const vetExemptVal = property.vetExemption || 0;
-              const landSqftVal = property.landSqft || 0;
-              
-              const landTaxPct = landVal > 0 && landTaxableVal > 0 
-                ? ((landTaxableVal / landVal) * 100).toFixed(1) 
-                : null;
-              const bldgTaxPct = improvVal > 0 && bldgTaxableVal > 0 
-                ? ((bldgTaxableVal / improvVal) * 100).toFixed(1) 
-                : null;
-              const pricePerSqft = landSqftVal > 0 && landVal > 0 
-                ? (landVal / landSqftVal).toFixed(2) 
-                : null;
-              
-              // Property taxes: (Total Taxable - HH Exemption - Vet Exemption) * Mill Levy / 1000
-              const parcelMillLevy = property.millLevy || 28.714;
-              const netTaxable = Math.max(0, totalTaxableVal - hhExemptVal - vetExemptVal);
-              const propertyTax = (netTaxable * parcelMillLevy) / 1000;
-              const taxPerSqft = landSqftVal > 0 ? (propertyTax / landSqftVal).toFixed(4) : null;
-              
-              const hasHhExemption = hhExemptVal > 0;
-              const hasVetExemption = vetExemptVal > 0;
-              
-              return (
-                <Marker 
-                  key={property.id} 
-                  position={[property.lat, property.lng]}
-                >
-                  <Popup className="bg-transparent border-none shadow-none">
-                    <div className="p-1 min-w-[260px]">
-                      <h3 className="font-bold text-sm mb-1">{property.address}</h3>
-                      <div className="text-xs space-y-1 text-muted-foreground">
-                        <p>Owner: <span className="text-foreground">{property.owner}</span></p>
-                        <p>Total Value: <span className="text-primary font-bold">{formatCurrency(property.assessedValue)}</span></p>
-                        <p>Land: {formatCurrency(landVal)}</p>
-                        <p>Improvements: {formatCurrency(improvVal)}</p>
-                        {pricePerSqft && <p>Land $/sqft: <span className="text-foreground">${pricePerSqft}</span></p>}
-                        {(hasHhExemption || hasVetExemption) && (
-                          <p className="text-green-500">
-                            Exemptions: {hasHhExemption && `HH ${formatCurrency(hhExemptVal)}`}{hasHhExemption && hasVetExemption && ', '}{hasVetExemption && `Vet ${formatCurrency(vetExemptVal)}`}
+            {properties &&
+              viewMode === "points" &&
+              properties.map((property) => {
+                const landVal = property.landValue || 0;
+                const improvVal = property.improvementValue || 0;
+                const landTaxableVal = property.landTaxable || 0;
+                const bldgTaxableVal = property.buildingTaxable || 0;
+                const totalTaxableVal = property.totalTaxable || 0;
+                const hhExemptVal = property.hhExemption || 0;
+                const vetExemptVal = property.vetExemption || 0;
+                const landSqftVal = property.landSqft || 0;
+
+                const landTaxPct =
+                  landVal > 0 && landTaxableVal > 0
+                    ? ((landTaxableVal / landVal) * 100).toFixed(1)
+                    : null;
+                const bldgTaxPct =
+                  improvVal > 0 && bldgTaxableVal > 0
+                    ? ((bldgTaxableVal / improvVal) * 100).toFixed(1)
+                    : null;
+                const pricePerSqft =
+                  landSqftVal > 0 && landVal > 0
+                    ? (landVal / landSqftVal).toFixed(2)
+                    : null;
+
+                // Property taxes: (Total Taxable - HH Exemption - Vet Exemption) * Mill Levy / 1000
+                const parcelMillLevy = property.millLevy || 28.714;
+                const netTaxable = Math.max(
+                  0,
+                  totalTaxableVal - hhExemptVal - vetExemptVal,
+                );
+                const propertyTax = (netTaxable * parcelMillLevy) / 1000;
+                const taxPerSqft =
+                  landSqftVal > 0
+                    ? (propertyTax / landSqftVal).toFixed(4)
+                    : null;
+
+                const hasHhExemption = hhExemptVal > 0;
+                const hasVetExemption = vetExemptVal > 0;
+
+                return (
+                  <Marker
+                    key={property.id}
+                    position={[property.lat, property.lng]}
+                  >
+                    <Popup className="bg-transparent border-none shadow-none">
+                      <div className="p-1 min-w-[260px]">
+                        <h3 className="font-bold text-sm mb-1">
+                          {property.address}
+                        </h3>
+                        <div className="text-xs space-y-1 text-muted-foreground">
+                          <p>
+                            Owner:{" "}
+                            <span className="text-foreground">
+                              {property.owner}
+                            </span>
                           </p>
-                        )}
-                        <p className="font-semibold text-amber-500">Property Tax: {formatCurrency(propertyTax)}</p>
-                        {taxPerSqft && <p>Tax/sqft: <span className="text-foreground">${taxPerSqft}</span></p>}
-                        <p>Year: {property.assessmentYear}</p>
+                          <p>
+                            Total Value:{" "}
+                            <span className="text-primary font-bold">
+                              {formatCurrency(property.assessedValue)}
+                            </span>
+                          </p>
+                          <p>Land: {formatCurrency(landVal)}</p>
+                          <p>Improvements: {formatCurrency(improvVal)}</p>
+                          {pricePerSqft && (
+                            <p>
+                              Land $/sqft:{" "}
+                              <span className="text-foreground">
+                                ${pricePerSqft}
+                              </span>
+                            </p>
+                          )}
+                          {(hasHhExemption || hasVetExemption) && (
+                            <p className="text-green-500">
+                              Exemptions:{" "}
+                              {hasHhExemption &&
+                                `HH ${formatCurrency(hhExemptVal)}`}
+                              {hasHhExemption && hasVetExemption && ", "}
+                              {hasVetExemption &&
+                                `Vet ${formatCurrency(vetExemptVal)}`}
+                            </p>
+                          )}
+                          <p className="font-semibold text-amber-500">
+                            Property Tax: {formatCurrency(propertyTax)}
+                          </p>
+                          {taxPerSqft && (
+                            <p>
+                              Tax/sqft:{" "}
+                              <span className="text-foreground">
+                                ${taxPerSqft}
+                              </span>
+                            </p>
+                          )}
+                          <p>Year: {property.assessmentYear}</p>
+                        </div>
                       </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
+                    </Popup>
+                  </Marker>
+                );
+              })}
           </MapContainer>
         </div>
 
