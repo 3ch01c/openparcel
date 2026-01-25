@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Home,
   Download,
+  Coffee,
 } from "lucide-react";
 import {
   BarChart,
@@ -300,9 +301,22 @@ export default function Dashboard() {
         <div className="p-6 space-y-8">
           {/* Header */}
           <div className="space-y-2">
-            <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Los Alamos Assessor
-            </h1>
+            <div className="flex items-center justify-between gap-2">
+              <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Los Alamos Assessor
+              </h1>
+              <a
+                href="http://venmo.com/werni"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="link-buy-coffee"
+              >
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Coffee className="h-4 w-4" />
+                  <span className="hidden sm:inline">Buy me a coffee</span>
+                </Button>
+              </a>
+            </div>
             <p className="text-sm text-muted-foreground">
               Interactive land value assessment heatmap and analytics platform.
             </p>
