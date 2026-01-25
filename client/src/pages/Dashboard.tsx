@@ -222,6 +222,46 @@ export default function Dashboard() {
       binMax: Math.round(minVal + (i + 1) * step),
     }));
 
+    // Tax histogram data (5 bins from 0 to max tax)
+    const taxValues = properties.map(p => {
+      const totalTaxable = p.totalTaxable || 0;
+      const hhExempt = p.hhExemption || 0;
+      const vetExempt = p.vetExemption || 0;
+      const parcelMillLevy = p.millLevy || 28.714;
+      const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
+      if (isExemptAccount) return 0;
+      return Math.max(0, totalTaxable - hhExempt - vetExempt) * parcelMillLevy / 1000;
+    });
+    const maxTax = Math.max(...taxValues, 1);
+    const taxDistribution = [0, 0, 0, 0, 0];
+    const taxStep = maxTax / 5;
+    taxValues.forEach(tax => {
+      const bucket = taxStep > 0 ? Math.min(Math.floor(tax / taxStep), 4) : 0;
+      taxDistribution[bucket]++;
+    });
+    const taxChartData = taxDistribution.map((count, i) => ({
+      range: `$${((i * taxStep) / 1000).toFixed(1)}k - $${(((i + 1) * taxStep) / 1000).toFixed(1)}k`,
+      count,
+      binMin: Math.round(i * taxStep),
+      binMax: Math.round((i + 1) * taxStep),
+    }));
+
+    // Land sqft histogram data (5 bins from 0 to max land sqft)
+    const landValues = properties.map(p => p.landSqft || 0);
+    const maxLand = Math.max(...landValues, 1);
+    const landDistribution = [0, 0, 0, 0, 0];
+    const landStep = maxLand / 5;
+    landValues.forEach(sqft => {
+      const bucket = landStep > 0 ? Math.min(Math.floor(sqft / landStep), 4) : 0;
+      landDistribution[bucket]++;
+    });
+    const landChartData = landDistribution.map((count, i) => ({
+      range: `${((i * landStep) / 1000).toFixed(0)}k - ${(((i + 1) * landStep) / 1000).toFixed(0)}k`,
+      count,
+      binMin: Math.round(i * landStep),
+      binMax: Math.round((i + 1) * landStep),
+    }));
+
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
     const totalTaxes = properties.reduce((sum, p) => {
       const totalTaxable = p.totalTaxable || 0;
@@ -312,6 +352,8 @@ export default function Dashboard() {
       exemptionsChartData,
       totalTaxExemptions,
       accountTypesChartData,
+      taxChartData,
+      landChartData,
     };
   }, [properties]);
 
@@ -568,6 +610,36 @@ export default function Dashboard() {
                   className="py-2"
                   data-testid="slider-value-range"
                 />
+                {stats?.chartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.chartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(199 89% 48%)"
+                          radius={[4, 4, 0, 0]}
+                          className="cursor-pointer"
+                          onClick={(data) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -636,6 +708,36 @@ export default function Dashboard() {
                   className="py-2"
                   data-testid="slider-tax-range"
                 />
+                {stats?.taxChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.taxChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(142 71% 45%)"
+                          radius={[4, 4, 0, 0]}
+                          className="cursor-pointer"
+                          onClick={(data) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setTaxRange([data.binMin, Math.min(data.binMax, 50000)]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -705,6 +807,36 @@ export default function Dashboard() {
                   className="py-2"
                   data-testid="slider-land-sqft"
                 />
+                {stats?.landChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.landChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(271 81% 56%)"
+                          radius={[4, 4, 0, 0]}
+                          className="cursor-pointer"
+                          onClick={(data) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setLandSqftRange([data.binMin, Math.min(data.binMax, 100000)]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2">
@@ -821,46 +953,6 @@ export default function Dashboard() {
                 icon={Layers}
                 description={`${stats.totalLandOnlySqft.toLocaleString()} total sqft`}
               />
-
-              {/* Chart */}
-              <div className="h-48 pt-4">
-                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
-                  Value Distribution
-                </label>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.chartData}>
-                    <XAxis dataKey="range" hide />
-                    <YAxis hide />
-                    <RechartsTooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(222 47% 11%)",
-                        borderColor: "hsl(217 33% 17%)",
-                        borderRadius: "8px",
-                      }}
-                      itemStyle={{ color: "white" }}
-                      cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                    />
-                    <Bar
-                      dataKey="count"
-                      fill="hsl(199 89% 48%)"
-                      radius={[4, 4, 0, 0]}
-                      className="cursor-pointer"
-                      onClick={(data) => {
-                        if (
-                          data &&
-                          data.binMin !== undefined &&
-                          data.binMax !== undefined
-                        ) {
-                          setValueRange([
-                            data.binMin,
-                            Math.min(data.binMax, 5000000),
-                          ]);
-                        }
-                      }}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
 
               {/* Account Types Chart */}
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
