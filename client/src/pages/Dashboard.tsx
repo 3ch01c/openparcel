@@ -137,6 +137,13 @@ export default function Dashboard() {
     const hhExemptionCount = properties.filter(p => (p.hhExemption || 0) > 0).length;
     const totalHhExemption = properties.reduce((sum, p) => sum + (p.hhExemption || 0), 0);
 
+    // Count properties with no improvement value (land only)
+    const noImprovementCount = properties.filter(p => (p.improvementValue || 0) === 0).length;
+
+    // Total land square footage
+    const totalLandSqft = properties.reduce((sum, p) => sum + (p.landSqft || 0), 0);
+    const avgLandSqft = properties.length > 0 ? totalLandSqft / properties.length : 0;
+
     return {
       totalValue,
       avgValue,
@@ -148,6 +155,9 @@ export default function Dashboard() {
       taxPctOfAvg,
       hhExemptionCount,
       totalHhExemption,
+      noImprovementCount,
+      totalLandSqft,
+      avgLandSqft,
     };
   }, [properties]);
 
@@ -471,6 +481,12 @@ export default function Dashboard() {
                 description={`Avg: ${formatCurrencyShort(stats.avgValue)}`}
               />
               <StatsCard
+                title="Total Land Sqft"
+                value={stats.totalLandSqft.toLocaleString()}
+                icon={TrendingUp}
+                description={`Avg: ${Math.round(stats.avgLandSqft).toLocaleString()} sqft`}
+              />
+              <StatsCard
                 title="Total Taxes Paid"
                 value={formatCurrencyShort(stats.totalTaxes)}
                 icon={DollarSign}
@@ -486,8 +502,15 @@ export default function Dashboard() {
                   title="HH Exemptions"
                   value={stats.hhExemptionCount.toLocaleString()}
                   icon={Home}
+                  description="Owner-occupied"
                 />
               </div>
+              <StatsCard
+                title="Land Only (No Improvements)"
+                value={stats.noImprovementCount.toLocaleString()}
+                icon={Layers}
+                description="Properties with $0 improvement value"
+              />
 
               {/* Chart */}
               <div className="h-48 pt-4">
@@ -574,18 +597,16 @@ export default function Dashboard() {
                 const hhExemptVal = property.hhExemption || 0;
                 const vetExemptVal = property.vetExemption || 0;
                 const landSqftVal = property.landSqft || 0;
+                const bldgSqftVal = property.buildingSqft || 0;
 
-                const landTaxPct =
-                  landVal > 0 && landTaxableVal > 0
-                    ? ((landTaxableVal / landVal) * 100).toFixed(1)
-                    : null;
-                const bldgTaxPct =
-                  improvVal > 0 && bldgTaxableVal > 0
-                    ? ((bldgTaxableVal / improvVal) * 100).toFixed(1)
-                    : null;
-                const pricePerSqft =
+                // Price per sqft calculations
+                const landPricePerSqft =
                   landSqftVal > 0 && landVal > 0
                     ? (landVal / landSqftVal).toFixed(2)
+                    : null;
+                const improvPricePerSqft =
+                  bldgSqftVal > 0 && improvVal > 0
+                    ? (improvVal / bldgSqftVal).toFixed(2)
                     : null;
 
                 // Property taxes: (Total Taxable - HH Exemption - Vet Exemption) * Mill Levy / 1000
@@ -595,10 +616,14 @@ export default function Dashboard() {
                   totalTaxableVal - hhExemptVal - vetExemptVal,
                 );
                 const propertyTax = (netTaxable * parcelMillLevy) / 1000;
-                const taxPerSqft =
-                  landSqftVal > 0
-                    ? (propertyTax / landSqftVal).toFixed(4)
-                    : null;
+
+                // Tax per sqft calculations - separate for land and improvements
+                const landTax = (landTaxableVal * parcelMillLevy) / 1000;
+                const bldgTax = (bldgTaxableVal * parcelMillLevy) / 1000;
+                const landTaxPerSqft =
+                  landSqftVal > 0 ? (landTax / landSqftVal).toFixed(4) : null;
+                const bldgTaxPerSqft =
+                  bldgSqftVal > 0 ? (bldgTax / bldgSqftVal).toFixed(4) : null;
 
                 const hasHhExemption = hhExemptVal > 0;
                 const hasVetExemption = vetExemptVal > 0;
@@ -626,16 +651,22 @@ export default function Dashboard() {
                               {formatCurrency(property.assessedValue)}
                             </span>
                           </p>
-                          <p>Land: {formatCurrency(landVal)}</p>
-                          <p>Improvements: {formatCurrency(improvVal)}</p>
-                          {pricePerSqft && (
-                            <p>
-                              Land $/sqft:{" "}
+                          <p>
+                            Land: {formatCurrency(landVal)}
+                            {landSqftVal > 0 && landPricePerSqft && (
                               <span className="text-foreground">
-                                ${pricePerSqft}
+                                {" "}/ {landSqftVal.toLocaleString()} sqft = ${landPricePerSqft}/sqft
                               </span>
-                            </p>
-                          )}
+                            )}
+                          </p>
+                          <p>
+                            Improvements: {formatCurrency(improvVal)}
+                            {bldgSqftVal > 0 && improvPricePerSqft && (
+                              <span className="text-foreground">
+                                {" "}/ {Math.round(bldgSqftVal).toLocaleString()} sqft = ${improvPricePerSqft}/sqft
+                              </span>
+                            )}
+                          </p>
                           {(hasHhExemption || hasVetExemption) && (
                             <p className="text-green-500">
                               Exemptions:{" "}
@@ -647,14 +678,22 @@ export default function Dashboard() {
                             </p>
                           )}
                           <p className="font-semibold text-amber-500">
-                            Property Tax: {formatCurrency(propertyTax)}
+                            Property Tax: {formatCurrency(propertyTax)} ({parcelMillLevy.toFixed(3)} mills)
                           </p>
-                          {taxPerSqft && (
+                          {(landTaxPerSqft || bldgTaxPerSqft) && (
                             <p>
                               Tax/sqft:{" "}
-                              <span className="text-foreground">
-                                ${taxPerSqft}
-                              </span>
+                              {landTaxPerSqft && (
+                                <span className="text-foreground">
+                                  Land ${landTaxPerSqft}
+                                </span>
+                              )}
+                              {landTaxPerSqft && bldgTaxPerSqft && " | "}
+                              {bldgTaxPerSqft && (
+                                <span className="text-foreground">
+                                  Bldg ${bldgTaxPerSqft}
+                                </span>
+                              )}
                             </p>
                           )}
                           <p>Year: {property.assessmentYear}</p>
