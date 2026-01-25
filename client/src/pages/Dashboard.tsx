@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { HeatmapLayer } from "@/components/MapController";
@@ -19,6 +19,42 @@ export default function Dashboard() {
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [viewMode, setViewMode] = useState<"heat" | "points">("heat");
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
+  const [editingMin, setEditingMin] = useState(false);
+  const [editingMax, setEditingMax] = useState(false);
+  const [tempMin, setTempMin] = useState("");
+  const [tempMax, setTempMax] = useState("");
+  const minInputRef = useRef<HTMLInputElement>(null);
+  const maxInputRef = useRef<HTMLInputElement>(null);
+
+  const handleMinClick = () => {
+    setTempMin(String(valueRange[0]));
+    setEditingMin(true);
+    setTimeout(() => minInputRef.current?.select(), 0);
+  };
+
+  const handleMaxClick = () => {
+    setTempMax(valueRange[1] >= 5000000 ? "5000000" : String(valueRange[1]));
+    setEditingMax(true);
+    setTimeout(() => maxInputRef.current?.select(), 0);
+  };
+
+  const handleMinSubmit = () => {
+    const val = parseInt(tempMin.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, valueRange[1]));
+      setValueRange([clamped, valueRange[1]]);
+    }
+    setEditingMin(false);
+  };
+
+  const handleMaxSubmit = () => {
+    const val = parseInt(tempMax.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(valueRange[0], Math.min(val, 5000000));
+      setValueRange([valueRange[0], clamped]);
+    }
+    setEditingMax(false);
+  };
 
   // Fetch properties based on filters
   const { data: properties, isLoading, isError } = useProperties({
@@ -205,9 +241,49 @@ export default function Dashboard() {
                    <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Assessed Value Range
                   </label>
-                  <span className="text-xs text-primary font-mono">
-                    {formatCurrencyShort(valueRange[0])} - {valueRange[1] >= 5000000 ? "5M+" : formatCurrencyShort(valueRange[1])}
-                  </span>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingMin ? (
+                      <input
+                        ref={minInputRef}
+                        type="text"
+                        value={tempMin}
+                        onChange={(e) => setTempMin(e.target.value)}
+                        onBlur={handleMinSubmit}
+                        onKeyDown={(e) => e.key === "Enter" && handleMinSubmit()}
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        data-testid="input-min-value"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleMinClick}
+                        className="text-primary hover:underline cursor-pointer"
+                        data-testid="button-edit-min"
+                      >
+                        {formatCurrencyShort(valueRange[0])}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingMax ? (
+                      <input
+                        ref={maxInputRef}
+                        type="text"
+                        value={tempMax}
+                        onChange={(e) => setTempMax(e.target.value)}
+                        onBlur={handleMaxSubmit}
+                        onKeyDown={(e) => e.key === "Enter" && handleMaxSubmit()}
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        data-testid="input-max-value"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleMaxClick}
+                        className="text-primary hover:underline cursor-pointer"
+                        data-testid="button-edit-max"
+                      >
+                        {valueRange[1] >= 5000000 ? "5M+" : formatCurrencyShort(valueRange[1])}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <Slider
                   defaultValue={[0, 5000000]}
