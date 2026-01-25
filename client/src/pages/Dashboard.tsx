@@ -121,12 +121,14 @@ export default function Dashboard() {
       binMax: Math.round(minVal + (i + 1) * step),
     }));
 
-    // Calculate total taxes using per-parcel mill levy
+    // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
     const totalTaxes = properties.reduce((sum, p) => {
       const totalTaxable = p.totalTaxable || 0;
       const hhExempt = p.hhExemption || 0;
       const vetExempt = p.vetExemption || 0;
       const parcelMillLevy = p.millLevy || 28.714; // Default fallback if not available
+      const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
+      if (isExemptAccount) return sum; // EXEMPT properties pay $0 tax
       const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
       return sum + (netTaxable * parcelMillLevy) / 1000;
     }, 0);
@@ -137,6 +139,33 @@ export default function Dashboard() {
     // Count properties with HH exemption
     const hhExemptionCount = properties.filter(p => (p.hhExemption || 0) > 0).length;
     const totalHhExemption = properties.reduce((sum, p) => sum + (p.hhExemption || 0), 0);
+    
+    // Count properties with Vet exemption
+    const vetExemptionCount = properties.filter(p => (p.vetExemption || 0) > 0).length;
+    const totalVetExemption = properties.reduce((sum, p) => sum + (p.vetExemption || 0), 0);
+    
+    // Calculate EXEMPT account type exemptions (grouped by account type)
+    const exemptAccountExemptions: Record<string, number> = {};
+    properties.forEach(p => {
+      const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
+      if (isExemptAccount && p.accountType) {
+        const totalTaxable = p.totalTaxable || 0;
+        const parcelMillLevy = p.millLevy || 28.714;
+        const exemptValue = (totalTaxable * parcelMillLevy) / 1000;
+        exemptAccountExemptions[p.accountType] = (exemptAccountExemptions[p.accountType] || 0) + exemptValue;
+      }
+    });
+    
+    // Build exemptions chart data
+    const exemptionsChartData = [
+      { type: "HH Exemption", value: totalHhExemption, count: hhExemptionCount },
+      { type: "Vet Exemption", value: totalVetExemption, count: vetExemptionCount },
+      ...Object.entries(exemptAccountExemptions).map(([type, value]) => ({
+        type,
+        value,
+        count: properties.filter(p => p.accountType === type).length,
+      })),
+    ].filter(d => d.value > 0);
 
     // Count properties with no improvement value (land only)
     const landOnlyProps = properties.filter(p => (p.improvementValue || 0) === 0);
@@ -162,6 +191,7 @@ export default function Dashboard() {
       totalLandOnlySqft,
       totalLandSqft,
       avgLandSqft,
+      exemptionsChartData,
     };
   }, [properties]);
 
@@ -568,6 +598,52 @@ export default function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Tax Exemptions Chart */}
+              {stats.exemptionsChartData && stats.exemptionsChartData.length > 0 && (
+                <div className="h-64 pt-4">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
+                    Tax Exemptions by Type
+                  </label>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={stats.exemptionsChartData} 
+                      layout="vertical"
+                      margin={{ left: 10, right: 10 }}
+                    >
+                      <XAxis type="number" hide />
+                      <YAxis 
+                        type="category" 
+                        dataKey="type" 
+                        width={100}
+                        tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
+                        tickFormatter={(value) => value.replace("EXEMPT ", "")}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(222 47% 11%)",
+                          borderColor: "hsl(217 33% 17%)",
+                          borderRadius: "8px",
+                        }}
+                        itemStyle={{ color: "white" }}
+                        formatter={(value: number, name: string) => {
+                          if (name === "value") {
+                            return [formatCurrencyShort(value), "Total Value"];
+                          }
+                          return [value, name];
+                        }}
+                        labelFormatter={(label) => label}
+                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                      />
+                      <Bar
+                        dataKey="value"
+                        fill="hsl(142 71% 45%)"
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
@@ -628,11 +704,16 @@ export default function Dashboard() {
 
                 // Property taxes: (Total Taxable - HH Exemption - Vet Exemption) * Mill Levy / 1000
                 const parcelMillLevy = property.millLevy || 28.714;
-                const netTaxable = Math.max(
+                
+                // Check if this is an EXEMPT account type
+                const isExemptAccount = property.accountType?.toUpperCase().includes("EXEMPT") || false;
+                const exemptAccountExemption = isExemptAccount ? (totalTaxableVal * parcelMillLevy) / 1000 : 0;
+                
+                const netTaxable = isExemptAccount ? 0 : Math.max(
                   0,
                   totalTaxableVal - hhExemptVal - vetExemptVal,
                 );
-                const propertyTax = (netTaxable * parcelMillLevy) / 1000;
+                const propertyTax = isExemptAccount ? 0 : (netTaxable * parcelMillLevy) / 1000;
 
                 // Tax per sqft calculations - separate for land and improvements
                 const landTax = (landTaxableVal * parcelMillLevy) / 1000;
@@ -677,14 +758,14 @@ export default function Dashboard() {
                             )}
                           </p>
                           <p>
-                            Improvements: {formatCurrency(improvVal)}
+                            Bldg: {formatCurrency(improvVal)}
                             {bldgSqftVal > 0 && improvPricePerSqft && (
                               <span className="text-foreground">
                                 {" "}/ {Math.round(bldgSqftVal).toLocaleString()} sqft = ${improvPricePerSqft}/sqft
                               </span>
                             )}
                           </p>
-                          {(hasHhExemption || hasVetExemption) && (
+                          {(hasHhExemption || hasVetExemption || isExemptAccount) && (
                             <p className="text-green-500">
                               Exemptions:{" "}
                               {hasHhExemption &&
@@ -692,10 +773,13 @@ export default function Dashboard() {
                               {hasHhExemption && hasVetExemption && ", "}
                               {hasVetExemption &&
                                 `Vet ${formatCurrency(vetExemptVal)}`}
+                              {(hasHhExemption || hasVetExemption) && isExemptAccount && ", "}
+                              {isExemptAccount &&
+                                `${property.accountType} ${formatCurrency(exemptAccountExemption)}`}
                             </p>
                           )}
                           <p className="font-semibold text-amber-500">
-                            Property Tax: {formatCurrency(propertyTax)} ({parcelMillLevy.toFixed(3)} mills)
+                            Property Tax Paid: {formatCurrency(propertyTax)} ({parcelMillLevy.toFixed(3)} mills)
                           </p>
                           {(landTaxPerSqft || bldgTaxPerSqft) && (
                             <p>
