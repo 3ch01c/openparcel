@@ -133,6 +133,10 @@ export default function Dashboard() {
     const taxPctOfTotal = totalValue > 0 ? (totalTaxes / totalValue) * 100 : 0;
     const taxPctOfAvg = avgValue > 0 ? (avgTaxes / avgValue) * 100 : 0;
 
+    // Count properties with HH exemption
+    const hhExemptionCount = properties.filter(p => (p.hhExemption || 0) > 0).length;
+    const totalHhExemption = properties.reduce((sum, p) => sum + (p.hhExemption || 0), 0);
+
     return {
       totalValue,
       avgValue,
@@ -142,6 +146,8 @@ export default function Dashboard() {
       avgTaxes,
       taxPctOfTotal,
       taxPctOfAvg,
+      hhExemptionCount,
+      totalHhExemption,
     };
   }, [properties]);
 
@@ -468,7 +474,12 @@ export default function Dashboard() {
                 title="Total Taxes Paid"
                 value={formatCurrencyShort(stats.totalTaxes)}
                 icon={DollarSign}
-                description={`Effective tax rate: ${stats.taxPctOfTotal.toFixed(2)}%`}
+              />
+              <StatsCard
+                title="Effective Tax Rate"
+                value={`${stats.taxPctOfTotal.toFixed(2)}%`}
+                icon={TrendingUp}
+                description="Total taxes as % of total assessed value"
               />
               <div className="grid grid-cols-2 gap-4">
                 <StatsCard
@@ -480,14 +491,21 @@ export default function Dashboard() {
                   title="Avg. Taxes"
                   value={formatCurrencyShort(stats.avgTaxes)}
                   icon={TrendingUp}
-                  description={`Effective tax rate: ${stats.taxPctOfAvg.toFixed(2)}%`}
                 />
               </div>
-              <StatsCard
-                title="Properties"
-                value={stats.count.toLocaleString()}
-                icon={Home}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <StatsCard
+                  title="Properties"
+                  value={stats.count.toLocaleString()}
+                  icon={Home}
+                />
+                <StatsCard
+                  title="HH Exemptions"
+                  value={stats.hhExemptionCount.toLocaleString()}
+                  icon={Home}
+                  description={`Total: ${formatCurrencyShort(stats.totalHhExemption)}`}
+                />
+              </div>
 
               {/* Chart */}
               <div className="h-48 pt-4">
@@ -658,6 +676,15 @@ export default function Dashboard() {
                             </p>
                           )}
                           <p>Year: {property.assessmentYear}</p>
+                          <a
+                            href={`https://www.zillow.com/homedetails/${property.address.replace(/\s+/g, "-")}-Los-Alamos-NM-87544/`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline block mt-2"
+                            data-testid="link-zillow"
+                          >
+                            View on Zillow
+                          </a>
                         </div>
                       </div>
                     </Popup>
