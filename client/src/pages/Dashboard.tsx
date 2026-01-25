@@ -677,7 +677,7 @@ export default function Dashboard() {
                           )}
                           <p>Year: {property.assessmentYear}</p>
                           <a
-                            href={`https://www.zillow.com/homes/${encodeURIComponent(property.address)}%20Los%20Alamos%20NM%2087544_rb/`}
+                            href={`https://www.zillow.com/homes/${encodeURIComponent(property.address)}%20${encodeURIComponent(property.city || "Los Alamos")}%20${encodeURIComponent(property.state || "NM")}%20${encodeURIComponent(property.zip || "87544")}_rb/`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline block mt-2"
