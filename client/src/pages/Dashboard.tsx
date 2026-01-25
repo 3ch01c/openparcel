@@ -167,15 +167,32 @@ export default function Dashboard() {
   };
 
   // Calculate property tax for a single property
+  // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
   const getPropertyTax = (p: PropertyResponse) => {
     const totalTaxable = p.totalTaxable || 0;
-    const hhExempt = p.hhExemption || 0;
-    const vetExempt = p.vetExemption || 0;
+    const hhExemptValue = p.hhExemption || 0;
+    const vetExemptValue = p.vetExemption || 0;
     const millLevy = p.millLevy || 28.714;
     const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
     if (isExemptAccount) return 0;
-    const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
-    return (netTaxable * millLevy) / 1000;
+    
+    // Calculate tax amounts
+    const grossTax = (totalTaxable * millLevy) / 1000;
+    const hhExemptionAmount = (hhExemptValue * millLevy) / 1000;
+    const vetExemptionAmount = (vetExemptValue * millLevy) / 1000;
+    
+    return Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
+  };
+  
+  // Helper to get exemption amounts (as tax dollars saved)
+  const getHhExemptionAmount = (p: PropertyResponse) => {
+    const millLevy = p.millLevy || 28.714;
+    return ((p.hhExemption || 0) * millLevy) / 1000;
+  };
+  
+  const getVetExemptionAmount = (p: PropertyResponse) => {
+    const millLevy = p.millLevy || 28.714;
+    return ((p.vetExemption || 0) * millLevy) / 1000;
   };
 
   // Fetch properties based on filters
@@ -295,27 +312,38 @@ export default function Dashboard() {
     }));
 
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
+    // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
     const totalTaxes = properties.reduce((sum, p) => {
       const totalTaxable = p.totalTaxable || 0;
-      const hhExempt = p.hhExemption || 0;
-      const vetExempt = p.vetExemption || 0;
-      const parcelMillLevy = p.millLevy || 28.714; // Default fallback if not available
+      const hhExemptValue = p.hhExemption || 0;
+      const vetExemptValue = p.vetExemption || 0;
+      const parcelMillLevy = p.millLevy || 28.714;
       const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
       if (isExemptAccount) return sum; // EXEMPT properties pay $0 tax
-      const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
-      return sum + (netTaxable * parcelMillLevy) / 1000;
+      
+      const grossTax = (totalTaxable * parcelMillLevy) / 1000;
+      const hhExemptionAmount = (hhExemptValue * parcelMillLevy) / 1000;
+      const vetExemptionAmount = (vetExemptValue * parcelMillLevy) / 1000;
+      
+      return sum + Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
     }, 0);
     const avgTaxes = properties.length > 0 ? totalTaxes / properties.length : 0;
     const taxPctOfTotal = totalValue > 0 ? (totalTaxes / totalValue) * 100 : 0;
     const taxPctOfAvg = avgValue > 0 ? (avgTaxes / avgValue) * 100 : 0;
 
-    // Count properties with HH exemption
+    // Count properties with HH exemption and calculate total tax savings
     const hhExemptionCount = properties.filter(p => (p.hhExemption || 0) > 0).length;
-    const totalHhExemption = properties.reduce((sum, p) => sum + (p.hhExemption || 0), 0);
+    const totalHhExemption = properties.reduce((sum, p) => {
+      const parcelMillLevy = p.millLevy || 28.714;
+      return sum + ((p.hhExemption || 0) * parcelMillLevy) / 1000;
+    }, 0);
     
-    // Count properties with Vet exemption
+    // Count properties with Vet exemption and calculate total tax savings
     const vetExemptionCount = properties.filter(p => (p.vetExemption || 0) > 0).length;
-    const totalVetExemption = properties.reduce((sum, p) => sum + (p.vetExemption || 0), 0);
+    const totalVetExemption = properties.reduce((sum, p) => {
+      const parcelMillLevy = p.millLevy || 28.714;
+      return sum + ((p.vetExemption || 0) * parcelMillLevy) / 1000;
+    }, 0);
     
     // Calculate EXEMPT account type exemptions (grouped by account type)
     const exemptAccountExemptions: Record<string, number> = {};
@@ -329,7 +357,7 @@ export default function Dashboard() {
       }
     });
     
-    // Build exemptions chart data
+    // Build exemptions chart data (all values now in tax dollars)
     const exemptionsChartData = [
       { type: "HH Exemption", value: totalHhExemption, count: hhExemptionCount },
       { type: "Vet Exemption", value: totalVetExemption, count: vetExemptionCount },
@@ -340,7 +368,7 @@ export default function Dashboard() {
       })),
     ].filter(d => d.value > 0);
     
-    // Total tax exemptions (sum of all exemption values)
+    // Total tax exemptions (sum of all exemption values - all in tax dollars)
     const totalExemptAccountValue = Object.values(exemptAccountExemptions).reduce((sum, v) => sum + v, 0);
     const totalTaxExemptions = totalHhExemption + totalVetExemption + totalExemptAccountValue;
 
@@ -405,13 +433,20 @@ export default function Dashboard() {
     }).format(val);
 
   // Calculate property tax for a single property using its mill levy
+  // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
   const calculatePropertyTax = (property: PropertyResponse) => {
     const totalTaxable = property.totalTaxable || 0;
-    const hhExempt = property.hhExemption || 0;
-    const vetExempt = property.vetExemption || 0;
-    const millLevy = property.millLevy || 28.714; // Default fallback
-    const netTaxable = Math.max(0, totalTaxable - hhExempt - vetExempt);
-    return (netTaxable * millLevy) / 1000;
+    const hhExemptValue = property.hhExemption || 0;
+    const vetExemptValue = property.vetExemption || 0;
+    const millLevy = property.millLevy || 28.714;
+    const isExemptAccount = property.accountType?.toUpperCase().includes("EXEMPT") || false;
+    if (isExemptAccount) return 0;
+    
+    const grossTax = (totalTaxable * millLevy) / 1000;
+    const hhExemptionAmount = (hhExemptValue * millLevy) / 1000;
+    const vetExemptionAmount = (vetExemptValue * millLevy) / 1000;
+    
+    return Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
   };
 
   const downloadData = () => {
@@ -1237,18 +1272,19 @@ export default function Dashboard() {
                     ? (improvVal / bldgSqftVal).toFixed(2)
                     : null;
 
-                // Property taxes: (Total Taxable - HH Exemption - Vet Exemption) * Mill Levy / 1000
+                // Property taxes: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
                 const parcelMillLevy = property.millLevy || 28.714;
                 
                 // Check if this is an EXEMPT account type
                 const isExemptAccount = property.accountType?.toUpperCase().includes("EXEMPT") || false;
                 const exemptAccountExemption = isExemptAccount ? (totalTaxableVal * parcelMillLevy) / 1000 : 0;
                 
-                const netTaxable = isExemptAccount ? 0 : Math.max(
-                  0,
-                  totalTaxableVal - hhExemptVal - vetExemptVal,
-                );
-                const propertyTax = isExemptAccount ? 0 : (netTaxable * parcelMillLevy) / 1000;
+                // Calculate exemption amounts as tax dollars
+                const hhExemptionAmount = (hhExemptVal * parcelMillLevy) / 1000;
+                const vetExemptionAmount = (vetExemptVal * parcelMillLevy) / 1000;
+                
+                const grossTax = (totalTaxableVal * parcelMillLevy) / 1000;
+                const propertyTax = isExemptAccount ? 0 : Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
 
                 // Tax per sqft calculations - separate for land and improvements
                 const landTax = (landTaxableVal * parcelMillLevy) / 1000;
@@ -1302,12 +1338,12 @@ export default function Dashboard() {
                           </p>
                           {(hasHhExemption || hasVetExemption || isExemptAccount) && (
                             <p className="text-green-500">
-                              Exemptions:{" "}
+                              Tax Savings:{" "}
                               {hasHhExemption &&
-                                `HH ${formatCurrency(hhExemptVal)}`}
+                                `HH ${formatCurrency(hhExemptionAmount)}`}
                               {hasHhExemption && hasVetExemption && ", "}
                               {hasVetExemption &&
-                                `Vet ${formatCurrency(vetExemptVal)}`}
+                                `Vet ${formatCurrency(vetExemptionAmount)}`}
                               {(hasHhExemption || hasVetExemption) && isExemptAccount && ", "}
                               {isExemptAccount &&
                                 `${property.accountType} ${formatCurrency(exemptAccountExemption)}`}
