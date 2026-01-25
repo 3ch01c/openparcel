@@ -743,13 +743,13 @@ export default function Dashboard() {
                         onKeyDown={(e) =>
                           e.key === "Enter" && handleTaxMinSubmit()
                         }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-green-500 text-green-500 rounded text-right"
                         data-testid="input-tax-min"
                       />
                     ) : (
                       <button
                         onClick={handleTaxMinClick}
-                        className="text-primary hover:underline cursor-pointer"
+                        className="text-green-500 hover:underline cursor-pointer"
                         data-testid="button-edit-tax-min"
                       >
                         {formatCurrencyShort(taxRange[0])}
@@ -766,13 +766,13 @@ export default function Dashboard() {
                         onKeyDown={(e) =>
                           e.key === "Enter" && handleTaxMaxSubmit()
                         }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-green-500 text-green-500 rounded text-right"
                         data-testid="input-tax-max"
                       />
                     ) : (
                       <button
                         onClick={handleTaxMaxClick}
-                        className="text-primary hover:underline cursor-pointer"
+                        className="text-green-500 hover:underline cursor-pointer"
                         data-testid="button-edit-tax-max"
                       >
                         {taxRange[1] >= 50000
@@ -791,6 +791,8 @@ export default function Dashboard() {
                     setTaxRange(val as [number, number])
                   }
                   className="py-2"
+                  rangeClassName="bg-green-500"
+                  thumbClassName="border-green-500"
                   data-testid="slider-tax-range"
                 />
                 {stats?.taxChartData && (
@@ -841,13 +843,13 @@ export default function Dashboard() {
                         onKeyDown={(e) =>
                           e.key === "Enter" && handleLandMinSubmit()
                         }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
                         data-testid="input-land-min"
                       />
                     ) : (
                       <button
                         onClick={handleLandMinClick}
-                        className="text-primary hover:underline cursor-pointer"
+                        className="text-purple-500 hover:underline cursor-pointer"
                         data-testid="button-edit-land-min"
                       >
                         {landSqftRange[0].toLocaleString()}
@@ -864,13 +866,13 @@ export default function Dashboard() {
                         onKeyDown={(e) =>
                           e.key === "Enter" && handleLandMaxSubmit()
                         }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
                         data-testid="input-land-max"
                       />
                     ) : (
                       <button
                         onClick={handleLandMaxClick}
-                        className="text-primary hover:underline cursor-pointer"
+                        className="text-purple-500 hover:underline cursor-pointer"
                         data-testid="button-edit-land-max"
                       >
                         {landSqftRange[1] >= 100000
@@ -890,6 +892,8 @@ export default function Dashboard() {
                     setLandSqftRange(val as [number, number])
                   }
                   className="py-2"
+                  rangeClassName="bg-purple-500"
+                  thumbClassName="border-purple-500"
                   data-testid="slider-land-sqft"
                 />
                 {stats?.landChartData && (
