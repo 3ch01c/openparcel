@@ -166,6 +166,10 @@ export default function Dashboard() {
         count: properties.filter(p => p.accountType === type).length,
       })),
     ].filter(d => d.value > 0);
+    
+    // Total tax exemptions (sum of all exemption values)
+    const totalExemptAccountValue = Object.values(exemptAccountExemptions).reduce((sum, v) => sum + v, 0);
+    const totalTaxExemptions = totalHhExemption + totalVetExemption + totalExemptAccountValue;
 
     // Count properties with no improvement value (land only)
     const landOnlyProps = properties.filter(p => (p.improvementValue || 0) === 0);
@@ -192,6 +196,7 @@ export default function Dashboard() {
       totalLandSqft,
       avgLandSqft,
       exemptionsChartData,
+      totalTaxExemptions,
     };
   }, [properties]);
 
@@ -539,6 +544,12 @@ export default function Dashboard() {
                 icon={DollarSign}
                 description={`Avg: ${formatCurrencyShort(stats.avgTaxes)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`}
               />
+              <StatsCard
+                title="Total Tax Exemptions"
+                value={formatCurrencyShort(stats.totalTaxExemptions)}
+                icon={DollarSign}
+                description="All exemption types combined"
+              />
               <div className="grid grid-cols-2 gap-4">
                 <StatsCard
                   title="Properties"
@@ -549,7 +560,7 @@ export default function Dashboard() {
                   title="HH Exemptions"
                   value={stats.hhExemptionCount.toLocaleString()}
                   icon={Home}
-                  description="Owner-occupied"
+                  description="Head of Household (owner-occupied)"
                 />
               </div>
               <StatsCard
