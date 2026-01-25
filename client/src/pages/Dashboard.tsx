@@ -30,7 +30,10 @@ import {
   Coffee,
   ChevronDown,
   BarChart3,
+  Check,
+  X,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   BarChart,
   Bar,
@@ -65,6 +68,7 @@ export default function Dashboard() {
   const [tempLandMax, setTempLandMax] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
+  const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
   const taxMinInputRef = useRef<HTMLInputElement>(null);
@@ -185,20 +189,34 @@ export default function Dashboard() {
     maxValue: valueRange[1],
   });
 
-  // Filter properties by tax range and land sqft (client-side)
+  // Get unique account types from raw data
+  const uniqueAccountTypes = useMemo(() => {
+    if (!rawProperties) return [];
+    const types = new Set<string>();
+    rawProperties.forEach((p) => {
+      if (p.accountType) types.add(p.accountType);
+    });
+    return Array.from(types).sort();
+  }, [rawProperties]);
+
+  // Filter properties by tax range, land sqft, and account types (client-side)
   const properties = useMemo(() => {
     if (!rawProperties) return [];
     return rawProperties.filter((p) => {
       const tax = getPropertyTax(p);
       const landSqft = p.landSqft || 0;
+      const accountTypeMatch =
+        selectedAccountTypes.length === 0 ||
+        (p.accountType && selectedAccountTypes.includes(p.accountType));
       return (
         tax >= taxRange[0] &&
         tax <= taxRange[1] &&
         landSqft >= landSqftRange[0] &&
-        landSqft <= landSqftRange[1]
+        landSqft <= landSqftRange[1] &&
+        accountTypeMatch
       );
     });
-  }, [rawProperties, taxRange, landSqftRange]);
+  }, [rawProperties, taxRange, landSqftRange, selectedAccountTypes]);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -851,6 +869,88 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                   </div>
                 )}
+              </div>
+
+              {/* Account Type Multi-Select */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Account Type
+                  </label>
+                  {selectedAccountTypes.length > 0 && (
+                    <button
+                      onClick={() => setSelectedAccountTypes([])}
+                      className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      data-testid="button-clear-account-types"
+                    >
+                      <X className="w-3 h-3" />
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {selectedAccountTypes.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {selectedAccountTypes.map((type) => (
+                      <Badge
+                        key={type}
+                        variant="secondary"
+                        className="text-xs cursor-pointer hover:bg-destructive/20"
+                        onClick={() =>
+                          setSelectedAccountTypes((prev) =>
+                            prev.filter((t) => t !== type)
+                          )
+                        }
+                        data-testid={`badge-account-type-${type.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        {type}
+                        <X className="w-3 h-3 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
+                  {uniqueAccountTypes.map((type) => {
+                    const isSelected = selectedAccountTypes.includes(type);
+                    const count = rawProperties?.filter((p) => p.accountType === type).length || 0;
+                    return (
+                      <button
+                        key={type}
+                        onClick={() =>
+                          setSelectedAccountTypes((prev) =>
+                            isSelected
+                              ? prev.filter((t) => t !== type)
+                              : [...prev, type]
+                          )
+                        }
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
+                          isSelected
+                            ? "bg-primary/20 text-primary"
+                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                        data-testid={`button-account-type-${type.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center ${
+                              isSelected
+                                ? "bg-primary border-primary"
+                                : "border-muted-foreground"
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                          </div>
+                          <span className="truncate">{type}</span>
+                        </div>
+                        <span className="text-muted-foreground ml-2">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedAccountTypes.length === 0
+                    ? "All types shown"
+                    : `${selectedAccountTypes.length} type${selectedAccountTypes.length > 1 ? "s" : ""} selected`}
+                </p>
               </div>
                 </div>
               </CollapsibleContent>
