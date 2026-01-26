@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from "react";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { ClusterLayer } from "@/components/MapController";
 import type { PropertyResponse } from "@shared/schema";
@@ -47,6 +47,18 @@ import {
 // Los Alamos County Center (calculated from actual data bounds)
 const CENTER_LAT = 35.875;
 const CENTER_LNG = -106.295;
+
+function MapResizeHandler({ collapsed }: { collapsed: boolean }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 350);
+  }, [collapsed, map]);
+  
+  return null;
+}
 
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
@@ -1327,6 +1339,7 @@ export default function Dashboard() {
             className="h-full w-full"
             data-testid="map-container"
           >
+            <MapResizeHandler collapsed={sidebarCollapsed} />
             {/* Dark Mode Map Tiles - CartoDB Dark Matter */}
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
