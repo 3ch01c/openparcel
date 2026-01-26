@@ -31,6 +31,8 @@ import {
   BarChart3,
   Check,
   X,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -66,6 +68,7 @@ export default function Dashboard() {
   const [tempLandMax, setTempLandMax] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
@@ -588,7 +591,23 @@ export default function Dashboard() {
   return (
     <div className="h-screen w-full bg-background flex flex-col md:flex-row overflow-hidden relative">
       {/* Sidebar Control Panel */}
-      <div className="w-full md:w-[400px] z-20 flex flex-col h-full bg-card/95 backdrop-blur-md border-r border-border shadow-2xl shrink-0 overflow-y-auto">
+      <div 
+        className={`z-20 flex flex-col h-full bg-card/95 backdrop-blur-md border-r border-border shadow-2xl shrink-0 overflow-y-auto transition-all duration-300 ${
+          sidebarCollapsed ? "w-14" : "w-full md:w-[400px]"
+        }`}
+      >
+        {/* Collapse Toggle Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="absolute top-4 right-4 z-30 md:relative md:top-0 md:right-0 md:self-end md:m-2"
+          data-testid="button-toggle-sidebar"
+        >
+          {sidebarCollapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+        </Button>
+
+        {!sidebarCollapsed && (
         <div className="p-6 space-y-8">
           {/* Header */}
           <div className="space-y-2">
@@ -1287,12 +1306,15 @@ export default function Dashboard() {
             </div>
           </Collapsible>
         </div>
+        )}
 
         {/* Footer */}
+        {!sidebarCollapsed && (
         <div className="mt-auto p-6 border-t border-border text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Los Alamos Assessment Viz.</p>
           <p className="mt-1">Data provided by County Assessor.</p>
         </div>
+        )}
       </div>
 
       {/* Map Area */}
