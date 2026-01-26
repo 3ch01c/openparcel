@@ -41,12 +41,22 @@ export async function registerRoutes(
 
 async function seedDatabase() {
   const existing = await storage.getProperties();
-  if (existing.length > 0) {
-    console.log(`Database already contains ${existing.length} properties.`);
+  
+  // Check if we need to refetch - either empty DB or missing account types
+  const needsRefetch = existing.length === 0 || 
+    existing.filter(p => p.accountType && p.accountType.length > 0).length === 0;
+  
+  if (!needsRefetch) {
+    console.log(`Database already contains ${existing.length} properties with account types.`);
     return;
   }
 
-  console.log("Database empty, fetching Los Alamos property data from ArcGIS...");
+  if (existing.length > 0) {
+    console.log(`Database has ${existing.length} properties but missing account types. Clearing and refetching...`);
+    await storage.clearAllProperties();
+  } else {
+    console.log("Database empty, fetching Los Alamos property data from ArcGIS...");
+  }
   
   try {
     const count = await fetchArcGISData();

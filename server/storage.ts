@@ -11,6 +11,7 @@ export interface IStorage {
   getProperties(params?: PropertyQueryParams): Promise<Property[]>;
   getProperty(id: number): Promise<Property | undefined>;
   createProperty(property: InsertProperty): Promise<Property>;
+  clearAllProperties(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -44,6 +45,10 @@ export class DatabaseStorage implements IStorage {
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
     const [property] = await db.insert(properties).values(insertProperty).returning();
     return property;
+  }
+
+  async clearAllProperties(): Promise<void> {
+    await db.delete(properties);
   }
 }
 
