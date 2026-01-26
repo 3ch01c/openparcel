@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
-import { HeatmapLayer } from "@/components/MapController";
+import { ClusterLayer } from "@/components/MapController";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { Slider } from "@/components/ui/slider";
@@ -588,7 +588,7 @@ export default function Dashboard() {
               </a>
             </div>
             <p className="text-sm text-muted-foreground">
-              Interactive land value assessment heatmap and analytics platform.
+              Interactive land value assessment map and analytics platform.
             </p>
           </div>
 
@@ -1024,9 +1024,9 @@ export default function Dashboard() {
                 size="sm"
                 onClick={() => setViewMode("heat")}
                 className="w-full"
-                data-testid="button-heatmap"
+                data-testid="button-cluster"
               >
-                <Layers className="w-4 h-4 mr-2" /> Heatmap
+                <Layers className="w-4 h-4 mr-2" /> Cluster
               </Button>
               <Button
                 variant={viewMode === "points" ? "default" : "outline"}
@@ -1267,7 +1267,7 @@ export default function Dashboard() {
             />
 
             {properties && viewMode === "heat" && (
-              <HeatmapLayer points={properties} />
+              <ClusterLayer points={properties} />
             )}
 
             {properties &&

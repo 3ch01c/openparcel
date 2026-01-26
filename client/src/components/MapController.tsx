@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import "leaflet.heat";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { PropertyResponse } from "@shared/schema";
 
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -16,16 +18,34 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-interface HeatmapLayerProps {
+interface ClusterLayerProps {
   points: PropertyResponse[];
+  onPropertyClick?: (property: PropertyResponse) => void;
 }
 
-export function HeatmapLayer({ points }: HeatmapLayerProps) {
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function getMarkerColor(value: number, maxValue: number): string {
+  const ratio = value / maxValue;
+  if (ratio < 0.2) return "#2c7bb6";
+  if (ratio < 0.4) return "#00a6ca";
+  if (ratio < 0.6) return "#00ccbc";
+  if (ratio < 0.8) return "#90eb9d";
+  return "#ffff8c";
+}
+
+export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
   const map = useMap();
-  const heatLayerRef = useRef<any>(null);
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
 
-  // Check if map container is properly sized
   const checkMapReady = useCallback(() => {
     if (!map) return false;
     const container = map.getContainer();
@@ -34,7 +54,6 @@ export function HeatmapLayer({ points }: HeatmapLayerProps) {
     return size.x > 0 && size.y > 0;
   }, [map]);
 
-  // Wait for map to be ready with proper size
   useEffect(() => {
     if (!map) return;
 
@@ -46,40 +65,16 @@ export function HeatmapLayer({ points }: HeatmapLayerProps) {
       }
     };
 
-    // Initial check after a small delay
     const timer = setTimeout(waitForMap, 200);
-
-    // Also listen for resize events
-    const onResize = () => {
-      if (checkMapReady()) {
-        setIsMapReady(true);
-        if (heatLayerRef.current) {
-          try {
-            heatLayerRef.current.redraw();
-          } catch (e) {
-            // Silently ignore redraw errors
-          }
-        }
-      }
-    };
-
-    map.on('resize', onResize);
-    map.on('zoomend', onResize);
-    map.on('moveend', onResize);
 
     return () => {
       clearTimeout(timer);
-      map.off('resize', onResize);
-      map.off('zoomend', onResize);
-      map.off('moveend', onResize);
     };
   }, [map, checkMapReady]);
 
-  // Create/update heatmap layer when ready
   useEffect(() => {
     if (!map || !isMapReady || !points || points.length === 0) return;
 
-    // Validate points
     const validPoints = points.filter(p => 
       p.lat && p.lng && 
       !isNaN(p.lat) && !isNaN(p.lng) &&
@@ -89,90 +84,141 @@ export function HeatmapLayer({ points }: HeatmapLayerProps) {
 
     if (validPoints.length === 0) return;
 
-    // Clean up existing layer
-    if (heatLayerRef.current) {
+    if (clusterGroupRef.current) {
       try {
-        map.removeLayer(heatLayerRef.current);
+        map.removeLayer(clusterGroupRef.current);
       } catch (e) {
-        // Ignore removal errors
       }
-      heatLayerRef.current = null;
+      clusterGroupRef.current = null;
     }
 
-    // Prepare heat data with normalized intensity
     const maxVal = Math.max(...validPoints.map((p) => p.assessedValue || 1));
-    const heatPoints: [number, number, number][] = validPoints.map((p) => [
-      p.lat, 
-      p.lng, 
-      Math.max(0.15, (p.assessedValue || 0) / maxVal)
-    ]);
 
-    // Create heatmap with error handling
     try {
-      // @ts-ignore
-      const heat = L.heatLayer(heatPoints, {
-        radius: 18,
-        blur: 12,
-        maxZoom: 17,
-        minOpacity: 0.5,
-        max: 1.0,
-        gradient: {
-          0.2: '#2c7bb6',
-          0.4: '#00a6ca',
-          0.6: '#00ccbc',
-          0.8: '#90eb9d',
-          1.0: '#ffff8c'
-        }
+      const clusterGroup = L.markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: (cluster) => {
+          const childCount = cluster.getChildCount();
+          let size = "small";
+          let dimensions = 30;
+          
+          if (childCount >= 100) {
+            size = "large";
+            dimensions = 50;
+          } else if (childCount >= 10) {
+            size = "medium";
+            dimensions = 40;
+          }
+
+          return L.divIcon({
+            html: `<div><span>${childCount}</span></div>`,
+            className: `marker-cluster marker-cluster-${size}`,
+            iconSize: L.point(dimensions, dimensions),
+          });
+        },
       });
 
-      // Add to map
-      heat.addTo(map);
-      heatLayerRef.current = heat;
-    } catch (error) {
-      // Log but don't throw - the map will still work
-      console.warn("Heatmap initialization delayed, will retry...");
-      
-      // Retry after a delay
-      const retryTimer = setTimeout(() => {
-        if (checkMapReady() && !heatLayerRef.current) {
-          try {
-            // @ts-ignore
-            const heat = L.heatLayer(heatPoints, {
-              radius: 18,
-              blur: 12,
-              maxZoom: 17,
-              minOpacity: 0.5,
-              max: 1.0,
-              gradient: {
-                0.2: '#2c7bb6',
-                0.4: '#00a6ca',
-                0.6: '#00ccbc',
-                0.8: '#90eb9d',
-                1.0: '#ffff8c'
-              }
-            });
-            heat.addTo(map);
-            heatLayerRef.current = heat;
-          } catch (e) {
-            console.warn("Heatmap retry failed");
-          }
-        }
-      }, 500);
+      validPoints.forEach((property) => {
+        const color = getMarkerColor(property.assessedValue, maxVal);
+        
+        const markerIcon = L.divIcon({
+          className: "custom-marker",
+          html: `<div style="
+            background-color: ${color};
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          "></div>`,
+          iconSize: [12, 12],
+          iconAnchor: [6, 6],
+        });
 
-      return () => clearTimeout(retryTimer);
+        const marker = L.marker([property.lat, property.lng], { icon: markerIcon });
+
+        const hhExemptAmount = (property.hhExemption || 0) * (property.millLevy || 28.714) / 1000;
+        const vetExemptAmount = (property.vetExemption || 0) * (property.millLevy || 28.714) / 1000;
+        const isExempt = property.accountType?.toUpperCase().includes("EXEMPT") || false;
+        const taxExemptAmount = isExempt ? (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 : 0;
+        const taxAssessed = isExempt ? 0 : Math.max(0, (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 - hhExemptAmount - vetExemptAmount);
+
+        const popupContent = `
+          <div style="min-width: 250px; font-family: system-ui, sans-serif;">
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #333;">${property.address || "Unknown Address"}</div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${property.city || ""}, ${property.state || ""} ${property.zip || ""}</div>
+            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px;">
+              <div style="color: #666;">Owner:</div>
+              <div style="font-weight: 500;">${property.owner || "N/A"}</div>
+              <div style="color: #666;">Assessed Value:</div>
+              <div style="font-weight: 500;">${formatCurrency(property.assessedValue)}</div>
+              <div style="color: #666;">Land Value:</div>
+              <div style="font-weight: 500;">${formatCurrency(property.landValue || 0)}</div>
+              <div style="color: #666;">Improvement:</div>
+              <div style="font-weight: 500;">${formatCurrency(property.improvementValue || 0)}</div>
+              <div style="color: #666;">Tax Assessed:</div>
+              <div style="font-weight: 500; color: #22c55e;">${formatCurrency(taxAssessed)}</div>
+              <div style="color: #666;">Land Sqft:</div>
+              <div style="font-weight: 500;">${(property.landSqft || 0).toLocaleString()}</div>
+              <div style="color: #666;">Account Type:</div>
+              <div style="font-weight: 500;">${property.accountType || "N/A"}</div>
+              <div style="color: #666;">Mill Levy:</div>
+              <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
+            </div>
+            ${(property.hhExemption || property.vetExemption || isExempt) ? `
+              <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+              <div style="font-size: 11px; color: #888;">
+                ${property.hhExemption ? `<div>HH Exemption: ${formatCurrency(hhExemptAmount)}</div>` : ""}
+                ${property.vetExemption ? `<div>Vet Exemption: ${formatCurrency(vetExemptAmount)}</div>` : ""}
+                ${isExempt ? `<div>Tax Exempt: ${formatCurrency(taxExemptAmount)}</div>` : ""}
+              </div>
+            ` : ""}
+            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-${encodeURIComponent(property.city || "")}-${encodeURIComponent(property.state || "")}-${encodeURIComponent(property.zip || "")}_rb/" 
+                 target="_blank" rel="noopener noreferrer"
+                 style="font-size: 11px; color: #3b82f6; text-decoration: none;">
+                View on Zillow
+              </a>
+              <a href="https://assessor.losalamosnm.us/assessor/web/?pid=${encodeURIComponent(property.parcelId || "")}" 
+                 target="_blank" rel="noopener noreferrer"
+                 style="font-size: 11px; color: #3b82f6; text-decoration: none;">
+                County Record
+              </a>
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupContent, { maxWidth: 300 });
+
+        if (onPropertyClick) {
+          marker.on("click", () => onPropertyClick(property));
+        }
+
+        clusterGroup.addLayer(marker);
+      });
+
+      clusterGroup.addTo(map);
+      clusterGroupRef.current = clusterGroup;
+    } catch (error) {
+      console.warn("Cluster initialization error:", error);
     }
 
     return () => {
-      if (heatLayerRef.current) {
+      if (clusterGroupRef.current) {
         try {
-          map.removeLayer(heatLayerRef.current);
+          map.removeLayer(clusterGroupRef.current);
         } catch (e) {
-          // Ignore cleanup errors
         }
-        heatLayerRef.current = null;
+        clusterGroupRef.current = null;
       }
     };
-  }, [map, isMapReady, points, checkMapReady]);
+  }, [map, isMapReady, points, onPropertyClick]);
 
   return null;
 }
