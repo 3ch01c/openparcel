@@ -198,12 +198,17 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
               <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-${encodeURIComponent(property.city || "")}-${encodeURIComponent(property.state || "")}-${encodeURIComponent(property.zip || "")}_rb/" 
                  target="_blank" rel="noopener noreferrer"
                  style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                View on Zillow
+                Zillow
               </a>
-              <a href="https://assessor.losalamosnm.us/assessor/web/?pid=${encodeURIComponent(property.parcelId || "")}" 
+              <a href="https://eagleweb.losalamosnm.us/assessor/taxweb/search.jsp" 
                  target="_blank" rel="noopener noreferrer"
                  style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                County Record
+                County Assessor
+              </a>
+              <a href="https://eaglerecorderselfservice.losalamosnm.us/web/search/DOCSEARCH138S1" 
+                 target="_blank" rel="noopener noreferrer"
+                 style="font-size: 11px; color: #3b82f6; text-decoration: none;">
+                County Clerk
               </a>
             </div>
           </div>
