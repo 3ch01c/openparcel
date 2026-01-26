@@ -94,3 +94,23 @@
 .glass-panel {
   @apply bg-card/80 backdrop-blur-md border border-white/10 shadow-2xl;
 }
+
+/* Custom cluster icon - remove default shadows */
+.custom-cluster-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.marker-cluster,
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background: transparent !important;
+}
+
+.marker-cluster div,
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background: transparent !important;
+}
