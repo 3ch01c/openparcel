@@ -185,7 +185,7 @@ export async function fetchArcGISData(): Promise<number> {
     let batchInserted = 0;
     for (const feature of features) {
       const property = parseFeature(feature);
-      if (property && property.assessedValue > 0) {
+      if (property) {
         try {
           await storage.createProperty(property);
           batchInserted++;
