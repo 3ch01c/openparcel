@@ -391,6 +391,28 @@ export default function Dashboard() {
     const noImprovementCount = landOnlyProps.length;
     const totalLandOnlySqft = landOnlyProps.reduce((sum, p) => sum + (p.landSqft || 0), 0);
 
+    // Top land holders - aggregate land sqft by owner
+    const landByOwner: Record<string, { totalSqft: number; propertyCount: number }> = {};
+    properties.forEach(p => {
+      const owner = p.owner || "Unknown";
+      if (!landByOwner[owner]) {
+        landByOwner[owner] = { totalSqft: 0, propertyCount: 0 };
+      }
+      landByOwner[owner].totalSqft += p.landSqft || 0;
+      landByOwner[owner].propertyCount += 1;
+    });
+    
+    const topLandHoldersData = Object.entries(landByOwner)
+      .map(([owner, data]) => ({
+        owner: owner.length > 25 ? owner.substring(0, 22) + "..." : owner,
+        fullOwner: owner,
+        totalSqft: data.totalSqft,
+        acres: data.totalSqft / 43560,
+        propertyCount: data.propertyCount,
+      }))
+      .sort((a, b) => b.totalSqft - a.totalSqft)
+      .slice(0, 10);
+
     // Total land square footage
     const totalLandSqft = properties.reduce((sum, p) => sum + (p.landSqft || 0), 0);
     const avgLandSqft = properties.length > 0 ? totalLandSqft / properties.length : 0;
@@ -423,6 +445,7 @@ export default function Dashboard() {
       accountTypesChartData,
       taxChartData,
       landChartData,
+      topLandHoldersData,
     };
   }, [properties]);
 
@@ -1196,6 +1219,58 @@ export default function Dashboard() {
                       <Bar
                         dataKey="value"
                         fill="hsl(142 71% 45%)"
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Top Land Holders Chart */}
+              {stats.topLandHoldersData && stats.topLandHoldersData.length > 0 && (
+                <div className="h-72 pt-4">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
+                    Top Land Holders (Total Sqft)
+                  </label>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={stats.topLandHoldersData} 
+                      layout="vertical"
+                      margin={{ left: 10, right: 10 }}
+                    >
+                      <XAxis type="number" hide />
+                      <YAxis 
+                        type="category" 
+                        dataKey="owner" 
+                        width={140}
+                        tick={{ fontSize: 9, fill: "hsl(215 20% 65%)" }}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(222 47% 11%)",
+                          borderColor: "hsl(217 33% 17%)",
+                          borderRadius: "8px",
+                        }}
+                        itemStyle={{ color: "white" }}
+                        formatter={(value: number, name: string, props: any) => {
+                          if (name === "totalSqft") {
+                            const acres = props.payload.acres;
+                            const count = props.payload.propertyCount;
+                            return [`${value.toLocaleString()} sqft (${acres.toFixed(1)} acres, ${count} properties)`, "Total Land"];
+                          }
+                          return [value, name];
+                        }}
+                        labelFormatter={(label, payload) => {
+                          if (payload && payload[0]) {
+                            return payload[0].payload.fullOwner;
+                          }
+                          return label;
+                        }}
+                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                      />
+                      <Bar
+                        dataKey="totalSqft"
+                        fill="hsl(280 65% 60%)"
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
