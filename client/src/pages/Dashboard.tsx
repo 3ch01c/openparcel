@@ -143,7 +143,7 @@ export default function Dashboard() {
   const handleTaxMaxSubmit = () => {
     const val = parseInt(tempTaxMax.replace(/[^0-9]/g, ""), 10);
     if (!isNaN(val)) {
-      const clamped = Math.max(taxRange[0], val);
+      const clamped = Math.max(taxRange[0], Math.min(val, 50000));
       setTaxRange([taxRange[0], clamped]);
     }
     setEditingTaxMax(false);
@@ -461,17 +461,8 @@ export default function Dashboard() {
       taxChartData,
       landChartData,
       topLandHoldersData,
-      actualTaxMin,
-      actualTaxMax,
     };
   }, [properties]);
-
-  // Update tax range when filtered data changes
-  useEffect(() => {
-    if (stats) {
-      setTaxRange([stats.actualTaxMin, stats.actualTaxMax]);
-    }
-  }, [stats?.actualTaxMin, stats?.actualTaxMax]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {
@@ -834,15 +825,17 @@ export default function Dashboard() {
                         className="text-green-500 hover:underline cursor-pointer"
                         data-testid="button-edit-tax-max"
                       >
-                        {formatCurrencyShort(taxRange[1])}
+                        {taxRange[1] >= 50000
+                          ? "$50k+"
+                          : formatCurrencyShort(taxRange[1])}
                       </button>
                     )}
                   </div>
                 </div>
                 <Slider
-                  min={stats?.actualTaxMin || 0}
-                  max={stats?.actualTaxMax || 50000}
-                  step={Math.max(1, Math.round((stats?.actualTaxMax || 50000) / 100))}
+                  defaultValue={[0, 50000]}
+                  max={50000}
+                  step={500}
                   value={taxRange}
                   onValueChange={(val) =>
                     setTaxRange(val as [number, number])
