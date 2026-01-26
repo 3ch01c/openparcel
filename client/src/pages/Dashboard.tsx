@@ -60,8 +60,22 @@ function MapResizeHandler({ collapsed }: { collapsed: boolean }) {
   return null;
 }
 
+const TILE_LAYERS = {
+  street: {
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    name: "Street"
+  },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
+    name: "Satellite"
+  }
+};
+
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
+  const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 50000]);
   const [landSqftRange, setLandSqftRange] = useState<[number, number]>([0, 100000]);
@@ -1409,19 +1423,40 @@ export default function Dashboard() {
             data-testid="map-container"
           >
             <MapResizeHandler collapsed={sidebarCollapsed} />
-            {/* Dark Mode Map Tiles - CartoDB Dark Matter */}
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              key={mapLayer}
+              attribution={TILE_LAYERS[mapLayer].attribution}
+              url={TILE_LAYERS[mapLayer].url}
             />
 
             {properties && <ClusterLayer points={properties} />}
           </MapContainer>
         </div>
 
-        {/* Floating Map Controls overlay if needed (zoom handled by Leaflet default) */}
-        <div className="absolute top-4 right-4 z-[400] md:hidden">
-          {/* Mobile indicator or simple legend could go here */}
+        {/* Map Layer Switcher */}
+        <div className="absolute top-4 right-4 z-[400] bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
+          <button
+            onClick={() => setMapLayer("street")}
+            className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+              mapLayer === "street"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            }`}
+            data-testid="button-map-street"
+          >
+            Street
+          </button>
+          <button
+            onClick={() => setMapLayer("satellite")}
+            className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+              mapLayer === "satellite"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            }`}
+            data-testid="button-map-satellite"
+          >
+            Satellite
+          </button>
         </div>
       </div>
     </div>
