@@ -984,16 +984,22 @@ export default function Dashboard() {
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Account Type
                   </label>
-                  {selectedAccountTypes.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedAccountTypes([...uniqueAccountTypes])}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-all-account-types"
+                    >
+                      All
+                    </button>
                     <button
                       onClick={() => setSelectedAccountTypes([])}
-                      className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                      data-testid="button-clear-account-types"
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-none-account-types"
                     >
-                      <X className="w-3 h-3" />
-                      Clear
+                      None
                     </button>
-                  )}
+                  </div>
                 </div>
                 {selectedAccountTypes.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
