@@ -647,13 +647,26 @@ export default function Dashboard() {
           {/* Filters Section - Collapsible */}
           <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
             <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
-              <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-semibold text-primary hover:text-primary/80 transition-colors" data-testid="button-toggle-filters">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors" data-testid="button-toggle-filters">
                   <Filter className="w-4 h-4" />
                   <span>Filters</span>
-                </div>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} />
-              </CollapsibleTrigger>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} />
+                </CollapsibleTrigger>
+                <button
+                  onClick={() => {
+                    setYear(2025);
+                    setValueRange([0, 5000000]);
+                    setTaxRange([0, 50000]);
+                    setLandSqftRange([0, 100000]);
+                    setSelectedAccountTypes([]);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-primary"
+                  data-testid="button-reset-all-filters"
+                >
+                  Reset All
+                </button>
+              </div>
 
               <CollapsibleContent className="pt-4">
                 <div className="space-y-4">
