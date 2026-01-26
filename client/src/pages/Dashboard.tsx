@@ -917,6 +917,144 @@ export default function Dashboard() {
                 )}
               </div>
 
+              {/* Land Value Filter */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Land Value
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingLandValueMin ? (
+                      <input
+                        ref={landValueMinInputRef}
+                        type="text"
+                        value={tempLandValueMin}
+                        onChange={(e) => setTempLandValueMin(e.target.value)}
+                        onBlur={handleLandValueMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandValueMinSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
+                        data-testid="input-land-value-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandValueMinClick}
+                        className="text-teal-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-land-value-min"
+                      >
+                        ${(landValueRange[0] / 1000).toFixed(0)}k
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingLandValueMax ? (
+                      <input
+                        ref={landValueMaxInputRef}
+                        type="text"
+                        value={tempLandValueMax}
+                        onChange={(e) => setTempLandValueMax(e.target.value)}
+                        onBlur={handleLandValueMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandValueMaxSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
+                        data-testid="input-land-value-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandValueMaxClick}
+                        className="text-teal-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-land-value-max"
+                      >
+                        {landValueRange[1] >= 2000000 ? "$2M+" : `$${(landValueRange[1] / 1000).toFixed(0)}k`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 2000000]}
+                  max={2000000}
+                  step={10000}
+                  value={landValueRange}
+                  onValueChange={(val) =>
+                    setLandValueRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-teal-500"
+                  thumbClassName="border-teal-500"
+                  data-testid="slider-land-value"
+                />
+              </div>
+
+              {/* Improvement Value Filter */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Improvement Value
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingImprovementMin ? (
+                      <input
+                        ref={improvementMinInputRef}
+                        type="text"
+                        value={tempImprovementMin}
+                        onChange={(e) => setTempImprovementMin(e.target.value)}
+                        onBlur={handleImprovementMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleImprovementMinSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
+                        data-testid="input-improvement-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleImprovementMinClick}
+                        className="text-orange-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-improvement-min"
+                      >
+                        ${(improvementValueRange[0] / 1000).toFixed(0)}k
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingImprovementMax ? (
+                      <input
+                        ref={improvementMaxInputRef}
+                        type="text"
+                        value={tempImprovementMax}
+                        onChange={(e) => setTempImprovementMax(e.target.value)}
+                        onBlur={handleImprovementMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleImprovementMaxSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
+                        data-testid="input-improvement-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleImprovementMaxClick}
+                        className="text-orange-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-improvement-max"
+                      >
+                        {improvementValueRange[1] >= 5000000 ? "$5M+" : `$${(improvementValueRange[1] / 1000).toFixed(0)}k`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 5000000]}
+                  max={5000000}
+                  step={50000}
+                  value={improvementValueRange}
+                  onValueChange={(val) =>
+                    setImprovementValueRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-orange-500"
+                  thumbClassName="border-orange-500"
+                  data-testid="slider-improvement-value"
+                />
+              </div>
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -1115,144 +1253,6 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                   </div>
                 )}
-              </div>
-
-              {/* Land Value Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Land Value
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingLandValueMin ? (
-                      <input
-                        ref={landValueMinInputRef}
-                        type="text"
-                        value={tempLandValueMin}
-                        onChange={(e) => setTempLandValueMin(e.target.value)}
-                        onBlur={handleLandValueMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandValueMinSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
-                        data-testid="input-land-value-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleLandValueMinClick}
-                        className="text-teal-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-value-min"
-                      >
-                        ${(landValueRange[0] / 1000).toFixed(0)}k
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingLandValueMax ? (
-                      <input
-                        ref={landValueMaxInputRef}
-                        type="text"
-                        value={tempLandValueMax}
-                        onChange={(e) => setTempLandValueMax(e.target.value)}
-                        onBlur={handleLandValueMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandValueMaxSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
-                        data-testid="input-land-value-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleLandValueMaxClick}
-                        className="text-teal-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-value-max"
-                      >
-                        {landValueRange[1] >= 2000000 ? "$2M+" : `$${(landValueRange[1] / 1000).toFixed(0)}k`}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  defaultValue={[0, 2000000]}
-                  max={2000000}
-                  step={10000}
-                  value={landValueRange}
-                  onValueChange={(val) =>
-                    setLandValueRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-teal-500"
-                  thumbClassName="border-teal-500"
-                  data-testid="slider-land-value"
-                />
-              </div>
-
-              {/* Improvement Value Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Improvement Value
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingImprovementMin ? (
-                      <input
-                        ref={improvementMinInputRef}
-                        type="text"
-                        value={tempImprovementMin}
-                        onChange={(e) => setTempImprovementMin(e.target.value)}
-                        onBlur={handleImprovementMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleImprovementMinSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
-                        data-testid="input-improvement-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleImprovementMinClick}
-                        className="text-orange-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-improvement-min"
-                      >
-                        ${(improvementValueRange[0] / 1000).toFixed(0)}k
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingImprovementMax ? (
-                      <input
-                        ref={improvementMaxInputRef}
-                        type="text"
-                        value={tempImprovementMax}
-                        onChange={(e) => setTempImprovementMax(e.target.value)}
-                        onBlur={handleImprovementMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleImprovementMaxSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
-                        data-testid="input-improvement-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleImprovementMaxClick}
-                        className="text-orange-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-improvement-max"
-                      >
-                        {improvementValueRange[1] >= 5000000 ? "$5M+" : `$${(improvementValueRange[1] / 1000).toFixed(0)}k`}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  defaultValue={[0, 5000000]}
-                  max={5000000}
-                  step={50000}
-                  value={improvementValueRange}
-                  onValueChange={(val) =>
-                    setImprovementValueRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-orange-500"
-                  thumbClassName="border-orange-500"
-                  data-testid="slider-improvement-value"
-                />
               </div>
 
               {/* Account Type Multi-Select */}
