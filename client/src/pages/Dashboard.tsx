@@ -454,6 +454,40 @@ export default function Dashboard() {
       binMax: actualParcelMin + (i + 1) * parcelStep,
     }));
 
+    // Land value histogram
+    const landValues = properties.map(p => p.landValue || 0);
+    const actualLandMin = landValues.length > 0 ? Math.min(...landValues) : 0;
+    const actualLandMax = landValues.length > 0 ? Math.max(...landValues) : 1;
+    const landDistribution = [0, 0, 0, 0, 0];
+    const landStep = (actualLandMax - actualLandMin) / 5;
+    landValues.forEach(val => {
+      const bucket = landStep > 0 ? Math.min(Math.floor((val - actualLandMin) / landStep), 4) : 0;
+      landDistribution[bucket]++;
+    });
+    const landChartData = landDistribution.map((count, i) => ({
+      range: `$${((actualLandMin + i * landStep) / 1000).toFixed(0)}k - $${((actualLandMin + (i + 1) * landStep) / 1000).toFixed(0)}k`,
+      count,
+      binMin: Math.round(actualLandMin + i * landStep),
+      binMax: Math.round(actualLandMin + (i + 1) * landStep),
+    }));
+
+    // Improvement value histogram
+    const improvementValues = properties.map(p => p.improvementValue || 0);
+    const actualImpMin = improvementValues.length > 0 ? Math.min(...improvementValues) : 0;
+    const actualImpMax = improvementValues.length > 0 ? Math.max(...improvementValues) : 1;
+    const improvementDistribution = [0, 0, 0, 0, 0];
+    const impStep = (actualImpMax - actualImpMin) / 5;
+    improvementValues.forEach(val => {
+      const bucket = impStep > 0 ? Math.min(Math.floor((val - actualImpMin) / impStep), 4) : 0;
+      improvementDistribution[bucket]++;
+    });
+    const improvementChartData = improvementDistribution.map((count, i) => ({
+      range: `$${((actualImpMin + i * impStep) / 1000).toFixed(0)}k - $${((actualImpMin + (i + 1) * impStep) / 1000).toFixed(0)}k`,
+      count,
+      binMin: Math.round(actualImpMin + i * impStep),
+      binMax: Math.round(actualImpMin + (i + 1) * impStep),
+    }));
+
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
     // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
     const totalTaxes = properties.reduce((sum, p) => {
@@ -586,6 +620,8 @@ export default function Dashboard() {
       accountTypesChartData,
       taxChartData,
       parcelChartData,
+      landChartData,
+      improvementChartData,
       topLandHoldersData,
     };
   }, [properties]);
@@ -984,6 +1020,36 @@ export default function Dashboard() {
                   thumbClassName="border-teal-500"
                   data-testid="slider-land-value"
                 />
+                {stats?.landChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.landChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(173 80% 40%)"
+                          radius={[4, 4, 0, 0]}
+                          className="cursor-pointer"
+                          onClick={(data) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setLandValueRange([data.binMin, Math.min(data.binMax, 2000000)]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               {/* Improvement Value Filter */}
@@ -1053,6 +1119,36 @@ export default function Dashboard() {
                   thumbClassName="border-orange-500"
                   data-testid="slider-improvement-value"
                 />
+                {stats?.improvementChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.improvementChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(24 95% 50%)"
+                          radius={[4, 4, 0, 0]}
+                          className="cursor-pointer"
+                          onClick={(data) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setImprovementValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
