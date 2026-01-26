@@ -124,7 +124,6 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
               color: white;
               font-weight: bold;
               font-size: ${dimensions >= 50 ? 14 : dimensions >= 40 ? 12 : 11}px;
-              border: 2px solid white;
             ">${childCount}</div>`,
             className: "custom-cluster-icon",
             iconSize: L.point(dimensions, dimensions),
