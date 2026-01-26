@@ -167,7 +167,7 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #333;">${property.address || "Unknown Address"}</div>
             <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${property.city || ""}, ${property.state || ""} ${property.zip || ""}</div>
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; column-gap: 5px; font-size: 12px;">
               <div style="color: #666;">Owner:</div>
               <div style="font-weight: 500;">${property.owner || "N/A"}</div>
               <div style="color: #666;">Assessed Value:</div>
