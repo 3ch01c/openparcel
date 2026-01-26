@@ -1458,19 +1458,7 @@ export default function Dashboard() {
                   value={stats.count.toLocaleString()}
                   icon={Home}
                 />
-                <StatsCard
-                  title="HH Exemptions"
-                  value={stats.hhExemptionCount.toLocaleString()}
-                  icon={Home}
-                  description="Implies owner-occupied"
-                />
               </div>
-              <StatsCard
-                title="Land Only (No Improvements)"
-                value={stats.noImprovementCount.toLocaleString()}
-                icon={Layers}
-                description={`${stats.totalLandOnlyAcres.toFixed(1)} total acres`}
-              />
 
               {/* Account Types Chart */}
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
