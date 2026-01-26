@@ -82,6 +82,8 @@ export default function Dashboard() {
   const [statsOpen, setStatsOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
+  const [ownerFilter, setOwnerFilter] = useState("");
+  const [useRegex, setUseRegex] = useState(false);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
   const taxMinInputRef = useRef<HTMLInputElement>(null);
@@ -245,13 +247,41 @@ export default function Dashboard() {
     });
   }, [rawProperties, taxRange, landSqftRange]);
 
-  // Filter properties by tax range, land sqft, and account types (client-side)
+  // Filter properties by tax range, land sqft, account types, and owner (client-side)
   const properties = useMemo(() => {
-    if (selectedAccountTypes.length === 0) return propertiesWithoutAccountTypeFilter;
-    return propertiesWithoutAccountTypeFilter.filter((p) =>
-      p.accountType && selectedAccountTypes.includes(p.accountType)
-    );
-  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes]);
+    let filtered = propertiesWithoutAccountTypeFilter;
+    
+    // Account type filter
+    if (selectedAccountTypes.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.accountType && selectedAccountTypes.includes(p.accountType)
+      );
+    }
+    
+    // Owner filter
+    if (ownerFilter.trim()) {
+      const searchTerm = ownerFilter.trim();
+      if (useRegex) {
+        try {
+          const regex = new RegExp(searchTerm, "i");
+          filtered = filtered.filter((p) => p.owner && regex.test(p.owner));
+        } catch {
+          // Invalid regex, fall back to literal match
+          const lowerSearch = searchTerm.toLowerCase();
+          filtered = filtered.filter((p) => 
+            p.owner && p.owner.toLowerCase().includes(lowerSearch)
+          );
+        }
+      } else {
+        const lowerSearch = searchTerm.toLowerCase();
+        filtered = filtered.filter((p) => 
+          p.owner && p.owner.toLowerCase().includes(lowerSearch)
+        );
+      }
+    }
+    
+    return filtered;
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, ownerFilter, useRegex]);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -660,6 +690,8 @@ export default function Dashboard() {
                     setTaxRange([0, 50000]);
                     setLandSqftRange([0, 100000]);
                     setSelectedAccountTypes([]);
+                    setOwnerFilter("");
+                    setUseRegex(false);
                   }}
                   className="text-xs text-muted-foreground hover:text-primary"
                   data-testid="button-reset-all-filters"
@@ -1057,6 +1089,44 @@ export default function Dashboard() {
                     ? "All types shown"
                     : `${selectedAccountTypes.length} type${selectedAccountTypes.length > 1 ? "s" : ""} selected`}
                 </p>
+              </div>
+
+              {/* Owner Filter */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Owner
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setUseRegex(false)}
+                      className={`text-xs px-2 py-0.5 rounded ${!useRegex ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}
+                      data-testid="button-owner-literal"
+                    >
+                      Literal
+                    </button>
+                    <button
+                      onClick={() => setUseRegex(true)}
+                      className={`text-xs px-2 py-0.5 rounded ${useRegex ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-primary'}`}
+                      data-testid="button-owner-regex"
+                    >
+                      Regex
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={ownerFilter}
+                  onChange={(e) => setOwnerFilter(e.target.value)}
+                  placeholder={useRegex ? "e.g. ^SMITH|JONES$" : "Search by owner name..."}
+                  className="w-full px-3 py-2 text-sm bg-background/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                  data-testid="input-owner-filter"
+                />
+                {ownerFilter && (
+                  <p className="text-xs text-muted-foreground">
+                    {useRegex ? "Using regex pattern (case-insensitive)" : "Using literal string match"}
+                  </p>
+                )}
               </div>
                 </div>
               </CollapsibleContent>
