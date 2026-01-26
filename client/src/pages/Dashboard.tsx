@@ -1001,26 +1001,6 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-                {selectedAccountTypes.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {selectedAccountTypes.map((type) => (
-                      <Badge
-                        key={type}
-                        variant="secondary"
-                        className="text-xs cursor-pointer hover:bg-destructive/20"
-                        onClick={() =>
-                          setSelectedAccountTypes((prev) =>
-                            prev.filter((t) => t !== type)
-                          )
-                        }
-                        data-testid={`badge-account-type-${type.replace(/\s+/g, '-').toLowerCase()}`}
-                      >
-                        {type}
-                        <X className="w-3 h-3 ml-1" />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
                 <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
                   {uniqueAccountTypes.map((type) => {
                     const isSelected = selectedAccountTypes.includes(type);
