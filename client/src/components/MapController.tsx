@@ -157,10 +157,11 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
         const taxAssessed = isExempt ? 0 : Math.max(0, (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 - hhExemptAmount - vetExemptAmount);
         
         const parcelArea = property.parcelArea || 0;
+        const landSqft = parcelArea * 43560;
         const buildingSqft = property.buildingSqft || 0;
-        const landPerAcre = parcelArea > 0 ? (property.landValue || 0) / parcelArea : 0;
+        const landPerSqft = landSqft > 0 ? (property.landValue || 0) / landSqft : 0;
         const improvementPerSqft = buildingSqft > 0 ? (property.improvementValue || 0) / buildingSqft : 0;
-        const taxPerAcre = parcelArea > 0 ? taxAssessed / parcelArea : 0;
+        const taxPerSqft = landSqft > 0 ? taxAssessed / landSqft : 0;
 
         const popupContent = `
           <div style="min-width: 250px; font-family: system-ui, sans-serif;">
@@ -173,11 +174,11 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
               <div style="color: #666;">Assessed Value:</div>
               <div style="font-weight: 500;">${formatCurrency(property.assessedValue)}</div>
               <div style="color: #666;">Land Value:</div>
-              <div style="font-weight: 500;">${formatCurrency(property.landValue || 0)} <span style="color: #888;">($${landPerAcre.toLocaleString(undefined, {maximumFractionDigits: 0})}/ac)</span></div>
+              <div style="font-weight: 500;">${formatCurrency(property.landValue || 0)} <span style="color: #888;">($${landPerSqft.toFixed(2)}/sqft)</span></div>
               <div style="color: #666;">Improvement:</div>
               <div style="font-weight: 500;">${formatCurrency(property.improvementValue || 0)} <span style="color: #888;">($${improvementPerSqft.toFixed(2)}/sqft)</span></div>
               <div style="color: #666;">Tax Assessed:</div>
-              <div style="font-weight: 500; color: #22c55e;">${formatCurrency(taxAssessed)} <span style="color: #888;">($${taxPerAcre.toLocaleString(undefined, {maximumFractionDigits: 0})}/ac)</span></div>
+              <div style="font-weight: 500; color: #22c55e;">${formatCurrency(taxAssessed)} <span style="color: #888;">($${taxPerSqft.toFixed(4)}/sqft)</span></div>
               <div style="color: #666;">Parcel Area:</div>
               <div style="font-weight: 500;">${parcelArea.toFixed(2)} acres</div>
               <div style="color: #666;">Account Type:</div>
