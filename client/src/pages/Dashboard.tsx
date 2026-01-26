@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { ClusterLayer } from "@/components/MapController";
 import type { PropertyResponse } from "@shared/schema";
@@ -20,7 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Loader2,
-  Map as MapIcon,
   Layers,
   Filter,
   DollarSign,
@@ -52,7 +51,6 @@ export default function Dashboard() {
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 50000]);
   const [landSqftRange, setLandSqftRange] = useState<[number, number]>([0, 100000]);
-  const [viewMode, setViewMode] = useState<"heat" | "points">("heat");
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
@@ -1012,34 +1010,6 @@ export default function Dashboard() {
             </div>
           </Collapsible>
 
-          {/* Visualization Mode Section */}
-          <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
-              <Layers className="w-4 h-4" />
-              <span>Visualization Mode</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant={viewMode === "heat" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("heat")}
-                className="w-full"
-                data-testid="button-cluster"
-              >
-                <Layers className="w-4 h-4 mr-2" /> Cluster
-              </Button>
-              <Button
-                variant={viewMode === "points" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("points")}
-                className="w-full"
-                data-testid="button-markers"
-              >
-                <MapIcon className="w-4 h-4 mr-2" /> Markers
-              </Button>
-            </div>
-          </div>
-
           {/* Export Data Section */}
           <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
             <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
@@ -1266,162 +1236,7 @@ export default function Dashboard() {
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
 
-            {properties && viewMode === "heat" && (
-              <ClusterLayer points={properties} />
-            )}
-
-            {properties &&
-              viewMode === "points" &&
-              properties.map((property) => {
-                const landVal = property.landValue || 0;
-                const improvVal = property.improvementValue || 0;
-                const landTaxableVal = property.landTaxable || 0;
-                const bldgTaxableVal = property.buildingTaxable || 0;
-                const totalTaxableVal = property.totalTaxable || 0;
-                const hhExemptVal = property.hhExemption || 0;
-                const vetExemptVal = property.vetExemption || 0;
-                const landSqftVal = property.landSqft || 0;
-                const bldgSqftVal = property.buildingSqft || 0;
-
-                // Price per sqft calculations
-                const landPricePerSqft =
-                  landSqftVal > 0 && landVal > 0
-                    ? (landVal / landSqftVal).toFixed(2)
-                    : null;
-                const improvPricePerSqft =
-                  bldgSqftVal > 0 && improvVal > 0
-                    ? (improvVal / bldgSqftVal).toFixed(2)
-                    : null;
-
-                // Property taxes: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
-                const parcelMillLevy = property.millLevy || 28.714;
-                
-                // Check if this is an EXEMPT account type
-                const isExemptAccount = property.accountType?.toUpperCase().includes("EXEMPT") || false;
-                const exemptAccountExemption = isExemptAccount ? (totalTaxableVal * parcelMillLevy) / 1000 : 0;
-                
-                // Calculate exemption amounts as tax dollars
-                const hhExemptionAmount = (hhExemptVal * parcelMillLevy) / 1000;
-                const vetExemptionAmount = (vetExemptVal * parcelMillLevy) / 1000;
-                
-                const grossTax = (totalTaxableVal * parcelMillLevy) / 1000;
-                const propertyTax = isExemptAccount ? 0 : Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
-
-                // Tax per sqft calculations - separate for land and improvements
-                const landTax = (landTaxableVal * parcelMillLevy) / 1000;
-                const bldgTax = (bldgTaxableVal * parcelMillLevy) / 1000;
-                const landTaxPerSqft =
-                  landSqftVal > 0 ? (landTax / landSqftVal).toFixed(4) : null;
-                const bldgTaxPerSqft =
-                  bldgSqftVal > 0 ? (bldgTax / bldgSqftVal).toFixed(4) : null;
-
-                const hasHhExemption = hhExemptVal > 0;
-                const hasVetExemption = vetExemptVal > 0;
-
-                return (
-                  <Marker
-                    key={property.id}
-                    position={[property.lat, property.lng]}
-                  >
-                    <Popup className="bg-transparent border-none shadow-none">
-                      <div className="p-1 min-w-[260px]">
-                        <h3 className="font-bold text-sm mb-1">
-                          {property.address}
-                        </h3>
-                        <div className="text-xs space-y-1 text-muted-foreground">
-                          <p>
-                            Owner:{" "}
-                            <span className="text-foreground">
-                              {property.owner}
-                            </span>
-                          </p>
-                          <p>
-                            Total Value:{" "}
-                            <span className="text-primary font-bold">
-                              {formatCurrency(property.assessedValue)}
-                            </span>
-                          </p>
-                          <p>
-                            Land: {formatCurrency(landVal)}
-                            {landSqftVal > 0 && landPricePerSqft && (
-                              <span className="text-foreground">
-                                {" "}/ {landSqftVal.toLocaleString()} sqft = ${landPricePerSqft}/sqft
-                              </span>
-                            )}
-                          </p>
-                          <p>
-                            Bldg: {formatCurrency(improvVal)}
-                            {bldgSqftVal > 0 && improvPricePerSqft && (
-                              <span className="text-foreground">
-                                {" "}/ {Math.round(bldgSqftVal).toLocaleString()} sqft = ${improvPricePerSqft}/sqft
-                              </span>
-                            )}
-                          </p>
-                          {(hasHhExemption || hasVetExemption || isExemptAccount) && (
-                            <p className="text-green-500">
-                              Tax Savings:{" "}
-                              {hasHhExemption &&
-                                `HH ${formatCurrency(hhExemptionAmount)}`}
-                              {hasHhExemption && hasVetExemption && ", "}
-                              {hasVetExemption &&
-                                `Vet ${formatCurrency(vetExemptionAmount)}`}
-                              {(hasHhExemption || hasVetExemption) && isExemptAccount && ", "}
-                              {isExemptAccount &&
-                                `${property.accountType} ${formatCurrency(exemptAccountExemption)}`}
-                            </p>
-                          )}
-                          <p className="font-semibold text-amber-500">
-                            Tax Assessed: {formatCurrency(propertyTax)} ({parcelMillLevy.toFixed(3)} mills)
-                          </p>
-                          {(landTaxPerSqft || bldgTaxPerSqft) && (
-                            <p>
-                              Tax/sqft:{" "}
-                              {landTaxPerSqft && (
-                                <span className="text-foreground">
-                                  Land ${landTaxPerSqft}
-                                </span>
-                              )}
-                              {landTaxPerSqft && bldgTaxPerSqft && " | "}
-                              {bldgTaxPerSqft && (
-                                <span className="text-foreground">
-                                  Bldg ${bldgTaxPerSqft}
-                                </span>
-                              )}
-                            </p>
-                          )}
-                          <p>Year: {property.assessmentYear}</p>
-                          {property.accountType && (
-                            <p>
-                              Account Type:{" "}
-                              <span className="text-foreground">
-                                {property.accountType}
-                              </span>
-                            </p>
-                          )}
-                          <a
-                            href={`https://www.zillow.com/homes/${encodeURIComponent(property.address)}%20${encodeURIComponent(property.city || "Los Alamos")}%20${encodeURIComponent(property.state || "NM")}%20${encodeURIComponent(property.zip || "87544")}_rb/`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline block mt-2"
-                            data-testid="link-zillow"
-                          >
-                            View on Zillow
-                          </a>
-                          <a
-                            href="https://eaglerecorderselfservice.losalamosnm.us/web/search/DOCSEARCH138S1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline block mt-1"
-                            data-testid="link-county-clerk"
-                          >
-                            County Clerk Records
-                          </a>
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
+            {properties && <ClusterLayer points={properties} />}
           </MapContainer>
         </div>
 
