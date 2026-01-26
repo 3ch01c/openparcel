@@ -33,6 +33,19 @@ export async function registerRoutes(
     res.json(property);
   });
 
+  // Force refresh endpoint - clears and refetches all data
+  app.post("/api/force-fetch", async (req, res) => {
+    try {
+      console.log("Force fetch requested - clearing database and refetching...");
+      await storage.clearAllProperties();
+      const count = await fetchArcGISData();
+      res.json({ success: true, count, message: `Successfully fetched ${count} properties` });
+    } catch (error) {
+      console.error("Force fetch failed:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch data" });
+    }
+  });
+
   // Seed database on startup
   seedDatabase();
 
