@@ -78,7 +78,9 @@ export default function Dashboard() {
   const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 50000]);
-  const [landSqftRange, setLandSqftRange] = useState<[number, number]>([0, 100000]);
+  const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 100]);
+  const [landValueRange, setLandValueRange] = useState<[number, number]>([0, 2000000]);
+  const [improvementValueRange, setImprovementValueRange] = useState<[number, number]>([0, 5000000]);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
@@ -88,10 +90,18 @@ export default function Dashboard() {
   const [editingTaxMax, setEditingTaxMax] = useState(false);
   const [tempTaxMin, setTempTaxMin] = useState("");
   const [tempTaxMax, setTempTaxMax] = useState("");
-  const [editingLandMin, setEditingLandMin] = useState(false);
-  const [editingLandMax, setEditingLandMax] = useState(false);
-  const [tempLandMin, setTempLandMin] = useState("");
-  const [tempLandMax, setTempLandMax] = useState("");
+  const [editingParcelMin, setEditingParcelMin] = useState(false);
+  const [editingParcelMax, setEditingParcelMax] = useState(false);
+  const [tempParcelMin, setTempParcelMin] = useState("");
+  const [tempParcelMax, setTempParcelMax] = useState("");
+  const [editingLandValueMin, setEditingLandValueMin] = useState(false);
+  const [editingLandValueMax, setEditingLandValueMax] = useState(false);
+  const [tempLandValueMin, setTempLandValueMin] = useState("");
+  const [tempLandValueMax, setTempLandValueMax] = useState("");
+  const [editingImprovementMin, setEditingImprovementMin] = useState(false);
+  const [editingImprovementMax, setEditingImprovementMax] = useState(false);
+  const [tempImprovementMin, setTempImprovementMin] = useState("");
+  const [tempImprovementMax, setTempImprovementMax] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -102,8 +112,12 @@ export default function Dashboard() {
   const maxInputRef = useRef<HTMLInputElement>(null);
   const taxMinInputRef = useRef<HTMLInputElement>(null);
   const taxMaxInputRef = useRef<HTMLInputElement>(null);
-  const landMinInputRef = useRef<HTMLInputElement>(null);
-  const landMaxInputRef = useRef<HTMLInputElement>(null);
+  const parcelMinInputRef = useRef<HTMLInputElement>(null);
+  const parcelMaxInputRef = useRef<HTMLInputElement>(null);
+  const landValueMinInputRef = useRef<HTMLInputElement>(null);
+  const landValueMaxInputRef = useRef<HTMLInputElement>(null);
+  const improvementMinInputRef = useRef<HTMLInputElement>(null);
+  const improvementMaxInputRef = useRef<HTMLInputElement>(null);
 
   const handleMinClick = () => {
     setTempMin(String(valueRange[0]));
@@ -165,34 +179,97 @@ export default function Dashboard() {
     setEditingTaxMax(false);
   };
 
-  const handleLandMinClick = () => {
-    setTempLandMin(String(landSqftRange[0]));
-    setEditingLandMin(true);
-    setTimeout(() => landMinInputRef.current?.select(), 0);
+  // Parcel Area handlers
+  const handleParcelMinClick = () => {
+    setTempParcelMin(String(parcelAreaRange[0]));
+    setEditingParcelMin(true);
+    setTimeout(() => parcelMinInputRef.current?.select(), 0);
   };
 
-  const handleLandMaxClick = () => {
-    setTempLandMax(landSqftRange[1] >= 100000 ? "100000" : String(landSqftRange[1]));
-    setEditingLandMax(true);
-    setTimeout(() => landMaxInputRef.current?.select(), 0);
+  const handleParcelMaxClick = () => {
+    setTempParcelMax(parcelAreaRange[1] >= 100 ? "100" : String(parcelAreaRange[1]));
+    setEditingParcelMax(true);
+    setTimeout(() => parcelMaxInputRef.current?.select(), 0);
   };
 
-  const handleLandMinSubmit = () => {
-    const val = parseInt(tempLandMin.replace(/[^0-9]/g, ""), 10);
+  const handleParcelMinSubmit = () => {
+    const val = parseFloat(tempParcelMin.replace(/[^0-9.]/g, ""));
     if (!isNaN(val)) {
-      const clamped = Math.max(0, Math.min(val, landSqftRange[1]));
-      setLandSqftRange([clamped, landSqftRange[1]]);
+      const clamped = Math.max(0, Math.min(val, parcelAreaRange[1]));
+      setParcelAreaRange([clamped, parcelAreaRange[1]]);
     }
-    setEditingLandMin(false);
+    setEditingParcelMin(false);
   };
 
-  const handleLandMaxSubmit = () => {
-    const val = parseInt(tempLandMax.replace(/[^0-9]/g, ""), 10);
+  const handleParcelMaxSubmit = () => {
+    const val = parseFloat(tempParcelMax.replace(/[^0-9.]/g, ""));
     if (!isNaN(val)) {
-      const clamped = Math.max(landSqftRange[0], Math.min(val, 100000));
-      setLandSqftRange([landSqftRange[0], clamped]);
+      const clamped = Math.max(parcelAreaRange[0], Math.min(val, 100));
+      setParcelAreaRange([parcelAreaRange[0], clamped]);
     }
-    setEditingLandMax(false);
+    setEditingParcelMax(false);
+  };
+
+  // Land Value handlers
+  const handleLandValueMinClick = () => {
+    setTempLandValueMin(String(landValueRange[0]));
+    setEditingLandValueMin(true);
+    setTimeout(() => landValueMinInputRef.current?.select(), 0);
+  };
+
+  const handleLandValueMaxClick = () => {
+    setTempLandValueMax(landValueRange[1] >= 2000000 ? "2000000" : String(landValueRange[1]));
+    setEditingLandValueMax(true);
+    setTimeout(() => landValueMaxInputRef.current?.select(), 0);
+  };
+
+  const handleLandValueMinSubmit = () => {
+    const val = parseInt(tempLandValueMin.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, landValueRange[1]));
+      setLandValueRange([clamped, landValueRange[1]]);
+    }
+    setEditingLandValueMin(false);
+  };
+
+  const handleLandValueMaxSubmit = () => {
+    const val = parseInt(tempLandValueMax.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(landValueRange[0], Math.min(val, 2000000));
+      setLandValueRange([landValueRange[0], clamped]);
+    }
+    setEditingLandValueMax(false);
+  };
+
+  // Improvement Value handlers
+  const handleImprovementMinClick = () => {
+    setTempImprovementMin(String(improvementValueRange[0]));
+    setEditingImprovementMin(true);
+    setTimeout(() => improvementMinInputRef.current?.select(), 0);
+  };
+
+  const handleImprovementMaxClick = () => {
+    setTempImprovementMax(improvementValueRange[1] >= 5000000 ? "5000000" : String(improvementValueRange[1]));
+    setEditingImprovementMax(true);
+    setTimeout(() => improvementMaxInputRef.current?.select(), 0);
+  };
+
+  const handleImprovementMinSubmit = () => {
+    const val = parseInt(tempImprovementMin.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, improvementValueRange[1]));
+      setImprovementValueRange([clamped, improvementValueRange[1]]);
+    }
+    setEditingImprovementMin(false);
+  };
+
+  const handleImprovementMaxSubmit = () => {
+    const val = parseInt(tempImprovementMax.replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(val)) {
+      const clamped = Math.max(improvementValueRange[0], Math.min(val, 5000000));
+      setImprovementValueRange([improvementValueRange[0], clamped]);
+    }
+    setEditingImprovementMax(false);
   };
 
   // Calculate property tax for a single property
@@ -245,21 +322,27 @@ export default function Dashboard() {
     return Array.from(types).sort();
   }, [rawProperties]);
 
-  // Filter properties by value, tax range, and land sqft (without account type filter)
+  // Filter properties by value, tax range, parcel area, land value, and improvement value (without account type filter)
   // Used to calculate account type counts based on current other filters
   const propertiesWithoutAccountTypeFilter = useMemo(() => {
     if (!rawProperties) return [];
     return rawProperties.filter((p) => {
       const tax = getPropertyTax(p);
-      const landSqft = p.landSqft || 0;
+      const parcelArea = p.parcelArea || 0;
+      const landValue = p.landValue || 0;
+      const improvementValue = p.improvementValue || 0;
       return (
         tax >= taxRange[0] &&
         tax <= taxRange[1] &&
-        landSqft >= landSqftRange[0] &&
-        landSqft <= landSqftRange[1]
+        parcelArea >= parcelAreaRange[0] &&
+        parcelArea <= parcelAreaRange[1] &&
+        landValue >= landValueRange[0] &&
+        landValue <= landValueRange[1] &&
+        improvementValue >= improvementValueRange[0] &&
+        improvementValue <= improvementValueRange[1]
       );
     });
-  }, [rawProperties, taxRange, landSqftRange]);
+  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange]);
 
   // Filter properties by tax range, land sqft, account types, and owner (client-side)
   const properties = useMemo(() => {
@@ -354,21 +437,21 @@ export default function Dashboard() {
       binMax: Math.round(actualTaxMin + (i + 1) * taxStep),
     }));
 
-    // Land sqft histogram uses actual min/max from filtered data
-    const landValues = properties.map(p => p.landSqft || 0);
-    const actualLandMin = landValues.length > 0 ? Math.min(...landValues) : 0;
-    const actualLandMax = landValues.length > 0 ? Math.max(...landValues) : 1;
-    const landDistribution = [0, 0, 0, 0, 0];
-    const landStep = (actualLandMax - actualLandMin) / 5;
-    landValues.forEach(sqft => {
-      const bucket = landStep > 0 ? Math.min(Math.floor((sqft - actualLandMin) / landStep), 4) : 0;
-      landDistribution[bucket]++;
+    // Parcel area histogram uses actual min/max from filtered data
+    const parcelAreas = properties.map(p => p.parcelArea || 0);
+    const actualParcelMin = parcelAreas.length > 0 ? Math.min(...parcelAreas) : 0;
+    const actualParcelMax = parcelAreas.length > 0 ? Math.max(...parcelAreas) : 1;
+    const parcelDistribution = [0, 0, 0, 0, 0];
+    const parcelStep = (actualParcelMax - actualParcelMin) / 5;
+    parcelAreas.forEach(area => {
+      const bucket = parcelStep > 0 ? Math.min(Math.floor((area - actualParcelMin) / parcelStep), 4) : 0;
+      parcelDistribution[bucket]++;
     });
-    const landChartData = landDistribution.map((count, i) => ({
-      range: `${((actualLandMin + i * landStep) / 1000).toFixed(0)}k - ${((actualLandMin + (i + 1) * landStep) / 1000).toFixed(0)}k`,
+    const parcelChartData = parcelDistribution.map((count, i) => ({
+      range: `${(actualParcelMin + i * parcelStep).toFixed(1)} - ${(actualParcelMin + (i + 1) * parcelStep).toFixed(1)} ac`,
       count,
-      binMin: Math.round(actualLandMin + i * landStep),
-      binMax: Math.round(actualLandMin + (i + 1) * landStep),
+      binMin: actualParcelMin + i * parcelStep,
+      binMax: actualParcelMin + (i + 1) * parcelStep,
     }));
 
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
@@ -448,16 +531,16 @@ export default function Dashboard() {
     // Count properties with no improvement value (land only)
     const landOnlyProps = properties.filter(p => (p.improvementValue || 0) === 0);
     const noImprovementCount = landOnlyProps.length;
-    const totalLandOnlySqft = landOnlyProps.reduce((sum, p) => sum + (p.landSqft || 0), 0);
+    const totalLandOnlyAcres = landOnlyProps.reduce((sum, p) => sum + (p.parcelArea || 0), 0);
 
-    // Top land holders - aggregate land sqft by owner
-    const landByOwner: Record<string, { totalSqft: number; propertyCount: number }> = {};
+    // Top land holders - aggregate parcel area (acres) by owner
+    const landByOwner: Record<string, { totalAcres: number; propertyCount: number }> = {};
     properties.forEach(p => {
       const owner = p.owner || "Unknown";
       if (!landByOwner[owner]) {
-        landByOwner[owner] = { totalSqft: 0, propertyCount: 0 };
+        landByOwner[owner] = { totalAcres: 0, propertyCount: 0 };
       }
-      landByOwner[owner].totalSqft += p.landSqft || 0;
+      landByOwner[owner].totalAcres += p.parcelArea || 0;
       landByOwner[owner].propertyCount += 1;
     });
     
@@ -465,20 +548,19 @@ export default function Dashboard() {
       .map(([owner, data]) => ({
         owner: owner.length > 25 ? owner.substring(0, 22) + "..." : owner,
         fullOwner: owner,
-        totalSqft: data.totalSqft,
-        acres: data.totalSqft / 43560,
+        totalAcres: data.totalAcres,
         propertyCount: data.propertyCount,
       }))
-      .sort((a, b) => b.totalSqft - a.totalSqft)
+      .sort((a, b) => b.totalAcres - a.totalAcres)
       .slice(0, 10);
 
-    // Total land square footage
-    const totalLandSqft = properties.reduce((sum, p) => sum + (p.landSqft || 0), 0);
-    const avgLandSqft = properties.length > 0 ? totalLandSqft / properties.length : 0;
+    // Total parcel area (acres)
+    const totalParcelAcres = properties.reduce((sum, p) => sum + (p.parcelArea || 0), 0);
+    const avgParcelAcres = properties.length > 0 ? totalParcelAcres / properties.length : 0;
     
-    // Total land value and avg per sqft
+    // Total land value and avg per acre
     const totalLandValue = properties.reduce((sum, p) => sum + (p.landValue || 0), 0);
-    const avgLandValuePerSqft = totalLandSqft > 0 ? totalLandValue / totalLandSqft : 0;
+    const avgLandValuePerAcre = totalParcelAcres > 0 ? totalLandValue / totalParcelAcres : 0;
 
     return {
       totalValue,
@@ -494,16 +576,16 @@ export default function Dashboard() {
       hhExemptionCount,
       totalHhExemption,
       noImprovementCount,
-      totalLandOnlySqft,
-      totalLandSqft,
-      avgLandSqft,
+      totalLandOnlyAcres,
+      totalParcelAcres,
+      avgParcelAcres,
       totalLandValue,
-      avgLandValuePerSqft,
+      avgLandValuePerAcre,
       exemptionsChartData,
       totalTaxExemptions,
       accountTypesChartData,
       taxChartData,
-      landChartData,
+      parcelChartData,
       topLandHoldersData,
     };
   }, [properties]);
@@ -560,10 +642,9 @@ export default function Dashboard() {
         totalTaxable: p.totalTaxable,
         hhExemption: p.hhExemption,
         vetExemption: p.vetExemption,
-        landSqft: p.landSqft,
+        parcelAreaAcres: p.parcelArea,
         buildingSqft: p.buildingSqft,
         millLevy: p.millLevy,
-        parcelAreaAcres: p.parcelArea,
         latitude: p.lat,
         longitude: p.lng,
         assessmentYear: p.assessmentYear,
@@ -584,10 +665,9 @@ export default function Dashboard() {
         "Total Taxable",
         "HH Exemption",
         "Vet Exemption",
-        "Land Sqft",
+        "Parcel Area (acres)",
         "Building Sqft",
         "Mill Levy",
-        "Parcel Area (acres)",
         "Latitude",
         "Longitude",
         "Assessment Year",
@@ -604,10 +684,9 @@ export default function Dashboard() {
         p.totalTaxable || 0,
         p.hhExemption || 0,
         p.vetExemption || 0,
-        p.landSqft || 0,
+        p.parcelArea?.toFixed(4) || "",
         p.buildingSqft || 0,
         p.millLevy || "",
-        p.parcelArea?.toFixed(4) || "",
         p.lat,
         p.lng,
         p.assessmentYear,
@@ -702,7 +781,9 @@ export default function Dashboard() {
                     setYear(2025);
                     setValueRange([0, 5000000]);
                     setTaxRange([0, 50000]);
-                    setLandSqftRange([0, 100000]);
+                    setParcelAreaRange([0, 100]);
+                    setLandValueRange([0, 2000000]);
+                    setImprovementValueRange([0, 5000000]);
                     setSelectedAccountTypes([]);
                     setOwnerFilter("");
                     setUseRegex(false);
@@ -936,79 +1017,78 @@ export default function Dashboard() {
                 )}
               </div>
 
+              {/* Parcel Area Filter */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Land Square Footage
+                    Parcel Area (Acres)
                   </label>
                   <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingLandMin ? (
+                    {editingParcelMin ? (
                       <input
-                        ref={landMinInputRef}
+                        ref={parcelMinInputRef}
                         type="text"
-                        value={tempLandMin}
-                        onChange={(e) => setTempLandMin(e.target.value)}
-                        onBlur={handleLandMinSubmit}
+                        value={tempParcelMin}
+                        onChange={(e) => setTempParcelMin(e.target.value)}
+                        onBlur={handleParcelMinSubmit}
                         onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandMinSubmit()
+                          e.key === "Enter" && handleParcelMinSubmit()
                         }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
-                        data-testid="input-land-min"
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
+                        data-testid="input-parcel-min"
                       />
                     ) : (
                       <button
-                        onClick={handleLandMinClick}
+                        onClick={handleParcelMinClick}
                         className="text-purple-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-min"
+                        data-testid="button-edit-parcel-min"
                       >
-                        {landSqftRange[0].toLocaleString()}
+                        {parcelAreaRange[0].toFixed(1)}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
-                    {editingLandMax ? (
+                    {editingParcelMax ? (
                       <input
-                        ref={landMaxInputRef}
+                        ref={parcelMaxInputRef}
                         type="text"
-                        value={tempLandMax}
-                        onChange={(e) => setTempLandMax(e.target.value)}
-                        onBlur={handleLandMaxSubmit}
+                        value={tempParcelMax}
+                        onChange={(e) => setTempParcelMax(e.target.value)}
+                        onBlur={handleParcelMaxSubmit}
                         onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandMaxSubmit()
+                          e.key === "Enter" && handleParcelMaxSubmit()
                         }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
-                        data-testid="input-land-max"
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
+                        data-testid="input-parcel-max"
                       />
                     ) : (
                       <button
-                        onClick={handleLandMaxClick}
+                        onClick={handleParcelMaxClick}
                         className="text-purple-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-max"
+                        data-testid="button-edit-parcel-max"
                       >
-                        {landSqftRange[1] >= 100000
-                          ? "100k+"
-                          : landSqftRange[1].toLocaleString()}
+                        {parcelAreaRange[1] >= 100 ? "100+" : parcelAreaRange[1].toFixed(1)}
                       </button>
                     )}
-                    <span className="text-muted-foreground text-[10px]">sqft</span>
+                    <span className="text-muted-foreground text-[10px]">ac</span>
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 100000]}
-                  max={100000}
-                  step={1000}
-                  value={landSqftRange}
+                  defaultValue={[0, 100]}
+                  max={100}
+                  step={0.1}
+                  value={parcelAreaRange}
                   onValueChange={(val) =>
-                    setLandSqftRange(val as [number, number])
+                    setParcelAreaRange(val as [number, number])
                   }
                   className="py-2"
                   rangeClassName="bg-purple-500"
                   thumbClassName="border-purple-500"
-                  data-testid="slider-land-sqft"
+                  data-testid="slider-parcel-area"
                 />
-                {stats?.landChartData && (
+                {stats?.parcelChartData && (
                   <div className="h-20 mt-2">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.landChartData}>
+                      <BarChart data={stats.parcelChartData}>
                         <XAxis dataKey="range" hide />
                         <YAxis hide />
                         <RechartsTooltip
@@ -1027,7 +1107,7 @@ export default function Dashboard() {
                           className="cursor-pointer"
                           onClick={(data) => {
                             if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setLandSqftRange([data.binMin, Math.min(data.binMax, 100000)]);
+                              setParcelAreaRange([data.binMin, Math.min(data.binMax, 100)]);
                             }
                           }}
                         />
@@ -1035,6 +1115,144 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                   </div>
                 )}
+              </div>
+
+              {/* Land Value Filter */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Land Value
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingLandValueMin ? (
+                      <input
+                        ref={landValueMinInputRef}
+                        type="text"
+                        value={tempLandValueMin}
+                        onChange={(e) => setTempLandValueMin(e.target.value)}
+                        onBlur={handleLandValueMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandValueMinSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
+                        data-testid="input-land-value-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandValueMinClick}
+                        className="text-teal-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-land-value-min"
+                      >
+                        ${(landValueRange[0] / 1000).toFixed(0)}k
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingLandValueMax ? (
+                      <input
+                        ref={landValueMaxInputRef}
+                        type="text"
+                        value={tempLandValueMax}
+                        onChange={(e) => setTempLandValueMax(e.target.value)}
+                        onBlur={handleLandValueMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandValueMaxSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
+                        data-testid="input-land-value-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandValueMaxClick}
+                        className="text-teal-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-land-value-max"
+                      >
+                        {landValueRange[1] >= 2000000 ? "$2M+" : `$${(landValueRange[1] / 1000).toFixed(0)}k`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 2000000]}
+                  max={2000000}
+                  step={10000}
+                  value={landValueRange}
+                  onValueChange={(val) =>
+                    setLandValueRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-teal-500"
+                  thumbClassName="border-teal-500"
+                  data-testid="slider-land-value"
+                />
+              </div>
+
+              {/* Improvement Value Filter */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Improvement Value
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingImprovementMin ? (
+                      <input
+                        ref={improvementMinInputRef}
+                        type="text"
+                        value={tempImprovementMin}
+                        onChange={(e) => setTempImprovementMin(e.target.value)}
+                        onBlur={handleImprovementMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleImprovementMinSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
+                        data-testid="input-improvement-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleImprovementMinClick}
+                        className="text-orange-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-improvement-min"
+                      >
+                        ${(improvementValueRange[0] / 1000).toFixed(0)}k
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingImprovementMax ? (
+                      <input
+                        ref={improvementMaxInputRef}
+                        type="text"
+                        value={tempImprovementMax}
+                        onChange={(e) => setTempImprovementMax(e.target.value)}
+                        onBlur={handleImprovementMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleImprovementMaxSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
+                        data-testid="input-improvement-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleImprovementMaxClick}
+                        className="text-orange-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-improvement-max"
+                      >
+                        {improvementValueRange[1] >= 5000000 ? "$5M+" : `$${(improvementValueRange[1] / 1000).toFixed(0)}k`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 5000000]}
+                  max={5000000}
+                  step={50000}
+                  value={improvementValueRange}
+                  onValueChange={(val) =>
+                    setImprovementValueRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-orange-500"
+                  thumbClassName="border-orange-500"
+                  data-testid="slider-improvement-value"
+                />
               </div>
 
               {/* Account Type Multi-Select */}
@@ -1211,16 +1429,16 @@ export default function Dashboard() {
                 description={`Avg: ${formatCurrencyShort(stats.avgValue)}`}
               />
               <StatsCard
-                title="Total Land Sqft"
-                value={stats.totalLandSqft.toLocaleString()}
+                title="Total Parcel Area"
+                value={`${stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})} ac`}
                 icon={TrendingUp}
-                description={`Avg: ${Math.round(stats.avgLandSqft).toLocaleString()} sqft`}
+                description={`Avg: ${stats.avgParcelAcres.toFixed(2)} acres`}
               />
               <StatsCard
                 title="Total Land Value"
                 value={formatCurrencyShort(stats.totalLandValue)}
                 icon={DollarSign}
-                description={`Avg: $${stats.avgLandValuePerSqft.toFixed(2)}/sqft`}
+                description={`Avg: $${stats.avgLandValuePerAcre.toLocaleString(undefined, {maximumFractionDigits: 0})}/acre`}
               />
               <StatsCard
                 title="Total Tax Assessed"
@@ -1251,7 +1469,7 @@ export default function Dashboard() {
                 title="Land Only (No Improvements)"
                 value={stats.noImprovementCount.toLocaleString()}
                 icon={Layers}
-                description={`${stats.totalLandOnlySqft.toLocaleString()} total sqft`}
+                description={`${stats.totalLandOnlyAcres.toFixed(1)} total acres`}
               />
 
               {/* Account Types Chart */}
@@ -1344,7 +1562,7 @@ export default function Dashboard() {
               {stats.topLandHoldersData && stats.topLandHoldersData.length > 0 && (
                 <div className="h-72 pt-4">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
-                    Top Land Holders (Total Sqft)
+                    Top Land Holders (Acres)
                   </label>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
@@ -1367,10 +1585,9 @@ export default function Dashboard() {
                         }}
                         itemStyle={{ color: "white" }}
                         formatter={(value: number, name: string, props: any) => {
-                          if (name === "totalSqft") {
-                            const acres = props.payload.acres;
+                          if (name === "totalAcres") {
                             const count = props.payload.propertyCount;
-                            return [`${value.toLocaleString()} sqft (${acres.toFixed(1)} acres, ${count} properties)`, "Total Land"];
+                            return [`${value.toFixed(2)} acres (${count} properties)`, "Total Land"];
                           }
                           return [value, name];
                         }}
@@ -1383,7 +1600,7 @@ export default function Dashboard() {
                         cursor={{ fill: "rgba(255,255,255,0.05)" }}
                       />
                       <Bar
-                        dataKey="totalSqft"
+                        dataKey="totalAcres"
                         fill="hsl(280 65% 60%)"
                         radius={[0, 4, 4, 0]}
                       />
