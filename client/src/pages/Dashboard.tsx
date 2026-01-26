@@ -1161,7 +1161,7 @@ export default function Dashboard() {
                   title="HH Exemptions"
                   value={stats.hhExemptionCount.toLocaleString()}
                   icon={Home}
-                  description="Head of Household (owner-occupied)"
+                  description="Implies owner-occupied"
                 />
               </div>
               <StatsCard
