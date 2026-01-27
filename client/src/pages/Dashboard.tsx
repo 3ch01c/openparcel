@@ -1912,7 +1912,7 @@ export default function Dashboard() {
                 />
                 <StatsCard
                   title="Total Acreage"
-                  value={`${stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})} ac`}
+                  value={stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})}
                   icon={TrendingUp}
                   description={`Avg: ${stats.avgParcelAcres.toFixed(2)} ac`}
                 />
