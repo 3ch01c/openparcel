@@ -207,7 +207,7 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
             ` : ""}
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-${encodeURIComponent(property.ownerCity || "Los Alamos")}-${encodeURIComponent(property.ownerState || "NM")}-${encodeURIComponent(property.ownerZip || "87544")}_rb/" 
+              <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-Los-Alamos-NM_rb/" 
                  target="_blank" rel="noopener noreferrer"
                  style="font-size: 11px; color: #3b82f6; text-decoration: none;">
                 Zillow
