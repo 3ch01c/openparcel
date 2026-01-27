@@ -1070,11 +1070,13 @@ export default function Dashboard() {
                 <button
                   onClick={() => {
                     setYear(2025);
-                    setValueRange([0, 5000000]);
-                    setTaxRange([0, 50000]);
-                    setParcelAreaRange([0, 100]);
-                    setLandValueRange([0, 2000000]);
-                    setImprovementValueRange([0, 5000000]);
+                    setValueRange([unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max]);
+                    setTaxRange([unfilteredRanges.tax.min, unfilteredRanges.tax.max]);
+                    setParcelAreaRange([unfilteredRanges.parcelArea.min, unfilteredRanges.parcelArea.max]);
+                    setLandValueRange([unfilteredRanges.landValue.min, unfilteredRanges.landValue.max]);
+                    setImprovementValueRange([unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max]);
+                    setLandValuePerSqftRange([unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max]);
+                    setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
                     setSelectedAccountTypes([]);
                     setOwnerFilter("");
                     setUseRegex(false);
