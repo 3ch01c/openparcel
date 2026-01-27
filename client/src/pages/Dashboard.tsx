@@ -117,6 +117,7 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const [selectedSubdivisions, setSelectedSubdivisions] = useState<string[]>([]);
+  const [selectedOwnerCityStates, setSelectedOwnerCityStates] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
   const rangesInitialized = useRef(false);
@@ -424,6 +425,21 @@ export default function Dashboard() {
     return Array.from(subdivs).sort();
   }, [rawProperties]);
 
+  // Get unique owner city/state combinations from raw data
+  const uniqueOwnerCityStates = useMemo(() => {
+    if (!rawProperties) return [];
+    const cityStates = new Set<string>();
+    rawProperties.forEach((p) => {
+      const city = p.ownerCity?.trim() || "";
+      const state = p.ownerState?.trim() || "";
+      if (city || state) {
+        const combined = [city, state].filter(Boolean).join(", ");
+        if (combined) cityStates.add(combined);
+      }
+    });
+    return Array.from(cityStates).sort();
+  }, [rawProperties]);
+
   // Calculate unfiltered data ranges for slider bounds (from rawProperties which is only filtered by assessed value)
   const unfilteredRanges = useMemo(() => {
     if (!rawProperties || rawProperties.length === 0) {
@@ -547,6 +563,16 @@ export default function Dashboard() {
       );
     }
     
+    // Owner City/State filter
+    if (selectedOwnerCityStates.length > 0) {
+      filtered = filtered.filter((p) => {
+        const city = p.ownerCity?.trim() || "";
+        const state = p.ownerState?.trim() || "";
+        const combined = [city, state].filter(Boolean).join(", ");
+        return combined && selectedOwnerCityStates.includes(combined);
+      });
+    }
+    
     // Owner filter
     if (ownerFilter.trim()) {
       const searchTerm = ownerFilter.trim();
@@ -570,7 +596,7 @@ export default function Dashboard() {
     }
     
     return filtered;
-  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, ownerFilter, useRegex]);
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedOwnerCityStates, ownerFilter, useRegex]);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -1097,6 +1123,7 @@ export default function Dashboard() {
                     setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
                     setSelectedAccountTypes([]);
                     setSelectedSubdivisions([]);
+                    setSelectedOwnerCityStates([]);
                     setOwnerFilter("");
                     setUseRegex(false);
                   }}
@@ -1969,6 +1996,79 @@ export default function Dashboard() {
                   {selectedSubdivisions.length === 0
                     ? "All subdivisions shown"
                     : `${selectedSubdivisions.length} subdivision${selectedSubdivisions.length > 1 ? "s" : ""} selected`}
+                </p>
+              </div>
+
+              {/* Owner City/State Filter */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Owner City/State
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedOwnerCityStates([...uniqueOwnerCityStates])}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-all-owner-city-states"
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setSelectedOwnerCityStates([])}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-none-owner-city-states"
+                    >
+                      None
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
+                  {uniqueOwnerCityStates.map((cityState) => {
+                    const isSelected = selectedOwnerCityStates.includes(cityState);
+                    const count = propertiesWithoutAccountTypeFilter.filter((p) => {
+                      const city = p.ownerCity?.trim() || "";
+                      const state = p.ownerState?.trim() || "";
+                      const combined = [city, state].filter(Boolean).join(", ");
+                      return combined === cityState;
+                    }).length;
+                    return (
+                      <button
+                        key={cityState}
+                        onClick={() =>
+                          setSelectedOwnerCityStates((prev) =>
+                            isSelected
+                              ? prev.filter((cs) => cs !== cityState)
+                              : [...prev, cityState]
+                          )
+                        }
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
+                          isSelected
+                            ? "bg-primary/20 text-primary"
+                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                        data-testid={`button-owner-city-state-${cityState.replace(/[\s,]+/g, '-').toLowerCase()}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center ${
+                              isSelected
+                                ? "bg-primary border-primary"
+                                : "border-muted-foreground"
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                          </div>
+                          <span className="truncate">{cityState}</span>
+                        </div>
+                        <span className="text-muted-foreground ml-2">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedOwnerCityStates.length === 0
+                    ? "All locations shown"
+                    : `${selectedOwnerCityStates.length} location${selectedOwnerCityStates.length > 1 ? "s" : ""} selected`}
                 </p>
               </div>
 
