@@ -92,7 +92,14 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
       clusterGroupRef.current = null;
     }
 
-    const maxVal = Math.max(...validPoints.map((p) => p.assessedValue || 1));
+    // Calculate land value per sqft for coloring markers
+    const getLandValuePerSqft = (p: PropertyResponse) => {
+      const parcelArea = p.parcelArea || 0;
+      const landSqft = parcelArea * 43560;
+      return landSqft > 0 ? (p.landValue || 0) / landSqft : 0;
+    };
+    
+    const maxLandPerSqft = Math.max(...validPoints.map(getLandValuePerSqft), 1);
 
     try {
       const clusterGroup = L.markerClusterGroup({
@@ -132,7 +139,8 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
       });
 
       validPoints.forEach((property) => {
-        const color = getMarkerColor(property.assessedValue, maxVal);
+        const landPerSqftValue = getLandValuePerSqft(property);
+        const color = getMarkerColor(landPerSqftValue, maxLandPerSqft);
         
         const markerIcon = L.divIcon({
           className: "custom-marker",
