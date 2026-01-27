@@ -118,6 +118,7 @@ export default function Dashboard() {
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
+  const rangesInitialized = useRef(false);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
   const taxMinInputRef = useRef<HTMLInputElement>(null);
@@ -411,6 +412,83 @@ export default function Dashboard() {
     });
     return Array.from(types).sort();
   }, [rawProperties]);
+
+  // Calculate unfiltered data ranges for slider bounds (from rawProperties which is only filtered by assessed value)
+  const unfilteredRanges = useMemo(() => {
+    if (!rawProperties || rawProperties.length === 0) {
+      return {
+        assessedValue: { min: 0, max: 250000000 },
+        tax: { min: 0, max: 500000 },
+        parcelArea: { min: 0, max: 1200 },
+        landValue: { min: 0, max: 250000000 },
+        improvementValue: { min: 0, max: 50000000 },
+        landPerSqft: { min: 0, max: 150 },
+        bldgRatio: { min: 0, max: 2 },
+      };
+    }
+
+    // Calculate tax values
+    const taxValues = rawProperties.map(p => {
+      const totalTaxable = p.totalTaxable || 0;
+      const hhExempt = p.hhExemption || 0;
+      const vetExempt = p.vetExemption || 0;
+      const parcelMillLevy = p.millLevy || 28.714;
+      const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
+      if (isExemptAccount) return 0;
+      return Math.max(0, totalTaxable - hhExempt - vetExempt) * parcelMillLevy / 1000;
+    });
+
+    // Calculate land per sqft values
+    const landPerSqftValues = rawProperties.map(p => getLandValuePerSqft(p));
+
+    // Calculate bldg ratio values
+    const bldgRatioValues = rawProperties.map(p => getBldgToLandRatio(p));
+
+    return {
+      assessedValue: {
+        min: Math.min(...rawProperties.map(p => p.assessedValue)),
+        max: Math.max(...rawProperties.map(p => p.assessedValue)),
+      },
+      tax: {
+        min: Math.min(...taxValues),
+        max: Math.max(...taxValues),
+      },
+      parcelArea: {
+        min: Math.min(...rawProperties.map(p => p.parcelArea || 0)),
+        max: Math.max(...rawProperties.map(p => p.parcelArea || 0)),
+      },
+      landValue: {
+        min: Math.min(...rawProperties.map(p => p.landValue || 0)),
+        max: Math.max(...rawProperties.map(p => p.landValue || 0)),
+      },
+      improvementValue: {
+        min: Math.min(...rawProperties.map(p => p.improvementValue || 0)),
+        max: Math.max(...rawProperties.map(p => p.improvementValue || 0)),
+      },
+      landPerSqft: {
+        min: Math.min(...landPerSqftValues),
+        max: Math.max(...landPerSqftValues),
+      },
+      bldgRatio: {
+        min: Math.min(...bldgRatioValues),
+        max: Math.max(...bldgRatioValues),
+      },
+    };
+  }, [rawProperties, getLandValuePerSqft, getBldgToLandRatio]);
+
+  // Initialize filter ranges to the unfiltered data ranges when data first loads
+  useEffect(() => {
+    if (!rangesInitialized.current && rawProperties && rawProperties.length > 0) {
+      setValueRange([unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max]);
+      setTaxRange([unfilteredRanges.tax.min, unfilteredRanges.tax.max]);
+      setParcelAreaRange([unfilteredRanges.parcelArea.min, unfilteredRanges.parcelArea.max]);
+      setLandValueRange([unfilteredRanges.landValue.min, unfilteredRanges.landValue.max]);
+      setImprovementValueRange([unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max]);
+      setLandValuePerSqftRange([unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max]);
+      setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
+      rangesInitialized.current = true;
+    }
+  }, [rawProperties, unfilteredRanges]);
 
   // Filter properties by value, tax range, parcel area, land value, improvement value, land value per sqft, and bldg ratio (without account type filter)
   // Used to calculate account type counts based on current other filters
@@ -1088,9 +1166,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 250000000]}
-                  max={250000000}
-                  step={1000000}
+                  min={unfilteredRanges.assessedValue.min}
+                  max={unfilteredRanges.assessedValue.max}
+                  step={Math.max(1, Math.round((unfilteredRanges.assessedValue.max - unfilteredRanges.assessedValue.min) / 100))}
                   value={valueRange}
                   onValueChange={(val) =>
                     setValueRange(val as [number, number])
@@ -1187,9 +1265,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 250000000]}
-                  max={250000000}
-                  step={1000000}
+                  min={unfilteredRanges.landValue.min}
+                  max={unfilteredRanges.landValue.max}
+                  step={Math.max(1, Math.round((unfilteredRanges.landValue.max - unfilteredRanges.landValue.min) / 100))}
                   value={landValueRange}
                   onValueChange={(val) =>
                     setLandValueRange(val as [number, number])
@@ -1288,9 +1366,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 50000000]}
-                  max={50000000}
-                  step={500000}
+                  min={unfilteredRanges.improvementValue.min}
+                  max={unfilteredRanges.improvementValue.max}
+                  step={Math.max(1, Math.round((unfilteredRanges.improvementValue.max - unfilteredRanges.improvementValue.min) / 100))}
                   value={improvementValueRange}
                   onValueChange={(val) =>
                     setImprovementValueRange(val as [number, number])
@@ -1388,9 +1466,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 500000]}
-                  max={500000}
-                  step={5000}
+                  min={unfilteredRanges.tax.min}
+                  max={unfilteredRanges.tax.max}
+                  step={Math.max(0.01, (unfilteredRanges.tax.max - unfilteredRanges.tax.min) / 100)}
                   value={taxRange}
                   onValueChange={(val) =>
                     setTaxRange(val as [number, number])
@@ -1490,9 +1568,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 1200]}
-                  max={1200}
-                  step={1}
+                  min={unfilteredRanges.parcelArea.min}
+                  max={unfilteredRanges.parcelArea.max}
+                  step={Math.max(0.01, (unfilteredRanges.parcelArea.max - unfilteredRanges.parcelArea.min) / 100)}
                   value={parcelAreaRange}
                   onValueChange={(val) =>
                     setParcelAreaRange(val as [number, number])
@@ -1592,9 +1670,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 150]}
-                  max={150}
-                  step={0.5}
+                  min={unfilteredRanges.landPerSqft.min}
+                  max={unfilteredRanges.landPerSqft.max}
+                  step={Math.max(0.01, (unfilteredRanges.landPerSqft.max - unfilteredRanges.landPerSqft.min) / 100)}
                   value={landValuePerSqftRange}
                   onValueChange={(val) =>
                     setLandValuePerSqftRange(val as [number, number])
@@ -1693,9 +1771,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 2]}
-                  max={2}
-                  step={0.01}
+                  min={unfilteredRanges.bldgRatio.min}
+                  max={unfilteredRanges.bldgRatio.max}
+                  step={Math.max(0.001, (unfilteredRanges.bldgRatio.max - unfilteredRanges.bldgRatio.min) / 100)}
                   value={bldgToLandRatioRange}
                   onValueChange={(val) =>
                     setBldgToLandRatioRange(val as [number, number])
