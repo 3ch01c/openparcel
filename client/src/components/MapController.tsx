@@ -33,12 +33,13 @@ function formatCurrency(value: number): string {
 }
 
 function getMarkerColor(value: number, maxValue: number): string {
-  const ratio = value / maxValue;
-  if (ratio < 0.2) return "#2c7bb6";
-  if (ratio < 0.4) return "#00a6ca";
-  if (ratio < 0.6) return "#00ccbc";
-  if (ratio < 0.8) return "#90eb9d";
-  return "#ffff8c";
+  // Plasma colorblind-safe palette (purple → pink → orange → yellow)
+  const ratio = maxValue > 0 ? value / maxValue : 0;
+  if (ratio < 0.2) return "#0d0887";
+  if (ratio < 0.4) return "#7e03a8";
+  if (ratio < 0.6) return "#cc4778";
+  if (ratio < 0.8) return "#f89540";
+  return "#f0f921";
 }
 
 export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
