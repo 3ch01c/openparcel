@@ -1183,7 +1183,7 @@ export default function Dashboard() {
                         className="text-primary hover:underline cursor-pointer"
                         data-testid="button-edit-min"
                       >
-                        {formatCurrencyShort(stats?.minAssessedValue ?? valueRange[0])}
+                        {formatCurrencyShort(valueRange[0])}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -1206,9 +1206,7 @@ export default function Dashboard() {
                         className="text-primary hover:underline cursor-pointer"
                         data-testid="button-edit-max"
                       >
-                        {(stats?.maxAssessedValue ?? valueRange[1]) >= 5000000
-                          ? "5M+"
-                          : formatCurrencyShort(stats?.maxAssessedValue ?? valueRange[1])}
+                        {formatCurrencyShort(valueRange[1])}
                       </button>
                     )}
                   </div>
@@ -1282,7 +1280,7 @@ export default function Dashboard() {
                         className="text-teal-500 hover:underline cursor-pointer"
                         data-testid="button-edit-land-value-min"
                       >
-                        {formatCurrencyShort(stats?.minLandValue ?? landValueRange[0])}
+                        {formatCurrencyShort(landValueRange[0])}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -1305,9 +1303,7 @@ export default function Dashboard() {
                         className="text-teal-500 hover:underline cursor-pointer"
                         data-testid="button-edit-land-value-max"
                       >
-                        {(stats?.maxLandValue ?? landValueRange[1]) >= 2000000
-                          ? "$2M+"
-                          : formatCurrencyShort(stats?.maxLandValue ?? landValueRange[1])}
+                        {formatCurrencyShort(landValueRange[1])}
                       </button>
                     )}
                   </div>
@@ -1383,7 +1379,7 @@ export default function Dashboard() {
                         className="text-orange-500 hover:underline cursor-pointer"
                         data-testid="button-edit-improvement-min"
                       >
-                        {formatCurrencyShort(stats?.minImprovementValue ?? improvementValueRange[0])}
+                        {formatCurrencyShort(improvementValueRange[0])}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -1406,9 +1402,7 @@ export default function Dashboard() {
                         className="text-orange-500 hover:underline cursor-pointer"
                         data-testid="button-edit-improvement-max"
                       >
-                        {(stats?.maxImprovementValue ?? improvementValueRange[1]) >= 5000000
-                          ? "$5M+"
-                          : formatCurrencyShort(stats?.maxImprovementValue ?? improvementValueRange[1])}
+                        {formatCurrencyShort(improvementValueRange[1])}
                       </button>
                     )}
                   </div>
@@ -1483,7 +1477,7 @@ export default function Dashboard() {
                         className="text-green-500 hover:underline cursor-pointer"
                         data-testid="button-edit-tax-min"
                       >
-                        {formatCurrencyShort(stats?.minTaxValue ?? taxRange[0])}
+                        {formatCurrencyShort(taxRange[0])}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -1506,9 +1500,7 @@ export default function Dashboard() {
                         className="text-green-500 hover:underline cursor-pointer"
                         data-testid="button-edit-tax-max"
                       >
-                        {(stats?.maxTaxValue ?? taxRange[1]) >= 50000
-                          ? "$50k+"
-                          : formatCurrencyShort(stats?.maxTaxValue ?? taxRange[1])}
+                        {formatCurrencyShort(taxRange[1])}
                       </button>
                     )}
                   </div>
@@ -1584,7 +1576,7 @@ export default function Dashboard() {
                         className="text-purple-500 hover:underline cursor-pointer"
                         data-testid="button-edit-parcel-min"
                       >
-                        {(stats?.minParcelArea ?? parcelAreaRange[0]).toFixed(1)}
+                        {parcelAreaRange[0].toFixed(2)}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -1607,9 +1599,7 @@ export default function Dashboard() {
                         className="text-purple-500 hover:underline cursor-pointer"
                         data-testid="button-edit-parcel-max"
                       >
-                        {(stats?.maxParcelArea ?? parcelAreaRange[1]) >= 1200 
-                          ? "1200+" 
-                          : (stats?.maxParcelArea ?? parcelAreaRange[1]).toFixed(1)}
+                        {parcelAreaRange[1].toFixed(2)}
                       </button>
                     )}
                     <span className="text-muted-foreground text-[10px]">ac</span>
@@ -1686,7 +1676,7 @@ export default function Dashboard() {
                         className="text-teal-500 hover:underline cursor-pointer"
                         data-testid="button-edit-land-per-sqft-min"
                       >
-                        ${(stats?.minLandPerSqft ?? landValuePerSqftRange[0]).toFixed(2)}
+                        ${landValuePerSqftRange[0].toFixed(2)}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -1709,9 +1699,7 @@ export default function Dashboard() {
                         className="text-teal-500 hover:underline cursor-pointer"
                         data-testid="button-edit-land-per-sqft-max"
                       >
-                        {(stats?.maxLandPerSqft ?? landValuePerSqftRange[1]) >= 150
-                          ? "$150+"
-                          : `$${(stats?.maxLandPerSqft ?? landValuePerSqftRange[1]).toFixed(2)}`}
+                        ${landValuePerSqftRange[1].toFixed(2)}
                       </button>
                     )}
                     <span className="text-muted-foreground text-[10px]">/sf</span>
@@ -1788,7 +1776,7 @@ export default function Dashboard() {
                         className="text-pink-500 hover:underline cursor-pointer"
                         data-testid="button-edit-bldg-ratio-min"
                       >
-                        {(stats?.minBldgRatio ?? bldgToLandRatioRange[0]).toFixed(3)}
+                        {bldgToLandRatioRange[0].toFixed(3)}
                       </button>
                     )}
                     <span className="text-muted-foreground">-</span>
@@ -1811,9 +1799,7 @@ export default function Dashboard() {
                         className="text-pink-500 hover:underline cursor-pointer"
                         data-testid="button-edit-bldg-ratio-max"
                       >
-                        {(stats?.maxBldgRatio ?? bldgToLandRatioRange[1]) >= 2
-                          ? "2+"
-                          : (stats?.maxBldgRatio ?? bldgToLandRatioRange[1]).toFixed(3)}
+                        {bldgToLandRatioRange[1].toFixed(3)}
                       </button>
                     )}
                   </div>
