@@ -1879,7 +1879,7 @@ export default function Dashboard() {
                 data-testid="button-download"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download {properties?.length || 0} Properties
+                Download {properties?.length || 0} Parcels
               </Button>
             </div>
           </div>
@@ -1904,17 +1904,24 @@ export default function Dashboard() {
             </div>
           ) : stats ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-2 gap-4">
+                <StatsCard
+                  title="Parcels"
+                  value={stats.count.toLocaleString()}
+                  icon={Home}
+                />
+                <StatsCard
+                  title="Total Acreage"
+                  value={`${stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})} ac`}
+                  icon={TrendingUp}
+                  description={`Avg: ${stats.avgParcelAcres.toFixed(2)} ac`}
+                />
+              </div>
               <StatsCard
                 title="Total Assessed Value"
                 value={formatCurrencyShort(stats.totalValue)}
                 icon={DollarSign}
                 description={`Avg: ${formatCurrencyShort(stats.avgValue)}`}
-              />
-              <StatsCard
-                title="Total Parcel Area"
-                value={`${stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})} ac`}
-                icon={TrendingUp}
-                description={`Avg: ${stats.avgParcelAcres.toFixed(2)} acres`}
               />
               <StatsCard
                 title="Total Land Value"
@@ -1934,19 +1941,12 @@ export default function Dashboard() {
                 icon={DollarSign}
                 description="All exemption types combined"
               />
-              <div className="grid grid-cols-2 gap-4">
-                <StatsCard
-                  title="Properties"
-                  value={stats.count.toLocaleString()}
-                  icon={Home}
-                />
-              </div>
 
               {/* Account Types Chart */}
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
                 <div className="h-64 pt-4">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
-                    Properties by Account Type
+                    Parcels by Account Type
                   </label>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
@@ -1968,7 +1968,7 @@ export default function Dashboard() {
                           borderRadius: "8px",
                         }}
                         itemStyle={{ color: "white" }}
-                        formatter={(value: number) => [value.toLocaleString(), "Properties"]}
+                        formatter={(value: number) => [value.toLocaleString(), "Parcels"]}
                         labelFormatter={(label) => label}
                         cursor={{ fill: "rgba(255,255,255,0.05)" }}
                       />
