@@ -484,7 +484,7 @@ export default function Dashboard() {
       (acc, curr) => acc + curr.assessedValue,
       0,
     );
-    const avgValue = totalValue / properties.length;
+    const avgValue = properties.length > 0 ? totalValue / properties.length : 0;
     const maxVal = Math.max(...properties.map((p) => p.assessedValue));
 
     // Simple distribution for chart - start from current filter min

@@ -39,8 +39,8 @@ function calculateCentroid(rings: number[][][]): { lat: number; lng: number } | 
   }
   
   return {
-    lat: sumLat / count,
-    lng: sumLng / count
+    lat: count > 0 ? sumLat / count : 0,
+    lng: count > 0 ? sumLng / count : 0
   };
 }
 
