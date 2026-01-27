@@ -78,10 +78,10 @@ export default function Dashboard() {
   const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 50000]);
-  const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 100]);
+  const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 1200]);
   const [landValueRange, setLandValueRange] = useState<[number, number]>([0, 2000000]);
   const [improvementValueRange, setImprovementValueRange] = useState<[number, number]>([0, 5000000]);
-  const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 100]);
+  const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 150]);
   const [bldgToLandRatioRange, setBldgToLandRatioRange] = useState<[number, number]>([0, 2]);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [editingMin, setEditingMin] = useState(false);
@@ -1481,8 +1481,8 @@ export default function Dashboard() {
                         className="text-purple-500 hover:underline cursor-pointer"
                         data-testid="button-edit-parcel-max"
                       >
-                        {(stats?.maxParcelArea ?? parcelAreaRange[1]) >= 100 
-                          ? "100+" 
+                        {(stats?.maxParcelArea ?? parcelAreaRange[1]) >= 1200 
+                          ? "1200+" 
                           : (stats?.maxParcelArea ?? parcelAreaRange[1]).toFixed(1)}
                       </button>
                     )}
@@ -1490,9 +1490,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 100]}
-                  max={100}
-                  step={0.1}
+                  defaultValue={[0, 1200]}
+                  max={1200}
+                  step={1}
                   value={parcelAreaRange}
                   onValueChange={(val) =>
                     setParcelAreaRange(val as [number, number])
@@ -1524,7 +1524,7 @@ export default function Dashboard() {
                           className="cursor-pointer"
                           onClick={(data) => {
                             if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setParcelAreaRange([data.binMin, Math.min(data.binMax, 100)]);
+                              setParcelAreaRange([data.binMin, Math.min(data.binMax, 1200)]);
                             }
                           }}
                         />
@@ -1583,8 +1583,8 @@ export default function Dashboard() {
                         className="text-teal-500 hover:underline cursor-pointer"
                         data-testid="button-edit-land-per-sqft-max"
                       >
-                        {(stats?.maxLandPerSqft ?? landValuePerSqftRange[1]) >= 100
-                          ? "$100+"
+                        {(stats?.maxLandPerSqft ?? landValuePerSqftRange[1]) >= 150
+                          ? "$150+"
                           : `$${(stats?.maxLandPerSqft ?? landValuePerSqftRange[1]).toFixed(2)}`}
                       </button>
                     )}
@@ -1592,9 +1592,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 100]}
-                  max={100}
-                  step={0.1}
+                  defaultValue={[0, 150]}
+                  max={150}
+                  step={0.5}
                   value={landValuePerSqftRange}
                   onValueChange={(val) =>
                     setLandValuePerSqftRange(val as [number, number])
@@ -1626,7 +1626,7 @@ export default function Dashboard() {
                           className="cursor-pointer"
                           onClick={(data) => {
                             if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setLandValuePerSqftRange([data.binMin, Math.min(data.binMax, 100)]);
+                              setLandValuePerSqftRange([data.binMin, Math.min(data.binMax, 150)]);
                             }
                           }}
                         />
