@@ -116,6 +116,7 @@ export default function Dashboard() {
   const [statsOpen, setStatsOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
+  const [selectedSubdivisions, setSelectedSubdivisions] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
   const rangesInitialized = useRef(false);
@@ -413,6 +414,16 @@ export default function Dashboard() {
     return Array.from(types).sort();
   }, [rawProperties]);
 
+  // Get unique subdivisions from raw data
+  const uniqueSubdivisions = useMemo(() => {
+    if (!rawProperties) return [];
+    const subdivs = new Set<string>();
+    rawProperties.forEach((p) => {
+      if (p.subdiv) subdivs.add(p.subdiv);
+    });
+    return Array.from(subdivs).sort();
+  }, [rawProperties]);
+
   // Calculate unfiltered data ranges for slider bounds (from rawProperties which is only filtered by assessed value)
   const unfilteredRanges = useMemo(() => {
     if (!rawProperties || rawProperties.length === 0) {
@@ -529,6 +540,13 @@ export default function Dashboard() {
       );
     }
     
+    // Subdivision filter
+    if (selectedSubdivisions.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+      );
+    }
+    
     // Owner filter
     if (ownerFilter.trim()) {
       const searchTerm = ownerFilter.trim();
@@ -552,7 +570,7 @@ export default function Dashboard() {
     }
     
     return filtered;
-  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, ownerFilter, useRegex]);
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, ownerFilter, useRegex]);
 
   // Derived Stats
   const stats = useMemo(() => {
@@ -1078,6 +1096,7 @@ export default function Dashboard() {
                     setLandValuePerSqftRange([unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max]);
                     setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
                     setSelectedAccountTypes([]);
+                    setSelectedSubdivisions([]);
                     setOwnerFilter("");
                     setUseRegex(false);
                   }}
@@ -1882,6 +1901,74 @@ export default function Dashboard() {
                   {selectedAccountTypes.length === 0
                     ? "All types shown"
                     : `${selectedAccountTypes.length} type${selectedAccountTypes.length > 1 ? "s" : ""} selected`}
+                </p>
+              </div>
+
+              {/* Subdivision Multi-Select */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Subdivision
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedSubdivisions([...uniqueSubdivisions])}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-all-subdivisions"
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setSelectedSubdivisions([])}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-none-subdivisions"
+                    >
+                      None
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
+                  {uniqueSubdivisions.map((subdiv) => {
+                    const isSelected = selectedSubdivisions.includes(subdiv);
+                    const count = propertiesWithoutAccountTypeFilter.filter((p) => p.subdiv === subdiv).length;
+                    return (
+                      <button
+                        key={subdiv}
+                        onClick={() =>
+                          setSelectedSubdivisions((prev) =>
+                            isSelected
+                              ? prev.filter((s) => s !== subdiv)
+                              : [...prev, subdiv]
+                          )
+                        }
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
+                          isSelected
+                            ? "bg-primary/20 text-primary"
+                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                        data-testid={`button-subdivision-${subdiv.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center ${
+                              isSelected
+                                ? "bg-primary border-primary"
+                                : "border-muted-foreground"
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                          </div>
+                          <span className="truncate">{subdiv}</span>
+                        </div>
+                        <span className="text-muted-foreground ml-2">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedSubdivisions.length === 0
+                    ? "All subdivisions shown"
+                    : `${selectedSubdivisions.length} subdivision${selectedSubdivisions.length > 1 ? "s" : ""} selected`}
                 </p>
               </div>
 

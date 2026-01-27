@@ -194,6 +194,8 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
               <div style="font-weight: 500;">${parcelArea.toFixed(2)} acres</div>
               <div style="color: #666;">Account Type:</div>
               <div style="font-weight: 500;">${property.accountType || "N/A"}</div>
+              <div style="color: #666;">Subdivision:</div>
+              <div style="font-weight: 500;">${property.subdiv || "N/A"}</div>
               <div style="color: #666;">Mill Levy:</div>
               <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
             </div>
