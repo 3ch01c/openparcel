@@ -1911,7 +1911,7 @@ export default function Dashboard() {
                   icon={Home}
                 />
                 <StatsCard
-                  title="Total Acreage"
+                  title="Acreage"
                   value={stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})}
                   icon={TrendingUp}
                   description={`Avg: ${stats.avgParcelAcres.toFixed(2)} ac`}
