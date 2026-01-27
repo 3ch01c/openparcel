@@ -59,7 +59,8 @@ Preferred communication style: Simple, everyday language.
   - Layer 2 contains parcel data with assessment values joined from Eagle_PARCEL_2025_SUM table
   - Field prefixes: `LAC_GIS.LACGIS.Parcels.*` and `LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.*`
   - Pagination: 1000 records per batch with resultOffset parameter
-  - Data includes ~8,400 parcels covering Los Alamos and White Rock areas
+  - Data includes ~8,674 parcels covering Los Alamos and White Rock areas
+  - **Parcel attributes stored**: PIN, ADDRESS, ACCT, LEGAL, ACCT_TYPE, OWNER (type), ZONE, SUBDIV, OWNERNAME, OWNERADDRESS_ADDRESS1, OWNERADDRESS_CITY, OWNERADDRESS_STATE, OWNERADDRESS_ZIP, BUILDING_ACTUAL, LAND_ACTUAL, TOTAL_ACTUAL, BUILDING_TAXABLE, LAND_TAXABLE, TOTAL_TAXABLE, HHEXEMPTION, VETEXEMPTION, BLDGSQFT, LANDSQFT, TAXYEAR, TAXAREALEVY
 
 ### Map Services
 - **OpenStreetMap**: Tile layer provider for base map imagery

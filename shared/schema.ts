@@ -6,9 +6,6 @@ export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
   parcelId: text("parcel_id").notNull().unique(),
   address: text("address").notNull(),
-  city: text("city"),
-  state: text("state"),
-  zip: text("zip"),
   owner: text("owner").notNull(),
   assessedValue: doublePrecision("assessed_value").notNull(),
   lat: doublePrecision("lat").notNull(),
@@ -26,6 +23,15 @@ export const properties = pgTable("properties", {
   buildingSqft: doublePrecision("building_sqft"),
   millLevy: doublePrecision("mill_levy"),
   accountType: text("account_type"),
+  acct: text("acct"),
+  legal: text("legal"),
+  ownerType: text("owner_type"),
+  zone: text("zone"),
+  subdiv: text("subdiv"),
+  ownerAddress1: text("owner_address1"),
+  ownerCity: text("owner_city"),
+  ownerState: text("owner_state"),
+  ownerZip: text("owner_zip"),
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });

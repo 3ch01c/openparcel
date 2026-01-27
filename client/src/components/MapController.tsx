@@ -163,14 +163,25 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
         const improvementPerSqft = buildingSqft > 0 ? (property.improvementValue || 0) / buildingSqft : 0;
         const taxPerSqft = landSqft > 0 ? taxAssessed / landSqft : 0;
 
+        const ownerAddressParts = [
+          property.ownerAddress1,
+          property.ownerCity,
+          property.ownerState,
+          property.ownerZip
+        ].filter(Boolean);
+        const ownerAddress = ownerAddressParts.length > 0 
+          ? `${property.ownerAddress1 || ""}${property.ownerAddress1 ? ", " : ""}${property.ownerCity || ""} ${property.ownerState || ""} ${property.ownerZip || ""}`.trim()
+          : "N/A";
+
         const popupContent = `
           <div style="min-width: 250px; font-family: system-ui, sans-serif;">
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #333;">${property.address || "Unknown Address"}</div>
-            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${property.city || ""}, ${property.state || ""} ${property.zip || ""}</div>
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; column-gap: 5px; font-size: 12px;">
               <div style="color: #666;">Owner:</div>
               <div style="font-weight: 500;">${property.owner || "N/A"}</div>
+              <div style="color: #666;">Owner Address:</div>
+              <div style="font-weight: 500;">${ownerAddress}</div>
               <div style="color: #666;">Assessed Value:</div>
               <div style="font-weight: 500;">${formatCurrency(property.assessedValue)}</div>
               <div style="color: #666;">Land Value:</div>
@@ -196,7 +207,7 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
             ` : ""}
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-${encodeURIComponent(property.city || "")}-${encodeURIComponent(property.state || "")}-${encodeURIComponent(property.zip || "")}_rb/" 
+              <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-${encodeURIComponent(property.ownerCity || "Los Alamos")}-${encodeURIComponent(property.ownerState || "NM")}-${encodeURIComponent(property.ownerZip || "87544")}_rb/" 
                  target="_blank" rel="noopener noreferrer"
                  style="font-size: 11px; color: #3b82f6; text-decoration: none;">
                 Zillow

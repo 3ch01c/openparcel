@@ -23,7 +23,6 @@ interface ArcGISResponse {
   };
 }
 
-// Calculate centroid from polygon rings
 function calculateCentroid(rings: number[][][]): { lat: number; lng: number } | null {
   if (!rings || rings.length === 0) return null;
   
@@ -54,8 +53,14 @@ async function fetchBatch(offset: number): Promise<{ features: ArcGISFeature[]; 
       "LAC_GIS.LACGIS.Parcels.OBJECTID",
       "LAC_GIS.LACGIS.Parcels.PIN",
       "LAC_GIS.LACGIS.Parcels.ADDRESS",
+      "LAC_GIS.LACGIS.Parcels.ACCT",
+      "LAC_GIS.LACGIS.Parcels.LEGAL",
       "LAC_GIS.LACGIS.Parcels.ACCT_TYPE",
+      "LAC_GIS.LACGIS.Parcels.OWNER",
+      "LAC_GIS.LACGIS.Parcels.ZONE",
+      "LAC_GIS.LACGIS.Parcels.SUBDIV",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERNAME",
+      "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_ADDRESS1",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_CITY",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_STATE",
       "LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_ZIP",
@@ -105,20 +110,27 @@ async function fetchBatch(offset: number): Promise<{ features: ArcGISFeature[]; 
 function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   const attrs = feature.attributes;
   
-  // Get centroid from geometry
   const centroid = feature.geometry?.rings 
     ? calculateCentroid(feature.geometry.rings)
     : null;
   
   if (!centroid) return null;
   
-  // Extract values with proper field prefixes
   const parcelId = attrs["LAC_GIS.LACGIS.Parcels.PIN"] || attrs["LAC_GIS.LACGIS.Parcels.OBJECTID"]?.toString();
   const address = attrs["LAC_GIS.LACGIS.Parcels.ADDRESS"] || "Unknown";
-  const city = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_CITY"] || "Los Alamos";
-  const state = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_STATE"] || "NM";
-  const zip = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_ZIP"] || "87544";
+  const acct = attrs["LAC_GIS.LACGIS.Parcels.ACCT"] || null;
+  const legal = attrs["LAC_GIS.LACGIS.Parcels.LEGAL"] || null;
+  const ownerType = attrs["LAC_GIS.LACGIS.Parcels.OWNER"] || null;
+  const zone = attrs["LAC_GIS.LACGIS.Parcels.ZONE"] || null;
+  const subdiv = attrs["LAC_GIS.LACGIS.Parcels.SUBDIV"] || null;
+  const accountType = attrs["LAC_GIS.LACGIS.Parcels.ACCT_TYPE"] || null;
+  
   const owner = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERNAME"] || "Unknown";
+  const ownerAddress1 = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_ADDRESS1"] || null;
+  const ownerCity = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_CITY"] || null;
+  const ownerState = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_STATE"] || null;
+  const ownerZip = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERADDRESS_ZIP"] || null;
+  
   const buildingValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BUILDING_ACTUAL"] || 0;
   const landValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LAND_ACTUAL"] || 0;
   const totalValue = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TOTAL_ACTUAL"] || buildingValue + landValue;
@@ -131,17 +143,12 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   const landSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.LANDSQFT"] || 0;
   const buildingSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT"] || 0;
   const millLevy = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXAREALEVY"] || null;
-  const accountType = attrs["LAC_GIS.LACGIS.Parcels.ACCT_TYPE"] || null;
   
-  // Convert square feet to acres (1 acre = 43,560 sq ft)
   const parcelArea = landSqFt / 43560;
   
   return {
     parcelId: parcelId?.toString() || "UNKNOWN",
     address,
-    city,
-    state,
-    zip,
     owner,
     assessedValue: totalValue,
     lat: centroid.lat,
@@ -158,7 +165,16 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
     landSqft: landSqFt,
     buildingSqft: buildingSqFt,
     millLevy,
-    accountType
+    accountType,
+    acct,
+    legal,
+    ownerType,
+    zone,
+    subdiv,
+    ownerAddress1,
+    ownerCity,
+    ownerState,
+    ownerZip
   };
 }
 
@@ -190,7 +206,6 @@ export async function fetchArcGISData(): Promise<number> {
           await storage.createProperty(property);
           batchInserted++;
         } catch (err) {
-          // Likely duplicate, skip
         }
       }
     }
@@ -200,7 +215,6 @@ export async function fetchArcGISData(): Promise<number> {
     
     offset += BATCH_SIZE;
     
-    // Rate limiting delay
     if (hasMore) {
       await new Promise(resolve => setTimeout(resolve, DELAY_MS));
     }
