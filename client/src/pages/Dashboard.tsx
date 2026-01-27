@@ -76,11 +76,11 @@ const TILE_LAYERS = {
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
-  const [valueRange, setValueRange] = useState<[number, number]>([0, 5000000]);
-  const [taxRange, setTaxRange] = useState<[number, number]>([0, 50000]);
+  const [valueRange, setValueRange] = useState<[number, number]>([0, 250000000]);
+  const [taxRange, setTaxRange] = useState<[number, number]>([0, 500000]);
   const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 1200]);
-  const [landValueRange, setLandValueRange] = useState<[number, number]>([0, 2000000]);
-  const [improvementValueRange, setImprovementValueRange] = useState<[number, number]>([0, 5000000]);
+  const [landValueRange, setLandValueRange] = useState<[number, number]>([0, 250000000]);
+  const [improvementValueRange, setImprovementValueRange] = useState<[number, number]>([0, 50000000]);
   const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 150]);
   const [bldgToLandRatioRange, setBldgToLandRatioRange] = useState<[number, number]>([0, 2]);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
@@ -1088,9 +1088,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 5000000]}
-                  max={5000000}
-                  step={50000}
+                  defaultValue={[0, 250000000]}
+                  max={250000000}
+                  step={1000000}
                   value={valueRange}
                   onValueChange={(val) =>
                     setValueRange(val as [number, number])
@@ -1187,9 +1187,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 2000000]}
-                  max={2000000}
-                  step={10000}
+                  defaultValue={[0, 250000000]}
+                  max={250000000}
+                  step={1000000}
                   value={landValueRange}
                   onValueChange={(val) =>
                     setLandValueRange(val as [number, number])
@@ -1288,9 +1288,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 5000000]}
-                  max={5000000}
-                  step={50000}
+                  defaultValue={[0, 50000000]}
+                  max={50000000}
+                  step={500000}
                   value={improvementValueRange}
                   onValueChange={(val) =>
                     setImprovementValueRange(val as [number, number])
@@ -1388,9 +1388,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Slider
-                  defaultValue={[0, 50000]}
-                  max={50000}
-                  step={500}
+                  defaultValue={[0, 500000]}
+                  max={500000}
+                  step={5000}
                   value={taxRange}
                   onValueChange={(val) =>
                     setTaxRange(val as [number, number])
