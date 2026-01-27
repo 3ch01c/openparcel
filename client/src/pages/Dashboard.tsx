@@ -81,6 +81,8 @@ export default function Dashboard() {
   const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 100]);
   const [landValueRange, setLandValueRange] = useState<[number, number]>([0, 2000000]);
   const [improvementValueRange, setImprovementValueRange] = useState<[number, number]>([0, 5000000]);
+  const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 100]);
+  const [bldgToLandRatioRange, setBldgToLandRatioRange] = useState<[number, number]>([0, 2]);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
@@ -102,6 +104,14 @@ export default function Dashboard() {
   const [editingImprovementMax, setEditingImprovementMax] = useState(false);
   const [tempImprovementMin, setTempImprovementMin] = useState("");
   const [tempImprovementMax, setTempImprovementMax] = useState("");
+  const [editingLandPerSqftMin, setEditingLandPerSqftMin] = useState(false);
+  const [editingLandPerSqftMax, setEditingLandPerSqftMax] = useState(false);
+  const [tempLandPerSqftMin, setTempLandPerSqftMin] = useState("");
+  const [tempLandPerSqftMax, setTempLandPerSqftMax] = useState("");
+  const [editingBldgRatioMin, setEditingBldgRatioMin] = useState(false);
+  const [editingBldgRatioMax, setEditingBldgRatioMax] = useState(false);
+  const [tempBldgRatioMin, setTempBldgRatioMin] = useState("");
+  const [tempBldgRatioMax, setTempBldgRatioMax] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -118,6 +128,10 @@ export default function Dashboard() {
   const landValueMaxInputRef = useRef<HTMLInputElement>(null);
   const improvementMinInputRef = useRef<HTMLInputElement>(null);
   const improvementMaxInputRef = useRef<HTMLInputElement>(null);
+  const landPerSqftMinInputRef = useRef<HTMLInputElement>(null);
+  const landPerSqftMaxInputRef = useRef<HTMLInputElement>(null);
+  const bldgRatioMinInputRef = useRef<HTMLInputElement>(null);
+  const bldgRatioMaxInputRef = useRef<HTMLInputElement>(null);
 
   const handleMinClick = () => {
     setTempMin(String(valueRange[0]));
@@ -272,6 +286,82 @@ export default function Dashboard() {
     setEditingImprovementMax(false);
   };
 
+  // Land Value Per Sqft handlers
+  const handleLandPerSqftMinClick = () => {
+    setTempLandPerSqftMin(String(landValuePerSqftRange[0]));
+    setEditingLandPerSqftMin(true);
+    setTimeout(() => landPerSqftMinInputRef.current?.select(), 0);
+  };
+
+  const handleLandPerSqftMaxClick = () => {
+    setTempLandPerSqftMax(landValuePerSqftRange[1] >= 100 ? "100" : String(landValuePerSqftRange[1]));
+    setEditingLandPerSqftMax(true);
+    setTimeout(() => landPerSqftMaxInputRef.current?.select(), 0);
+  };
+
+  const handleLandPerSqftMinSubmit = () => {
+    const val = parseFloat(tempLandPerSqftMin.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, landValuePerSqftRange[1]));
+      setLandValuePerSqftRange([clamped, landValuePerSqftRange[1]]);
+    }
+    setEditingLandPerSqftMin(false);
+  };
+
+  const handleLandPerSqftMaxSubmit = () => {
+    const val = parseFloat(tempLandPerSqftMax.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(landValuePerSqftRange[0], Math.min(val, 100));
+      setLandValuePerSqftRange([landValuePerSqftRange[0], clamped]);
+    }
+    setEditingLandPerSqftMax(false);
+  };
+
+  // Building Sqft to Land Sqft Ratio handlers
+  const handleBldgRatioMinClick = () => {
+    setTempBldgRatioMin(String(bldgToLandRatioRange[0]));
+    setEditingBldgRatioMin(true);
+    setTimeout(() => bldgRatioMinInputRef.current?.select(), 0);
+  };
+
+  const handleBldgRatioMaxClick = () => {
+    setTempBldgRatioMax(bldgToLandRatioRange[1] >= 2 ? "2" : String(bldgToLandRatioRange[1]));
+    setEditingBldgRatioMax(true);
+    setTimeout(() => bldgRatioMaxInputRef.current?.select(), 0);
+  };
+
+  const handleBldgRatioMinSubmit = () => {
+    const val = parseFloat(tempBldgRatioMin.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, bldgToLandRatioRange[1]));
+      setBldgToLandRatioRange([clamped, bldgToLandRatioRange[1]]);
+    }
+    setEditingBldgRatioMin(false);
+  };
+
+  const handleBldgRatioMaxSubmit = () => {
+    const val = parseFloat(tempBldgRatioMax.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(bldgToLandRatioRange[0], Math.min(val, 2));
+      setBldgToLandRatioRange([bldgToLandRatioRange[0], clamped]);
+    }
+    setEditingBldgRatioMax(false);
+  };
+
+  // Calculate land value per sqft for a property
+  const getLandValuePerSqft = (p: PropertyResponse) => {
+    const landValue = p.landValue || 0;
+    const landSqft = p.landSqft || (p.parcelArea || 0) * 43560;
+    return landSqft > 0 ? landValue / landSqft : 0;
+  };
+
+  // Calculate building sqft to land sqft ratio
+  const getBldgToLandRatio = (p: PropertyResponse) => {
+    const bldgSqft = p.buildingSqft || 0;
+    const landSqft = p.landSqft || (p.parcelArea || 0) * 43560;
+    return landSqft > 0 ? bldgSqft / landSqft : 0;
+  };
+
   // Calculate property tax for a single property
   // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
   const getPropertyTax = (p: PropertyResponse) => {
@@ -322,7 +412,7 @@ export default function Dashboard() {
     return Array.from(types).sort();
   }, [rawProperties]);
 
-  // Filter properties by value, tax range, parcel area, land value, and improvement value (without account type filter)
+  // Filter properties by value, tax range, parcel area, land value, improvement value, land value per sqft, and bldg ratio (without account type filter)
   // Used to calculate account type counts based on current other filters
   const propertiesWithoutAccountTypeFilter = useMemo(() => {
     if (!rawProperties) return [];
@@ -331,6 +421,8 @@ export default function Dashboard() {
       const parcelArea = p.parcelArea || 0;
       const landValue = p.landValue || 0;
       const improvementValue = p.improvementValue || 0;
+      const landPerSqft = getLandValuePerSqft(p);
+      const bldgRatio = getBldgToLandRatio(p);
       return (
         tax >= taxRange[0] &&
         tax <= taxRange[1] &&
@@ -339,10 +431,14 @@ export default function Dashboard() {
         landValue >= landValueRange[0] &&
         landValue <= landValueRange[1] &&
         improvementValue >= improvementValueRange[0] &&
-        improvementValue <= improvementValueRange[1]
+        improvementValue <= improvementValueRange[1] &&
+        landPerSqft >= landValuePerSqftRange[0] &&
+        landPerSqft <= landValuePerSqftRange[1] &&
+        bldgRatio >= bldgToLandRatioRange[0] &&
+        bldgRatio <= bldgToLandRatioRange[1]
       );
     });
-  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange]);
+  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange]);
 
   // Filter properties by tax range, land sqft, account types, and owner (client-side)
   const properties = useMemo(() => {
@@ -488,6 +584,40 @@ export default function Dashboard() {
       binMax: Math.round(actualImpMin + (i + 1) * impStep),
     }));
 
+    // Land value per sqft histogram
+    const landPerSqftValues = properties.map(p => getLandValuePerSqft(p));
+    const actualLandPerSqftMin = landPerSqftValues.length > 0 ? Math.min(...landPerSqftValues) : 0;
+    const actualLandPerSqftMax = landPerSqftValues.length > 0 ? Math.max(...landPerSqftValues) : 1;
+    const landPerSqftDistribution = [0, 0, 0, 0, 0];
+    const landPerSqftStep = (actualLandPerSqftMax - actualLandPerSqftMin) / 5;
+    landPerSqftValues.forEach(val => {
+      const bucket = landPerSqftStep > 0 ? Math.min(Math.floor((val - actualLandPerSqftMin) / landPerSqftStep), 4) : 0;
+      landPerSqftDistribution[bucket]++;
+    });
+    const landPerSqftChartData = landPerSqftDistribution.map((count, i) => ({
+      range: `$${(actualLandPerSqftMin + i * landPerSqftStep).toFixed(2)} - $${(actualLandPerSqftMin + (i + 1) * landPerSqftStep).toFixed(2)}`,
+      count,
+      binMin: actualLandPerSqftMin + i * landPerSqftStep,
+      binMax: actualLandPerSqftMin + (i + 1) * landPerSqftStep,
+    }));
+
+    // Building sqft to land sqft ratio histogram
+    const bldgRatioValues = properties.map(p => getBldgToLandRatio(p));
+    const actualBldgRatioMin = bldgRatioValues.length > 0 ? Math.min(...bldgRatioValues) : 0;
+    const actualBldgRatioMax = bldgRatioValues.length > 0 ? Math.max(...bldgRatioValues) : 1;
+    const bldgRatioDistribution = [0, 0, 0, 0, 0];
+    const bldgRatioStep = (actualBldgRatioMax - actualBldgRatioMin) / 5;
+    bldgRatioValues.forEach(val => {
+      const bucket = bldgRatioStep > 0 ? Math.min(Math.floor((val - actualBldgRatioMin) / bldgRatioStep), 4) : 0;
+      bldgRatioDistribution[bucket]++;
+    });
+    const bldgRatioChartData = bldgRatioDistribution.map((count, i) => ({
+      range: `${(actualBldgRatioMin + i * bldgRatioStep).toFixed(3)} - ${(actualBldgRatioMin + (i + 1) * bldgRatioStep).toFixed(3)}`,
+      count,
+      binMin: actualBldgRatioMin + i * bldgRatioStep,
+      binMax: actualBldgRatioMin + (i + 1) * bldgRatioStep,
+    }));
+
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
     // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
     const totalTaxes = properties.reduce((sum, p) => {
@@ -611,6 +741,10 @@ export default function Dashboard() {
       maxImprovementValue: actualImpMax,
       minParcelArea: actualParcelMin,
       maxParcelArea: actualParcelMax,
+      minLandPerSqft: actualLandPerSqftMin,
+      maxLandPerSqft: actualLandPerSqftMax,
+      minBldgRatio: actualBldgRatioMin,
+      maxBldgRatio: actualBldgRatioMax,
       totalTaxes,
       avgTaxes,
       taxPctOfTotal,
@@ -630,6 +764,8 @@ export default function Dashboard() {
       parcelChartData,
       landChartData,
       improvementChartData,
+      landPerSqftChartData,
+      bldgRatioChartData,
       topLandHoldersData,
     };
   }, [properties]);
@@ -1356,6 +1492,209 @@ export default function Dashboard() {
                           onClick={(data) => {
                             if (data && data.binMin !== undefined && data.binMax !== undefined) {
                               setParcelAreaRange([data.binMin, Math.min(data.binMax, 100)]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Land Value Per Sqft Filter */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Land Value/Sqft
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingLandPerSqftMin ? (
+                      <input
+                        ref={landPerSqftMinInputRef}
+                        type="text"
+                        value={tempLandPerSqftMin}
+                        onChange={(e) => setTempLandPerSqftMin(e.target.value)}
+                        onBlur={handleLandPerSqftMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandPerSqftMinSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
+                        data-testid="input-land-per-sqft-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandPerSqftMinClick}
+                        className="text-teal-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-land-per-sqft-min"
+                      >
+                        ${(stats?.minLandPerSqft ?? landValuePerSqftRange[0]).toFixed(2)}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingLandPerSqftMax ? (
+                      <input
+                        ref={landPerSqftMaxInputRef}
+                        type="text"
+                        value={tempLandPerSqftMax}
+                        onChange={(e) => setTempLandPerSqftMax(e.target.value)}
+                        onBlur={handleLandPerSqftMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleLandPerSqftMaxSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
+                        data-testid="input-land-per-sqft-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleLandPerSqftMaxClick}
+                        className="text-teal-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-land-per-sqft-max"
+                      >
+                        {(stats?.maxLandPerSqft ?? landValuePerSqftRange[1]) >= 100
+                          ? "$100+"
+                          : `$${(stats?.maxLandPerSqft ?? landValuePerSqftRange[1]).toFixed(2)}`}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground text-[10px]">/sf</span>
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 100]}
+                  max={100}
+                  step={0.1}
+                  value={landValuePerSqftRange}
+                  onValueChange={(val) =>
+                    setLandValuePerSqftRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-teal-500"
+                  thumbClassName="border-teal-500"
+                  data-testid="slider-land-per-sqft"
+                />
+                {stats?.landPerSqftChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.landPerSqftChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(173 80% 40%)"
+                          radius={[4, 4, 0, 0]}
+                          className="cursor-pointer"
+                          onClick={(data) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setLandValuePerSqftRange([data.binMin, Math.min(data.binMax, 100)]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Building Sqft to Land Sqft Ratio Filter */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Bldg/Land Sqft Ratio
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingBldgRatioMin ? (
+                      <input
+                        ref={bldgRatioMinInputRef}
+                        type="text"
+                        value={tempBldgRatioMin}
+                        onChange={(e) => setTempBldgRatioMin(e.target.value)}
+                        onBlur={handleBldgRatioMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleBldgRatioMinSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-pink-500 text-pink-500 rounded text-right"
+                        data-testid="input-bldg-ratio-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleBldgRatioMinClick}
+                        className="text-pink-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-bldg-ratio-min"
+                      >
+                        {(stats?.minBldgRatio ?? bldgToLandRatioRange[0]).toFixed(3)}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingBldgRatioMax ? (
+                      <input
+                        ref={bldgRatioMaxInputRef}
+                        type="text"
+                        value={tempBldgRatioMax}
+                        onChange={(e) => setTempBldgRatioMax(e.target.value)}
+                        onBlur={handleBldgRatioMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleBldgRatioMaxSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-pink-500 text-pink-500 rounded text-right"
+                        data-testid="input-bldg-ratio-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleBldgRatioMaxClick}
+                        className="text-pink-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-bldg-ratio-max"
+                      >
+                        {(stats?.maxBldgRatio ?? bldgToLandRatioRange[1]) >= 2
+                          ? "2+"
+                          : (stats?.maxBldgRatio ?? bldgToLandRatioRange[1]).toFixed(3)}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  defaultValue={[0, 2]}
+                  max={2}
+                  step={0.01}
+                  value={bldgToLandRatioRange}
+                  onValueChange={(val) =>
+                    setBldgToLandRatioRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-pink-500"
+                  thumbClassName="border-pink-500"
+                  data-testid="slider-bldg-ratio"
+                />
+                {stats?.bldgRatioChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.bldgRatioChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(330 81% 60%)"
+                          radius={[4, 4, 0, 0]}
+                          className="cursor-pointer"
+                          onClick={(data) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setBldgToLandRatioRange([data.binMin, Math.min(data.binMax, 2)]);
                             }
                           }}
                         />
