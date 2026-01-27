@@ -33,13 +33,13 @@ function formatCurrency(value: number): string {
 }
 
 function getMarkerColor(value: number, maxValue: number): string {
-  // Plasma colorblind-safe palette (purple → pink → orange → yellow)
+  // Viridis colorblind-safe palette (purple → teal → yellow)
   const ratio = maxValue > 0 ? value / maxValue : 0;
-  if (ratio < 0.2) return "#0d0887";
-  if (ratio < 0.4) return "#7e03a8";
-  if (ratio < 0.6) return "#cc4778";
-  if (ratio < 0.8) return "#f89540";
-  return "#f0f921";
+  if (ratio < 0.2) return "#440154";
+  if (ratio < 0.4) return "#3b528b";
+  if (ratio < 0.6) return "#21918c";
+  if (ratio < 0.8) return "#5ec962";
+  return "#fde725";
 }
 
 export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
