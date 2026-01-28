@@ -2288,7 +2288,7 @@ export default function Dashboard() {
                   title="Parcels"
                   value={stats.count.toLocaleString()}
                   icon={Home}
-                  description={`out of ${(initialTotalParcelsRef.current || rawProperties?.length || 0).toLocaleString()}`}
+                  description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
                 />
                 <StatsCard
                   title="Acreage"
