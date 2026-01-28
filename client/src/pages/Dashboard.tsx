@@ -121,6 +121,7 @@ export default function Dashboard() {
   const [ownerFilter, setOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
   const rangesInitialized = useRef(false);
+  const initialTotalParcelsRef = useRef<number | null>(null);
   const initialBoundsRef = useRef<{
     assessedValue: { min: number; max: number };
     tax: { min: number; max: number };
@@ -515,6 +516,8 @@ export default function Dashboard() {
   // Initialize filter ranges and store initial bounds when data first loads
   useEffect(() => {
     if (!rangesInitialized.current && rawProperties && rawProperties.length > 0) {
+      // Store initial total parcel count - this will never change after first load
+      initialTotalParcelsRef.current = rawProperties.length;
       // Store initial bounds permanently - these will never change after first load
       initialBoundsRef.current = {
         assessedValue: { min: unfilteredRanges.assessedValue.min, max: unfilteredRanges.assessedValue.max },
@@ -2285,7 +2288,7 @@ export default function Dashboard() {
                   title="Parcels"
                   value={stats.count.toLocaleString()}
                   icon={Home}
-                  description={`out of ${rawProperties?.length.toLocaleString() || 0}`}
+                  description={`out of ${(initialTotalParcelsRef.current || rawProperties?.length || 0).toLocaleString()}`}
                 />
                 <StatsCard
                   title="Acreage"
