@@ -1342,10 +1342,14 @@ export default function Dashboard() {
                           dataKey="count"
                           fill="hsl(199 89% 48%)"
                           radius={[4, 4, 0, 0]}
-                          className="cursor-pointer"
-                          onClick={(data) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                          background={{
+                            fill: "transparent",
+                            cursor: "pointer",
+                            onClick: (e: any) => {
+                              const data = stats.chartData?.[e.index];
+                              if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                                setValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                              }
                             }
                           }}
                         />
@@ -1441,10 +1445,14 @@ export default function Dashboard() {
                           dataKey="count"
                           fill="hsl(173 80% 40%)"
                           radius={[4, 4, 0, 0]}
-                          className="cursor-pointer"
-                          onClick={(data) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setLandValueRange([data.binMin, Math.min(data.binMax, 2000000)]);
+                          background={{
+                            fill: "transparent",
+                            cursor: "pointer",
+                            onClick: (e: any) => {
+                              const data = stats.landChartData?.[e.index];
+                              if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                                setLandValueRange([data.binMin, Math.min(data.binMax, 2000000)]);
+                              }
                             }
                           }}
                         />
@@ -1540,10 +1548,14 @@ export default function Dashboard() {
                           dataKey="count"
                           fill="hsl(24 95% 50%)"
                           radius={[4, 4, 0, 0]}
-                          className="cursor-pointer"
-                          onClick={(data) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setImprovementValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                          background={{
+                            fill: "transparent",
+                            cursor: "pointer",
+                            onClick: (e: any) => {
+                              const data = stats.improvementChartData?.[e.index];
+                              if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                                setImprovementValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
+                              }
                             }
                           }}
                         />
@@ -1638,10 +1650,14 @@ export default function Dashboard() {
                           dataKey="count"
                           fill="hsl(142 71% 45%)"
                           radius={[4, 4, 0, 0]}
-                          className="cursor-pointer"
-                          onClick={(data) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setTaxRange([data.binMin, Math.min(data.binMax, 50000)]);
+                          background={{
+                            fill: "transparent",
+                            cursor: "pointer",
+                            onClick: (e: any) => {
+                              const data = stats.taxChartData?.[e.index];
+                              if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                                setTaxRange([data.binMin, Math.min(data.binMax, 50000)]);
+                              }
                             }
                           }}
                         />
@@ -1738,10 +1754,14 @@ export default function Dashboard() {
                           dataKey="count"
                           fill="hsl(271 81% 56%)"
                           radius={[4, 4, 0, 0]}
-                          className="cursor-pointer"
-                          onClick={(data) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setParcelAreaRange([data.binMin, Math.min(data.binMax, 1200)]);
+                          background={{
+                            fill: "transparent",
+                            cursor: "pointer",
+                            onClick: (e: any) => {
+                              const data = stats.parcelChartData?.[e.index];
+                              if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                                setParcelAreaRange([data.binMin, Math.min(data.binMax, 1200)]);
+                              }
                             }
                           }}
                         />
@@ -1838,10 +1858,14 @@ export default function Dashboard() {
                           dataKey="count"
                           fill="hsl(173 80% 40%)"
                           radius={[4, 4, 0, 0]}
-                          className="cursor-pointer"
-                          onClick={(data) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setLandValuePerSqftRange([data.binMin, Math.min(data.binMax, 150)]);
+                          background={{
+                            fill: "transparent",
+                            cursor: "pointer",
+                            onClick: (e: any) => {
+                              const data = stats.landPerSqftChartData?.[e.index];
+                              if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                                setLandValuePerSqftRange([data.binMin, Math.min(data.binMax, 150)]);
+                              }
                             }
                           }}
                         />
@@ -1937,10 +1961,14 @@ export default function Dashboard() {
                           dataKey="count"
                           fill="hsl(330 81% 60%)"
                           radius={[4, 4, 0, 0]}
-                          className="cursor-pointer"
-                          onClick={(data) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setBldgToLandRatioRange([data.binMin, Math.min(data.binMax, 2)]);
+                          background={{
+                            fill: "transparent",
+                            cursor: "pointer",
+                            onClick: (e: any) => {
+                              const data = stats.bldgRatioChartData?.[e.index];
+                              if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                                setBldgToLandRatioRange([data.binMin, Math.min(data.binMax, 2)]);
+                              }
                             }
                           }}
                         />
