@@ -122,6 +122,9 @@ export default function Dashboard() {
   const [useRegex, setUseRegex] = useState(false);
   const rangesInitialized = useRef(false);
   const initialTotalParcelsRef = useRef<number | null>(null);
+  const initialAccountTypesRef = useRef<string[] | null>(null);
+  const initialSubdivisionsRef = useRef<string[] | null>(null);
+  const initialOwnerCityStatesRef = useRef<string[] | null>(null);
   const initialBoundsRef = useRef<{
     assessedValue: { min: number; max: number };
     tax: { min: number; max: number };
@@ -415,40 +418,14 @@ export default function Dashboard() {
     maxValue: valueRange[1],
   });
 
-  // Get unique account types from raw data
-  const uniqueAccountTypes = useMemo(() => {
-    if (!rawProperties) return [];
-    const types = new Set<string>();
-    rawProperties.forEach((p) => {
-      if (p.accountType) types.add(p.accountType);
-    });
-    return Array.from(types).sort();
-  }, [rawProperties]);
+  // Get unique account types from initial data load (never changes after first load)
+  const uniqueAccountTypes = initialAccountTypesRef.current || [];
 
-  // Get unique subdivisions from raw data
-  const uniqueSubdivisions = useMemo(() => {
-    if (!rawProperties) return [];
-    const subdivs = new Set<string>();
-    rawProperties.forEach((p) => {
-      if (p.subdiv) subdivs.add(p.subdiv);
-    });
-    return Array.from(subdivs).sort();
-  }, [rawProperties]);
+  // Get unique subdivisions from initial data load (never changes after first load)
+  const uniqueSubdivisions = initialSubdivisionsRef.current || [];
 
-  // Get unique owner city/state combinations from raw data
-  const uniqueOwnerCityStates = useMemo(() => {
-    if (!rawProperties) return [];
-    const cityStates = new Set<string>();
-    rawProperties.forEach((p) => {
-      const city = p.ownerCity?.trim() || "";
-      const state = p.ownerState?.trim() || "";
-      if (city || state) {
-        const combined = [city, state].filter(Boolean).join(", ");
-        if (combined) cityStates.add(combined);
-      }
-    });
-    return Array.from(cityStates).sort();
-  }, [rawProperties]);
+  // Get unique owner city/state combinations from initial data load (never changes after first load)
+  const uniqueOwnerCityStates = initialOwnerCityStatesRef.current || [];
 
   // Calculate unfiltered data ranges for initial slider bounds and reset
   const unfilteredRanges = useMemo(() => {
@@ -528,6 +505,24 @@ export default function Dashboard() {
         landPerSqft: { min: unfilteredRanges.landPerSqft.min, max: unfilteredRanges.landPerSqft.max },
         bldgRatio: { min: unfilteredRanges.bldgRatio.min, max: unfilteredRanges.bldgRatio.max },
       };
+      // Store initial multi-choice options permanently - these will never change after first load
+      const accountTypes = new Set<string>();
+      const subdivisions = new Set<string>();
+      const ownerCityStates = new Set<string>();
+      rawProperties.forEach((p) => {
+        if (p.accountType) accountTypes.add(p.accountType);
+        if (p.subdiv) subdivisions.add(p.subdiv);
+        const city = p.ownerCity?.trim() || "";
+        const state = p.ownerState?.trim() || "";
+        if (city || state) {
+          const combined = [city, state].filter(Boolean).join(", ");
+          if (combined) ownerCityStates.add(combined);
+        }
+      });
+      initialAccountTypesRef.current = Array.from(accountTypes).sort();
+      initialSubdivisionsRef.current = Array.from(subdivisions).sort();
+      initialOwnerCityStatesRef.current = Array.from(ownerCityStates).sort();
+      
       setValueRange([unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max]);
       setTaxRange([unfilteredRanges.tax.min, unfilteredRanges.tax.max]);
       setParcelAreaRange([unfilteredRanges.parcelArea.min, unfilteredRanges.parcelArea.max]);
