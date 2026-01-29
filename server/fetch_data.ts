@@ -174,7 +174,8 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
     ownerAddress1,
     ownerCity,
     ownerState,
-    ownerZip
+    ownerZip,
+    geometry: feature.geometry?.rings ? JSON.stringify(feature.geometry.rings) : null
   };
 }
 

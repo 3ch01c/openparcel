@@ -32,6 +32,7 @@ export const properties = pgTable("properties", {
   ownerCity: text("owner_city"),
   ownerState: text("owner_state"),
   ownerZip: text("owner_zip"),
+  geometry: text("geometry"),
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });
