@@ -570,6 +570,69 @@ export default function Dashboard() {
     });
   }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange]);
 
+  // For account type counts: apply subdivision and owner city/state filters (but not account type)
+  const propertiesForAccountTypeCounts = useMemo(() => {
+    let filtered = propertiesWithoutAccountTypeFilter;
+    
+    if (selectedSubdivisions.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+      );
+    }
+    
+    if (selectedOwnerCityStates.length > 0) {
+      filtered = filtered.filter((p) => {
+        const city = p.ownerCity?.trim() || "";
+        const state = p.ownerState?.trim() || "";
+        const combined = [city, state].filter(Boolean).join(", ");
+        return combined && selectedOwnerCityStates.includes(combined);
+      });
+    }
+    
+    return filtered;
+  }, [propertiesWithoutAccountTypeFilter, selectedSubdivisions, selectedOwnerCityStates]);
+
+  // For subdivision counts: apply account type and owner city/state filters (but not subdivision)
+  const propertiesForSubdivisionCounts = useMemo(() => {
+    let filtered = propertiesWithoutAccountTypeFilter;
+    
+    if (selectedAccountTypes.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.accountType && selectedAccountTypes.includes(p.accountType)
+      );
+    }
+    
+    if (selectedOwnerCityStates.length > 0) {
+      filtered = filtered.filter((p) => {
+        const city = p.ownerCity?.trim() || "";
+        const state = p.ownerState?.trim() || "";
+        const combined = [city, state].filter(Boolean).join(", ");
+        return combined && selectedOwnerCityStates.includes(combined);
+      });
+    }
+    
+    return filtered;
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedOwnerCityStates]);
+
+  // For owner city/state counts: apply account type and subdivision filters (but not owner city/state)
+  const propertiesForOwnerCityStateCounts = useMemo(() => {
+    let filtered = propertiesWithoutAccountTypeFilter;
+    
+    if (selectedAccountTypes.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.accountType && selectedAccountTypes.includes(p.accountType)
+      );
+    }
+    
+    if (selectedSubdivisions.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+      );
+    }
+    
+    return filtered;
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions]);
+
   // Filter properties by tax range, land sqft, account types, and owner (client-side)
   const properties = useMemo(() => {
     let filtered = propertiesWithoutAccountTypeFilter;
@@ -2001,7 +2064,7 @@ export default function Dashboard() {
                 <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
                   {uniqueAccountTypes.map((type) => {
                     const isSelected = selectedAccountTypes.includes(type);
-                    const count = propertiesWithoutAccountTypeFilter.filter((p) => p.accountType === type).length;
+                    const count = propertiesForAccountTypeCounts.filter((p) => p.accountType === type).length;
                     return (
                       <button
                         key={type}
@@ -2069,7 +2132,7 @@ export default function Dashboard() {
                 <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
                   {uniqueSubdivisions.map((subdiv) => {
                     const isSelected = selectedSubdivisions.includes(subdiv);
-                    const count = propertiesWithoutAccountTypeFilter.filter((p) => p.subdiv === subdiv).length;
+                    const count = propertiesForSubdivisionCounts.filter((p) => p.subdiv === subdiv).length;
                     return (
                       <button
                         key={subdiv}
@@ -2137,7 +2200,7 @@ export default function Dashboard() {
                 <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
                   {uniqueOwnerCityStates.map((cityState) => {
                     const isSelected = selectedOwnerCityStates.includes(cityState);
-                    const count = propertiesWithoutAccountTypeFilter.filter((p) => {
+                    const count = propertiesForOwnerCityStateCounts.filter((p) => {
                       const city = p.ownerCity?.trim() || "";
                       const state = p.ownerState?.trim() || "";
                       const combined = [city, state].filter(Boolean).join(", ");
