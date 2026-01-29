@@ -32,7 +32,7 @@ Preferred communication style: Simple, everyday language.
 2. Data is stored in PostgreSQL using Drizzle ORM
 3. Frontend queries /api/properties with optional filters (year, min/max value)
 4. React Query caches responses for 5 minutes
-5. Map displays properties as heatmap or individual markers
+5. Map displays properties as clustered heatmap markers or individual parcel polygons (toggleable view modes)
 
 ### Project Structure
 - `client/` - React frontend application
@@ -61,6 +61,7 @@ Preferred communication style: Simple, everyday language.
   - Pagination: 1000 records per batch with resultOffset parameter
   - Data includes ~8,674 parcels covering Los Alamos and White Rock areas
   - **Parcel attributes stored**: PIN, ADDRESS, ACCT, LEGAL, ACCT_TYPE, OWNER (type), ZONE, SUBDIV, OWNERNAME, OWNERADDRESS_ADDRESS1, OWNERADDRESS_CITY, OWNERADDRESS_STATE, OWNERADDRESS_ZIP, BUILDING_ACTUAL, LAND_ACTUAL, TOTAL_ACTUAL, BUILDING_TAXABLE, LAND_TAXABLE, TOTAL_TAXABLE, HHEXEMPTION, VETEXEMPTION, BLDGSQFT, LANDSQFT, TAXYEAR, TAXAREALEVY
+  - **Polygon geometry**: Parcel boundary coordinates stored as JSON text field containing coordinate rings in [lng, lat] format
 
 ### Map Services
 - **OpenStreetMap**: Tile layer provider for base map imagery

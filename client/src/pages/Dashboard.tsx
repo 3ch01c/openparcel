@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
-import { ClusterLayer } from "@/components/MapController";
+import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { Slider } from "@/components/ui/slider";
@@ -76,6 +76,7 @@ const TILE_LAYERS = {
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
+  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 250000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 500000]);
   const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 1200]);
@@ -2554,34 +2555,64 @@ export default function Dashboard() {
               url={TILE_LAYERS[mapLayer].url}
             />
 
-            {properties && <ClusterLayer points={properties} />}
+            {properties && mapViewMode === "cluster" && <ClusterLayer points={properties} />}
+            {properties && mapViewMode === "polygon" && <PolygonLayer points={properties} />}
           </MapContainer>
         </div>
 
-        {/* Map Layer Switcher */}
-        <div className="absolute top-4 right-4 z-[400] bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
-          <button
-            onClick={() => setMapLayer("street")}
-            className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-              mapLayer === "street"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-            }`}
-            data-testid="button-map-street"
-          >
-            Street
-          </button>
-          <button
-            onClick={() => setMapLayer("satellite")}
-            className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-              mapLayer === "satellite"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-            }`}
-            data-testid="button-map-satellite"
-          >
-            Satellite
-          </button>
+        {/* Map Controls */}
+        <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
+          {/* Map Layer Switcher */}
+          <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
+            <button
+              onClick={() => setMapLayer("street")}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                mapLayer === "street"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              }`}
+              data-testid="button-map-street"
+            >
+              Street
+            </button>
+            <button
+              onClick={() => setMapLayer("satellite")}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                mapLayer === "satellite"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              }`}
+              data-testid="button-map-satellite"
+            >
+              Satellite
+            </button>
+          </div>
+          
+          {/* View Mode Switcher */}
+          <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
+            <button
+              onClick={() => setMapViewMode("cluster")}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                mapViewMode === "cluster"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              }`}
+              data-testid="button-view-cluster"
+            >
+              Clusters
+            </button>
+            <button
+              onClick={() => setMapViewMode("polygon")}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                mapViewMode === "polygon"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              }`}
+              data-testid="button-view-polygon"
+            >
+              Parcels
+            </button>
+          </div>
         </div>
       </div>
     </div>
