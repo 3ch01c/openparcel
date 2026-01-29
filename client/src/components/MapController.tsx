@@ -5,6 +5,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { PropertyResponse } from "@shared/schema";
+import { type ColorMetric, getMetricValue } from "@/lib/map-metrics";
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -23,11 +24,13 @@ export type MapViewMode = "cluster" | "polygon";
 interface ClusterLayerProps {
   points: PropertyResponse[];
   onPropertyClick?: (property: PropertyResponse) => void;
+  colorMetric?: ColorMetric;
 }
 
 interface PolygonLayerProps {
   points: PropertyResponse[];
   onPropertyClick?: (property: PropertyResponse) => void;
+  colorMetric?: ColorMetric;
 }
 
 function formatCurrency(value: number): string {
@@ -49,7 +52,7 @@ function getMarkerColor(value: number, maxValue: number): string {
   return "#fde725";
 }
 
-export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
+export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft" }: ClusterLayerProps) {
   const map = useMap();
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -100,14 +103,8 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
       clusterGroupRef.current = null;
     }
 
-    // Calculate land value per sqft for coloring markers
-    const getLandValuePerSqft = (p: PropertyResponse) => {
-      const parcelArea = p.parcelArea || 0;
-      const landSqft = parcelArea * 43560;
-      return landSqft > 0 ? (p.landValue || 0) / landSqft : 0;
-    };
-    
-    const maxLandPerSqft = Math.max(...validPoints.map(getLandValuePerSqft), 1);
+    // Calculate max value for the selected color metric
+    const maxMetricValue = Math.max(...validPoints.map(p => getMetricValue(p, colorMetric)), 1);
 
     try {
       const clusterGroup = L.markerClusterGroup({
@@ -147,8 +144,8 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
       });
 
       validPoints.forEach((property) => {
-        const landPerSqftValue = getLandValuePerSqft(property);
-        const color = getMarkerColor(landPerSqftValue, maxLandPerSqft);
+        const metricValue = getMetricValue(property, colorMetric);
+        const color = getMarkerColor(metricValue, maxMetricValue);
         
         const markerIcon = L.divIcon({
           className: "custom-marker",
@@ -268,12 +265,12 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
         clusterGroupRef.current = null;
       }
     };
-  }, [map, isMapReady, points, onPropertyClick]);
+  }, [map, isMapReady, points, onPropertyClick, colorMetric]);
 
   return null;
 }
 
-export function PolygonLayer({ points, onPropertyClick }: PolygonLayerProps) {
+export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft" }: PolygonLayerProps) {
   const map = useMap();
   const polygonLayerRef = useRef<L.LayerGroup | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -325,13 +322,8 @@ export function PolygonLayer({ points, onPropertyClick }: PolygonLayerProps) {
       polygonLayerRef.current = null;
     }
 
-    const getLandValuePerSqft = (p: PropertyResponse) => {
-      const parcelArea = p.parcelArea || 0;
-      const landSqft = parcelArea * 43560;
-      return landSqft > 0 ? (p.landValue || 0) / landSqft : 0;
-    };
-    
-    const maxLandPerSqft = Math.max(...validPoints.map(getLandValuePerSqft), 1);
+    // Calculate max value for the selected color metric
+    const maxMetricValue = Math.max(...validPoints.map(p => getMetricValue(p, colorMetric)), 1);
 
     try {
       const layerGroup = L.layerGroup();
@@ -345,8 +337,8 @@ export function PolygonLayer({ points, onPropertyClick }: PolygonLayerProps) {
             ring.map(([lng, lat]) => [lat, lng] as [number, number])
           );
 
-          const landPerSqftValue = getLandValuePerSqft(property);
-          const color = getMarkerColor(landPerSqftValue, maxLandPerSqft);
+          const metricValue = getMetricValue(property, colorMetric);
+          const color = getMarkerColor(metricValue, maxMetricValue);
 
           const polygon = L.polygon(latLngs, {
             color: color,
@@ -460,7 +452,7 @@ export function PolygonLayer({ points, onPropertyClick }: PolygonLayerProps) {
         polygonLayerRef.current = null;
       }
     };
-  }, [map, isMapReady, points, onPropertyClick]);
+  }, [map, isMapReady, points, onPropertyClick, colorMetric]);
 
   return null;
 }

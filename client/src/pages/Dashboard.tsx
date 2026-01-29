@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
+import { type ColorMetric, COLOR_METRIC_LABELS } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { Slider } from "@/components/ui/slider";
@@ -77,6 +78,7 @@ export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
+  const [colorMetric, setColorMetric] = useState<ColorMetric>("landValuePerSqft");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 250000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 500000]);
   const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 1200]);
@@ -2555,8 +2557,8 @@ export default function Dashboard() {
               url={TILE_LAYERS[mapLayer].url}
             />
 
-            {properties && mapViewMode === "cluster" && <ClusterLayer points={properties} />}
-            {properties && mapViewMode === "polygon" && <PolygonLayer points={properties} />}
+            {properties && mapViewMode === "cluster" && <ClusterLayer points={properties} colorMetric={colorMetric} />}
+            {properties && mapViewMode === "polygon" && <PolygonLayer points={properties} colorMetric={colorMetric} />}
           </MapContainer>
         </div>
 
@@ -2590,28 +2592,39 @@ export default function Dashboard() {
           
           {/* View Mode Switcher */}
           <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
-            <button
+            <Button
+              size="sm"
+              variant={mapViewMode === "cluster" ? "default" : "ghost"}
               onClick={() => setMapViewMode("cluster")}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                mapViewMode === "cluster"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
               data-testid="button-view-cluster"
             >
               Clusters
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              variant={mapViewMode === "polygon" ? "default" : "ghost"}
               onClick={() => setMapViewMode("polygon")}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                mapViewMode === "polygon"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
               data-testid="button-view-polygon"
             >
               Parcels
-            </button>
+            </Button>
+          </div>
+          
+          {/* Color Metric Selector */}
+          <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-2">
+            <label className="text-xs text-muted-foreground mb-1 block">Color by:</label>
+            <Select value={colorMetric} onValueChange={(value) => setColorMetric(value as ColorMetric)}>
+              <SelectTrigger className="w-[160px] h-8 text-xs" data-testid="select-color-metric">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(COLOR_METRIC_LABELS) as ColorMetric[]).map((metric) => (
+                  <SelectItem key={metric} value={metric} data-testid={`option-color-metric-${metric}`}>
+                    {COLOR_METRIC_LABELS[metric]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
