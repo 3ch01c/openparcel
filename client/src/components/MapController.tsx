@@ -18,7 +18,14 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+export type MapViewMode = "cluster" | "polygon";
+
 interface ClusterLayerProps {
+  points: PropertyResponse[];
+  onPropertyClick?: (property: PropertyResponse) => void;
+}
+
+interface PolygonLayerProps {
   points: PropertyResponse[];
   onPropertyClick?: (property: PropertyResponse) => void;
 }
@@ -259,6 +266,198 @@ export function ClusterLayer({ points, onPropertyClick }: ClusterLayerProps) {
         } catch (e) {
         }
         clusterGroupRef.current = null;
+      }
+    };
+  }, [map, isMapReady, points, onPropertyClick]);
+
+  return null;
+}
+
+export function PolygonLayer({ points, onPropertyClick }: PolygonLayerProps) {
+  const map = useMap();
+  const polygonLayerRef = useRef<L.LayerGroup | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
+
+  const checkMapReady = useCallback(() => {
+    if (!map) return false;
+    const container = map.getContainer();
+    if (!container) return false;
+    const size = map.getSize();
+    return size.x > 0 && size.y > 0;
+  }, [map]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const waitForMap = () => {
+      if (checkMapReady()) {
+        setIsMapReady(true);
+      } else {
+        setTimeout(waitForMap, 100);
+      }
+    };
+
+    const timer = setTimeout(waitForMap, 200);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [map, checkMapReady]);
+
+  useEffect(() => {
+    if (!map || !isMapReady || !points || points.length === 0) return;
+
+    const validPoints = points.filter(p => 
+      p.lat && p.lng && 
+      !isNaN(p.lat) && !isNaN(p.lng) &&
+      p.lat >= -90 && p.lat <= 90 &&
+      p.lng >= -180 && p.lng <= 180 &&
+      p.geometry
+    );
+
+    if (validPoints.length === 0) return;
+
+    if (polygonLayerRef.current) {
+      try {
+        map.removeLayer(polygonLayerRef.current);
+      } catch (e) {
+      }
+      polygonLayerRef.current = null;
+    }
+
+    const getLandValuePerSqft = (p: PropertyResponse) => {
+      const parcelArea = p.parcelArea || 0;
+      const landSqft = parcelArea * 43560;
+      return landSqft > 0 ? (p.landValue || 0) / landSqft : 0;
+    };
+    
+    const maxLandPerSqft = Math.max(...validPoints.map(getLandValuePerSqft), 1);
+
+    try {
+      const layerGroup = L.layerGroup();
+
+      validPoints.forEach((property) => {
+        try {
+          const rings: number[][][] = JSON.parse(property.geometry!);
+          if (!rings || rings.length === 0) return;
+
+          const latLngs = rings.map(ring => 
+            ring.map(([lng, lat]) => [lat, lng] as [number, number])
+          );
+
+          const landPerSqftValue = getLandValuePerSqft(property);
+          const color = getMarkerColor(landPerSqftValue, maxLandPerSqft);
+
+          const polygon = L.polygon(latLngs, {
+            color: color,
+            weight: 1,
+            opacity: 0.8,
+            fillColor: color,
+            fillOpacity: 0.4,
+          });
+
+          const hhExemptAmount = (property.hhExemption || 0) * (property.millLevy || 28.714) / 1000;
+          const vetExemptAmount = (property.vetExemption || 0) * (property.millLevy || 28.714) / 1000;
+          const isExempt = property.accountType?.toUpperCase().includes("EXEMPT") || false;
+          const taxExemptAmount = isExempt ? (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 : 0;
+          const taxAssessed = isExempt ? 0 : Math.max(0, (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 - hhExemptAmount - vetExemptAmount);
+          
+          const parcelArea = property.parcelArea || 0;
+          const landSqft = parcelArea * 43560;
+          const buildingSqft = property.buildingSqft || 0;
+          const landPerSqft = landSqft > 0 ? (property.landValue || 0) / landSqft : 0;
+          const improvementPerSqft = buildingSqft > 0 ? (property.improvementValue || 0) / buildingSqft : 0;
+          const taxPerSqft = landSqft > 0 ? taxAssessed / landSqft : 0;
+
+          const ownerAddressParts = [
+            property.ownerAddress1,
+            property.ownerCity,
+            property.ownerState,
+            property.ownerZip
+          ].filter(Boolean);
+          const ownerAddress = ownerAddressParts.length > 0 
+            ? `${property.ownerAddress1 || ""}${property.ownerAddress1 ? ", " : ""}${property.ownerCity || ""} ${property.ownerState || ""} ${property.ownerZip || ""}`.trim()
+            : "N/A";
+
+          const popupContent = `
+            <div style="min-width: 250px; font-family: system-ui, sans-serif;">
+              <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #333;">${property.address || "Unknown Address"}</div>
+              <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; column-gap: 5px; font-size: 12px;">
+                <div style="color: #666;">Owner:</div>
+                <div style="font-weight: 500;">${property.owner || "N/A"}</div>
+                <div style="color: #666;">Owner Address:</div>
+                <div style="font-weight: 500;">${ownerAddress}</div>
+                <div style="color: #666;">Assessed Value:</div>
+                <div style="font-weight: 500;">${formatCurrency(property.assessedValue)}</div>
+                <div style="color: #666;">Land Value:</div>
+                <div style="font-weight: 500;">${formatCurrency(property.landValue || 0)} <span style="color: #888;">($${landPerSqft.toFixed(2)}/sqft)</span></div>
+                <div style="color: #666;">Improvement:</div>
+                <div style="font-weight: 500;">${formatCurrency(property.improvementValue || 0)} <span style="color: #888;">($${improvementPerSqft.toFixed(2)}/sqft)</span></div>
+                <div style="color: #666;">Tax Assessed:</div>
+                <div style="font-weight: 500; color: #22c55e;">${formatCurrency(taxAssessed)} <span style="color: #888;">($${taxPerSqft.toFixed(4)}/sqft)</span></div>
+                <div style="color: #666;">Parcel Area:</div>
+                <div style="font-weight: 500;">${parcelArea.toFixed(2)} acres</div>
+                <div style="color: #666;">Account Type:</div>
+                <div style="font-weight: 500;">${property.accountType || "N/A"}</div>
+                <div style="color: #666;">Subdivision:</div>
+                <div style="font-weight: 500;">${property.subdiv || "N/A"}</div>
+                <div style="color: #666;">Mill Levy:</div>
+                <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
+              </div>
+              ${(property.hhExemption || property.vetExemption || isExempt) ? `
+                <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+                <div style="font-size: 11px; color: #888;">
+                  ${property.hhExemption ? `<div>HH Exemption: ${formatCurrency(hhExemptAmount)}</div>` : ""}
+                  ${property.vetExemption ? `<div>Vet Exemption: ${formatCurrency(vetExemptAmount)}</div>` : ""}
+                  ${isExempt ? `<div>Tax Exempt: ${formatCurrency(taxExemptAmount)}</div>` : ""}
+                </div>
+              ` : ""}
+              <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-Los-Alamos-NM_rb/" 
+                   target="_blank" rel="noopener noreferrer"
+                   style="font-size: 11px; color: #3b82f6; text-decoration: none;">
+                  Zillow
+                </a>
+                <a href="https://eagleweb.losalamosnm.us/assessor/taxweb/search.jsp" 
+                   target="_blank" rel="noopener noreferrer"
+                   style="font-size: 11px; color: #3b82f6; text-decoration: none;">
+                  County Assessor
+                </a>
+                <a href="https://eaglerecorderselfservice.losalamosnm.us/web/search/DOCSEARCH138S1" 
+                   target="_blank" rel="noopener noreferrer"
+                   style="font-size: 11px; color: #3b82f6; text-decoration: none;">
+                  County Clerk
+                </a>
+              </div>
+            </div>
+          `;
+
+          polygon.bindPopup(popupContent, { maxWidth: 300 });
+
+          if (onPropertyClick) {
+            polygon.on("click", () => onPropertyClick(property));
+          }
+
+          layerGroup.addLayer(polygon);
+        } catch (e) {
+        }
+      });
+
+      layerGroup.addTo(map);
+      polygonLayerRef.current = layerGroup;
+    } catch (error) {
+      console.warn("Polygon initialization error:", error);
+    }
+
+    return () => {
+      if (polygonLayerRef.current) {
+        try {
+          map.removeLayer(polygonLayerRef.current);
+        } catch (e) {
+        }
+        polygonLayerRef.current = null;
       }
     };
   }, [map, isMapReady, points, onPropertyClick]);
