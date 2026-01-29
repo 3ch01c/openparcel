@@ -120,6 +120,7 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const [selectedSubdivisions, setSelectedSubdivisions] = useState<string[]>([]);
+  const [selectedZones, setSelectedZones] = useState<string[]>([]);
   const [selectedOwnerCityStates, setSelectedOwnerCityStates] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
@@ -127,6 +128,7 @@ export default function Dashboard() {
   const initialTotalParcelsRef = useRef<number | null>(null);
   const initialAccountTypesRef = useRef<string[] | null>(null);
   const initialSubdivisionsRef = useRef<string[] | null>(null);
+  const initialZonesRef = useRef<string[] | null>(null);
   const initialOwnerCityStatesRef = useRef<string[] | null>(null);
   const initialBoundsRef = useRef<{
     assessedValue: { min: number; max: number };
@@ -427,6 +429,9 @@ export default function Dashboard() {
   // Get unique subdivisions from initial data load (never changes after first load)
   const uniqueSubdivisions = initialSubdivisionsRef.current || [];
 
+  // Get unique zones from initial data load (never changes after first load)
+  const uniqueZones = initialZonesRef.current || [];
+
   // Get unique owner city/state combinations from initial data load (never changes after first load)
   const uniqueOwnerCityStates = initialOwnerCityStatesRef.current || [];
 
@@ -511,10 +516,12 @@ export default function Dashboard() {
       // Store initial multi-choice options permanently - these will never change after first load
       const accountTypes = new Set<string>();
       const subdivisions = new Set<string>();
+      const zones = new Set<string>();
       const ownerCityStates = new Set<string>();
       rawProperties.forEach((p) => {
         if (p.accountType) accountTypes.add(p.accountType);
         if (p.subdiv) subdivisions.add(p.subdiv);
+        if (p.zone) zones.add(p.zone);
         const city = p.ownerCity?.trim() || "";
         const state = p.ownerState?.trim() || "";
         if (city || state) {
@@ -524,6 +531,7 @@ export default function Dashboard() {
       });
       initialAccountTypesRef.current = Array.from(accountTypes).sort();
       initialSubdivisionsRef.current = Array.from(subdivisions).sort();
+      initialZonesRef.current = Array.from(zones).sort();
       initialOwnerCityStatesRef.current = Array.from(ownerCityStates).sort();
       
       setValueRange([unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max]);
@@ -568,9 +576,71 @@ export default function Dashboard() {
     });
   }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange]);
 
-  // For account type counts: apply subdivision and owner city/state filters (but not account type)
+  // For account type counts: apply subdivision, zone, and owner city/state filters (but not account type)
   const propertiesForAccountTypeCounts = useMemo(() => {
     let filtered = propertiesWithoutAccountTypeFilter;
+    
+    if (selectedSubdivisions.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+      );
+    }
+    
+    if (selectedZones.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.zone && selectedZones.includes(p.zone)
+      );
+    }
+    
+    if (selectedOwnerCityStates.length > 0) {
+      filtered = filtered.filter((p) => {
+        const city = p.ownerCity?.trim() || "";
+        const state = p.ownerState?.trim() || "";
+        const combined = [city, state].filter(Boolean).join(", ");
+        return combined && selectedOwnerCityStates.includes(combined);
+      });
+    }
+    
+    return filtered;
+  }, [propertiesWithoutAccountTypeFilter, selectedSubdivisions, selectedZones, selectedOwnerCityStates]);
+
+  // For subdivision counts: apply account type, zone, and owner city/state filters (but not subdivision)
+  const propertiesForSubdivisionCounts = useMemo(() => {
+    let filtered = propertiesWithoutAccountTypeFilter;
+    
+    if (selectedAccountTypes.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.accountType && selectedAccountTypes.includes(p.accountType)
+      );
+    }
+    
+    if (selectedZones.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.zone && selectedZones.includes(p.zone)
+      );
+    }
+    
+    if (selectedOwnerCityStates.length > 0) {
+      filtered = filtered.filter((p) => {
+        const city = p.ownerCity?.trim() || "";
+        const state = p.ownerState?.trim() || "";
+        const combined = [city, state].filter(Boolean).join(", ");
+        return combined && selectedOwnerCityStates.includes(combined);
+      });
+    }
+    
+    return filtered;
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedZones, selectedOwnerCityStates]);
+
+  // For zone counts: apply account type, subdivision, and owner city/state filters (but not zone)
+  const propertiesForZoneCounts = useMemo(() => {
+    let filtered = propertiesWithoutAccountTypeFilter;
+    
+    if (selectedAccountTypes.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.accountType && selectedAccountTypes.includes(p.accountType)
+      );
+    }
     
     if (selectedSubdivisions.length > 0) {
       filtered = filtered.filter((p) =>
@@ -588,31 +658,9 @@ export default function Dashboard() {
     }
     
     return filtered;
-  }, [propertiesWithoutAccountTypeFilter, selectedSubdivisions, selectedOwnerCityStates]);
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedOwnerCityStates]);
 
-  // For subdivision counts: apply account type and owner city/state filters (but not subdivision)
-  const propertiesForSubdivisionCounts = useMemo(() => {
-    let filtered = propertiesWithoutAccountTypeFilter;
-    
-    if (selectedAccountTypes.length > 0) {
-      filtered = filtered.filter((p) =>
-        p.accountType && selectedAccountTypes.includes(p.accountType)
-      );
-    }
-    
-    if (selectedOwnerCityStates.length > 0) {
-      filtered = filtered.filter((p) => {
-        const city = p.ownerCity?.trim() || "";
-        const state = p.ownerState?.trim() || "";
-        const combined = [city, state].filter(Boolean).join(", ");
-        return combined && selectedOwnerCityStates.includes(combined);
-      });
-    }
-    
-    return filtered;
-  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedOwnerCityStates]);
-
-  // For owner city/state counts: apply account type and subdivision filters (but not owner city/state)
+  // For owner city/state counts: apply account type, subdivision, and zone filters (but not owner city/state)
   const propertiesForOwnerCityStateCounts = useMemo(() => {
     let filtered = propertiesWithoutAccountTypeFilter;
     
@@ -628,8 +676,14 @@ export default function Dashboard() {
       );
     }
     
+    if (selectedZones.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.zone && selectedZones.includes(p.zone)
+      );
+    }
+    
     return filtered;
-  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions]);
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedZones]);
 
   // Filter properties by tax range, land sqft, account types, and owner (client-side)
   const properties = useMemo(() => {
@@ -646,6 +700,13 @@ export default function Dashboard() {
     if (selectedSubdivisions.length > 0) {
       filtered = filtered.filter((p) =>
         p.subdiv && selectedSubdivisions.includes(p.subdiv)
+      );
+    }
+    
+    // Zone filter
+    if (selectedZones.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.zone && selectedZones.includes(p.zone)
       );
     }
     
@@ -682,7 +743,7 @@ export default function Dashboard() {
     }
     
     return filtered;
-  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedOwnerCityStates, ownerFilter, useRegex]);
+  }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, ownerFilter, useRegex]);
 
   // Calculate filtered data ranges for dynamic slider bounds (from filtered properties)
   const filteredRanges = useMemo(() => {
@@ -2169,6 +2230,74 @@ export default function Dashboard() {
                   {selectedSubdivisions.length === 0
                     ? "All subdivisions shown"
                     : `${selectedSubdivisions.length} subdivision${selectedSubdivisions.length > 1 ? "s" : ""} selected`}
+                </p>
+              </div>
+
+              {/* Zone Multi-Select */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Zone
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedZones([...uniqueZones])}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-all-zones"
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setSelectedZones([])}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                      data-testid="button-select-none-zones"
+                    >
+                      None
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
+                  {uniqueZones.map((zone) => {
+                    const isSelected = selectedZones.includes(zone);
+                    const count = propertiesForZoneCounts.filter((p) => p.zone === zone).length;
+                    return (
+                      <button
+                        key={zone}
+                        onClick={() =>
+                          setSelectedZones((prev) =>
+                            isSelected
+                              ? prev.filter((z) => z !== zone)
+                              : [...prev, zone]
+                          )
+                        }
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
+                          isSelected
+                            ? "bg-primary/20 text-primary"
+                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                        data-testid={`button-zone-${zone.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center ${
+                              isSelected
+                                ? "bg-primary border-primary"
+                                : "border-muted-foreground"
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                          </div>
+                          <span className="truncate">{zone}</span>
+                        </div>
+                        <span className="text-muted-foreground ml-2">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedZones.length === 0
+                    ? "All zones shown"
+                    : `${selectedZones.length} zone${selectedZones.length > 1 ? "s" : ""} selected`}
                 </p>
               </div>
 
