@@ -108,7 +108,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
     // Calculate min/max values for the selected color metric from filtered data
     const metricValues = validPoints.map(p => getMetricValue(p, colorMetric));
     const minMetricValue = Math.min(...metricValues);
-    const maxMetricValue = Math.max(...metricValues, 1);
+    const maxMetricValue = Math.max(...metricValues);
 
     try {
       const clusterGroup = L.markerClusterGroup({
@@ -331,7 +331,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
     // Calculate min/max values for the selected color metric from filtered data
     const metricValues = validPoints.map(p => getMetricValue(p, colorMetric));
     const minMetricValue = Math.min(...metricValues);
-    const maxMetricValue = Math.max(...metricValues, 1);
+    const maxMetricValue = Math.max(...metricValues);
 
     try {
       const layerGroup = L.layerGroup();
