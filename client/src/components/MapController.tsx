@@ -42,9 +42,11 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function getMarkerColor(value: number, maxValue: number): string {
+function getMarkerColor(value: number, minValue: number, maxValue: number): string {
   // Viridis colorblind-safe palette (purple → teal → yellow)
-  const ratio = maxValue > 0 ? value / maxValue : 0;
+  // Normalize value to 0-1 range based on min/max of filtered data
+  const range = maxValue - minValue;
+  const ratio = range > 0 ? (value - minValue) / range : 0;
   if (ratio < 0.2) return "#440154";
   if (ratio < 0.4) return "#3b528b";
   if (ratio < 0.6) return "#21918c";
@@ -103,8 +105,10 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
       clusterGroupRef.current = null;
     }
 
-    // Calculate max value for the selected color metric
-    const maxMetricValue = Math.max(...validPoints.map(p => getMetricValue(p, colorMetric)), 1);
+    // Calculate min/max values for the selected color metric from filtered data
+    const metricValues = validPoints.map(p => getMetricValue(p, colorMetric));
+    const minMetricValue = Math.min(...metricValues);
+    const maxMetricValue = Math.max(...metricValues, 1);
 
     try {
       const clusterGroup = L.markerClusterGroup({
@@ -145,7 +149,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
 
       validPoints.forEach((property) => {
         const metricValue = getMetricValue(property, colorMetric);
-        const color = getMarkerColor(metricValue, maxMetricValue);
+        const color = getMarkerColor(metricValue, minMetricValue, maxMetricValue);
         
         const markerIcon = L.divIcon({
           className: "custom-marker",
@@ -324,8 +328,10 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
       polygonLayerRef.current = null;
     }
 
-    // Calculate max value for the selected color metric
-    const maxMetricValue = Math.max(...validPoints.map(p => getMetricValue(p, colorMetric)), 1);
+    // Calculate min/max values for the selected color metric from filtered data
+    const metricValues = validPoints.map(p => getMetricValue(p, colorMetric));
+    const minMetricValue = Math.min(...metricValues);
+    const maxMetricValue = Math.max(...metricValues, 1);
 
     try {
       const layerGroup = L.layerGroup();
@@ -340,7 +346,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
           );
 
           const metricValue = getMetricValue(property, colorMetric);
-          const color = getMarkerColor(metricValue, maxMetricValue);
+          const color = getMarkerColor(metricValue, minMetricValue, maxMetricValue);
 
           const polygon = L.polygon(latLngs, {
             color: color,
