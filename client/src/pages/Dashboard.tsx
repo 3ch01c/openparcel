@@ -88,6 +88,7 @@ export default function Dashboard() {
   const [improvementValueRange, setImprovementValueRange] = useState<[number, number]>([0, 50000000]);
   const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 150]);
   const [bldgToLandRatioRange, setBldgToLandRatioRange] = useState<[number, number]>([0, 2]);
+  const [waterUsageRange, setWaterUsageRange] = useState<[number, number]>([0, 100]);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{ success: boolean; message: string } | null>(null);
@@ -120,6 +121,10 @@ export default function Dashboard() {
   const [editingBldgRatioMax, setEditingBldgRatioMax] = useState(false);
   const [tempBldgRatioMin, setTempBldgRatioMin] = useState("");
   const [tempBldgRatioMax, setTempBldgRatioMax] = useState("");
+  const [editingWaterMin, setEditingWaterMin] = useState(false);
+  const [editingWaterMax, setEditingWaterMax] = useState(false);
+  const [tempWaterMin, setTempWaterMin] = useState("");
+  const [tempWaterMax, setTempWaterMax] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -144,6 +149,7 @@ export default function Dashboard() {
     improvementValue: { min: number; max: number };
     landPerSqft: { min: number; max: number };
     bldgRatio: { min: number; max: number };
+    waterUsage: { min: number; max: number };
   } | null>(null);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
@@ -159,6 +165,8 @@ export default function Dashboard() {
   const landPerSqftMaxInputRef = useRef<HTMLInputElement>(null);
   const bldgRatioMinInputRef = useRef<HTMLInputElement>(null);
   const bldgRatioMaxInputRef = useRef<HTMLInputElement>(null);
+  const waterMinInputRef = useRef<HTMLInputElement>(null);
+  const waterMaxInputRef = useRef<HTMLInputElement>(null);
 
   const handleMinClick = () => {
     setTempMin(String(valueRange[0]));
@@ -375,6 +383,37 @@ export default function Dashboard() {
     setEditingBldgRatioMax(false);
   };
 
+  // Water Usage handlers
+  const handleWaterMinClick = () => {
+    setTempWaterMin(String(waterUsageRange[0]));
+    setEditingWaterMin(true);
+    setTimeout(() => waterMinInputRef.current?.select(), 0);
+  };
+
+  const handleWaterMaxClick = () => {
+    setTempWaterMax(String(waterUsageRange[1]));
+    setEditingWaterMax(true);
+    setTimeout(() => waterMaxInputRef.current?.select(), 0);
+  };
+
+  const handleWaterMinSubmit = () => {
+    const val = parseFloat(tempWaterMin.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, waterUsageRange[1]));
+      setWaterUsageRange([clamped, waterUsageRange[1]]);
+    }
+    setEditingWaterMin(false);
+  };
+
+  const handleWaterMaxSubmit = () => {
+    const val = parseFloat(tempWaterMax.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(waterUsageRange[0], val);
+      setWaterUsageRange([waterUsageRange[0], clamped]);
+    }
+    setEditingWaterMax(false);
+  };
+
   // Calculate land value per sqft for a property
   const getLandValuePerSqft = (p: PropertyResponse) => {
     const landValue = p.landValue || 0;
@@ -453,6 +492,7 @@ export default function Dashboard() {
         improvementValue: { min: 0, max: 50000000 },
         landPerSqft: { min: 0, max: 150 },
         bldgRatio: { min: 0, max: 2 },
+        waterUsage: { min: 0, max: 100 },
       };
     }
 
@@ -502,6 +542,10 @@ export default function Dashboard() {
         min: Math.min(...bldgRatioValues),
         max: Math.max(...bldgRatioValues),
       },
+      waterUsage: {
+        min: Math.min(...rawProperties.map(p => p.avgMonthlyWaterKgal || 0)),
+        max: Math.max(...rawProperties.map(p => p.avgMonthlyWaterKgal || 0)),
+      },
     };
   }, [rawProperties, getLandValuePerSqft, getBldgToLandRatio]);
 
@@ -519,6 +563,7 @@ export default function Dashboard() {
         improvementValue: { min: unfilteredRanges.improvementValue.min, max: unfilteredRanges.improvementValue.max },
         landPerSqft: { min: unfilteredRanges.landPerSqft.min, max: unfilteredRanges.landPerSqft.max },
         bldgRatio: { min: unfilteredRanges.bldgRatio.min, max: unfilteredRanges.bldgRatio.max },
+        waterUsage: { min: unfilteredRanges.waterUsage.min, max: unfilteredRanges.waterUsage.max },
       };
       // Store initial multi-choice options permanently - these will never change after first load
       const accountTypes = new Set<string>();
@@ -548,6 +593,7 @@ export default function Dashboard() {
       setImprovementValueRange([unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max]);
       setLandValuePerSqftRange([unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max]);
       setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
+      setWaterUsageRange([unfilteredRanges.waterUsage.min, unfilteredRanges.waterUsage.max]);
       rangesInitialized.current = true;
     }
   }, [rawProperties, unfilteredRanges]);
@@ -566,6 +612,7 @@ export default function Dashboard() {
       const improvementValue = p.improvementValue || 0;
       const landPerSqft = getLandValuePerSqft(p);
       const bldgRatio = getBldgToLandRatio(p);
+      const waterUsage = p.avgMonthlyWaterKgal || 0;
       return (
         tax >= taxRange[0] &&
         tax <= taxRange[1] &&
@@ -578,10 +625,12 @@ export default function Dashboard() {
         landPerSqft >= landValuePerSqftRange[0] &&
         landPerSqft <= landValuePerSqftRange[1] &&
         bldgRatio >= bldgToLandRatioRange[0] &&
-        bldgRatio <= bldgToLandRatioRange[1]
+        bldgRatio <= bldgToLandRatioRange[1] &&
+        waterUsage >= waterUsageRange[0] &&
+        waterUsage <= waterUsageRange[1]
       );
     });
-  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange]);
+  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange]);
 
   // For account type counts: apply subdivision, zone, and owner city/state filters (but not account type)
   const propertiesForAccountTypeCounts = useMemo(() => {
@@ -2139,6 +2188,76 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                   </div>
                 )}
+              </div>
+
+              {/* Avg Monthly Water Usage Filter */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Droplets className="w-3 h-3" />
+                    Avg Water (kgal/mo)
+                  </label>
+                  <div className="flex items-center gap-1 text-xs font-mono">
+                    {editingWaterMin ? (
+                      <input
+                        ref={waterMinInputRef}
+                        type="text"
+                        value={tempWaterMin}
+                        onChange={(e) => setTempWaterMin(e.target.value)}
+                        onBlur={handleWaterMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleWaterMinSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-cyan-500 text-cyan-500 rounded text-right"
+                        data-testid="input-water-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleWaterMinClick}
+                        className="text-cyan-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-water-min"
+                      >
+                        {waterUsageRange[0].toFixed(1)}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingWaterMax ? (
+                      <input
+                        ref={waterMaxInputRef}
+                        type="text"
+                        value={tempWaterMax}
+                        onChange={(e) => setTempWaterMax(e.target.value)}
+                        onBlur={handleWaterMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleWaterMaxSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-cyan-500 text-cyan-500 rounded text-right"
+                        data-testid="input-water-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleWaterMaxClick}
+                        className="text-cyan-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-water-max"
+                      >
+                        {waterUsageRange[1].toFixed(1)}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  min={sliderBounds.waterUsage.min}
+                  max={sliderBounds.waterUsage.max}
+                  step={Math.max(0.1, (sliderBounds.waterUsage.max - sliderBounds.waterUsage.min) / 100)}
+                  value={waterUsageRange}
+                  onValueChange={(val) =>
+                    setWaterUsageRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-cyan-500"
+                  thumbClassName="border-cyan-500"
+                  data-testid="slider-water-usage"
+                />
               </div>
 
               {/* Account Type Multi-Select */}
