@@ -48,8 +48,11 @@ export async function registerRoutes(
     }
   });
 
-  // Utility CSV upload endpoint
-  const upload = multer({ storage: multer.memoryStorage() });
+  // Utility CSV upload endpoint - allow up to 50MB files
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+  });
   
   app.post("/api/upload-utility-csv", upload.single("file"), async (req, res) => {
     try {
