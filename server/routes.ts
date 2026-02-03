@@ -67,11 +67,11 @@ export async function registerRoutes(
         trim: true,
       }) as Array<Record<string, string>>;
 
-      // Group water usage (service 30000) by parcel ID and month
-      // Each record is a monthly usage, so group by parcel -> month -> sum usage
-      // Then average across months to get average monthly usage
+      // Group utility usage by service type, parcel ID and month
       // Structure: { parcelId: { "YYYY-MM": totalUsage } }
       const waterUsageByParcelMonth: Record<string, Record<string, number>> = {};
+      const electricUsageByParcelMonth: Record<string, Record<string, number>> = {};
+      const gasUsageByParcelMonth: Record<string, Record<string, number>> = {};
 
       for (const record of records) {
         const serviceCode = record["Service"] || record["SERVICE"] || record["service"];
@@ -79,46 +79,81 @@ export async function registerRoutes(
         const usage = parseFloat(record["Actual Usage"] || record["ACTUAL USAGE"] || record["actual usage"] || record["USAGE"] || record["usage"] || record["Usage"] || "0");
         const billDateStr = record["Bill Date"] || record["BILL DATE"] || record["bill date"] || record["BillDate"] || "";
 
-        // Only process water service (30000)
-        if (serviceCode === "30000" && parcelId && !isNaN(usage) && billDateStr) {
-          // Parse bill date to get year-month key
-          const billDate = new Date(billDateStr);
-          if (!isNaN(billDate.getTime())) {
-            const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
-            
-            if (!waterUsageByParcelMonth[parcelId]) {
-              waterUsageByParcelMonth[parcelId] = {};
-            }
-            if (!waterUsageByParcelMonth[parcelId][monthKey]) {
-              waterUsageByParcelMonth[parcelId][monthKey] = 0;
-            }
-            waterUsageByParcelMonth[parcelId][monthKey] += usage;
-          }
+        if (!parcelId || isNaN(usage) || !billDateStr) continue;
+
+        const billDate = new Date(billDateStr);
+        if (isNaN(billDate.getTime())) continue;
+
+        const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
+
+        // Process by service type
+        if (serviceCode === "10000") {
+          // Electric (kWh)
+          if (!electricUsageByParcelMonth[parcelId]) electricUsageByParcelMonth[parcelId] = {};
+          if (!electricUsageByParcelMonth[parcelId][monthKey]) electricUsageByParcelMonth[parcelId][monthKey] = 0;
+          electricUsageByParcelMonth[parcelId][monthKey] += usage;
+        } else if (serviceCode === "20000") {
+          // Gas (therms)
+          if (!gasUsageByParcelMonth[parcelId]) gasUsageByParcelMonth[parcelId] = {};
+          if (!gasUsageByParcelMonth[parcelId][monthKey]) gasUsageByParcelMonth[parcelId][monthKey] = 0;
+          gasUsageByParcelMonth[parcelId][monthKey] += usage;
+        } else if (serviceCode === "30000") {
+          // Water (100s of gallons)
+          if (!waterUsageByParcelMonth[parcelId]) waterUsageByParcelMonth[parcelId] = {};
+          if (!waterUsageByParcelMonth[parcelId][monthKey]) waterUsageByParcelMonth[parcelId][monthKey] = 0;
+          waterUsageByParcelMonth[parcelId][monthKey] += usage;
         }
       }
 
-      // Calculate average monthly water usage in kgal for each parcel
-      // Input is in 100s of gallons, convert to kgal (1000 gallons)
-      // 100s of gallons * 100 = gallons, then / 1000 = kgal
-      // So multiply by 0.1 to get kgal
-      let updatedCount = 0;
-      await storage.clearWaterUsageData();
+      // Clear all utility data before updating
+      await storage.clearUtilityData();
 
+      let waterCount = 0;
+      let electricCount = 0;
+      let gasCount = 0;
+
+      // Calculate average monthly water usage in kgal (input is 100s of gallons, multiply by 0.1)
       for (const [parcelId, monthlyUsage] of Object.entries(waterUsageByParcelMonth)) {
         const months = Object.values(monthlyUsage);
         if (months.length > 0) {
           const totalUsage = months.reduce((a, b) => a + b, 0);
           const avgMonthlyUsage = totalUsage / months.length;
-          const avgMonthlyWaterKgal = avgMonthlyUsage * 0.1; // Convert from 100s of gallons to kgal
+          const avgMonthlyWaterKgal = avgMonthlyUsage * 0.1;
           await storage.updatePropertyWaterUsage(parcelId, avgMonthlyWaterKgal);
-          updatedCount++;
+          waterCount++;
         }
       }
 
+      // Calculate average monthly electric usage in kWh
+      for (const [parcelId, monthlyUsage] of Object.entries(electricUsageByParcelMonth)) {
+        const months = Object.values(monthlyUsage);
+        if (months.length > 0) {
+          const totalUsage = months.reduce((a, b) => a + b, 0);
+          const avgMonthlyElectricKwh = totalUsage / months.length;
+          await storage.updatePropertyElectricUsage(parcelId, avgMonthlyElectricKwh);
+          electricCount++;
+        }
+      }
+
+      // Calculate average monthly gas usage in therms
+      for (const [parcelId, monthlyUsage] of Object.entries(gasUsageByParcelMonth)) {
+        const months = Object.values(monthlyUsage);
+        if (months.length > 0) {
+          const totalUsage = months.reduce((a, b) => a + b, 0);
+          const avgMonthlyGasTherms = totalUsage / months.length;
+          await storage.updatePropertyGasUsage(parcelId, avgMonthlyGasTherms);
+          gasCount++;
+        }
+      }
+
+      const totalUpdated = waterCount + electricCount + gasCount;
       res.json({
         success: true,
-        message: `Processed ${records.length} records, updated ${updatedCount} parcels with water usage data`,
-        parcelsUpdated: updatedCount,
+        message: `Processed ${records.length} records. Updated ${waterCount} parcels with water, ${electricCount} with electric, ${gasCount} with gas data.`,
+        parcelsUpdated: totalUpdated,
+        waterParcels: waterCount,
+        electricParcels: electricCount,
+        gasParcels: gasCount,
         totalRecords: records.length,
       });
     } catch (error) {
@@ -130,8 +165,8 @@ export async function registerRoutes(
   // Clear utility data endpoint
   app.post("/api/clear-utility-data", async (req, res) => {
     try {
-      await storage.clearWaterUsageData();
-      res.json({ success: true, message: "Water usage data cleared" });
+      await storage.clearUtilityData();
+      res.json({ success: true, message: "All utility data cleared (water, electric, gas)" });
     } catch (error) {
       console.error("Clear utility data failed:", error);
       res.status(500).json({ success: false, message: "Failed to clear utility data" });
