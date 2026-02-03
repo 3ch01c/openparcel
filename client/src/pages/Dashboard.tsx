@@ -1044,6 +1044,23 @@ export default function Dashboard() {
       binMax: actualBldgRatioMin + (i + 1) * bldgRatioStep,
     }));
 
+    // Water usage histogram
+    const waterUsageValues = properties.map(p => p.avgMonthlyWaterKgal || 0);
+    const actualWaterMin = waterUsageValues.length > 0 ? Math.min(...waterUsageValues) : 0;
+    const actualWaterMax = waterUsageValues.length > 0 ? Math.max(...waterUsageValues) : 100;
+    const waterDistribution = [0, 0, 0, 0, 0];
+    const waterStep = (actualWaterMax - actualWaterMin) / 5;
+    waterUsageValues.forEach(val => {
+      const bucket = waterStep > 0 ? Math.min(Math.floor((val - actualWaterMin) / waterStep), 4) : 0;
+      waterDistribution[bucket]++;
+    });
+    const waterUsageChartData = waterDistribution.map((count, i) => ({
+      range: `${(actualWaterMin + i * waterStep).toFixed(1)} - ${(actualWaterMin + (i + 1) * waterStep).toFixed(1)}`,
+      count,
+      binMin: actualWaterMin + i * waterStep,
+      binMax: actualWaterMin + (i + 1) * waterStep,
+    }));
+
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
     // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
     const totalTaxes = properties.reduce((sum, p) => {
@@ -1192,6 +1209,7 @@ export default function Dashboard() {
       improvementChartData,
       landPerSqftChartData,
       bldgRatioChartData,
+      waterUsageChartData,
       topLandHoldersData,
     };
   }, [properties]);
@@ -2258,6 +2276,36 @@ export default function Dashboard() {
                   thumbClassName="border-cyan-500"
                   data-testid="slider-water-usage"
                 />
+                {stats?.waterUsageChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.waterUsageChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(187 85% 53%)"
+                          radius={[4, 4, 0, 0]}
+                          cursor="pointer"
+                          onClick={(data: any) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setWaterUsageRange([data.binMin, data.binMax]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               {/* Account Type Multi-Select */}
