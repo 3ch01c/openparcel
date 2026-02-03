@@ -1,9 +1,12 @@
 import { db } from "./db";
 import {
   properties,
+  utilityReadings,
   type InsertProperty,
   type Property,
-  type PropertyQueryParams
+  type PropertyQueryParams,
+  type InsertUtilityReading,
+  type UtilityReading
 } from "@shared/schema";
 import { eq, and, gte, lte, inArray } from "drizzle-orm";
 
@@ -16,6 +19,9 @@ export interface IStorage {
   updatePropertyElectricUsage(parcelId: string, avgMonthlyElectricKwh: number): Promise<void>;
   updatePropertyGasUsage(parcelId: string, avgMonthlyGasTherms: number): Promise<void>;
   clearUtilityData(): Promise<void>;
+  insertUtilityReadings(readings: InsertUtilityReading[]): Promise<void>;
+  clearUtilityReadings(): Promise<void>;
+  getUtilityReadings(): Promise<UtilityReading[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -79,6 +85,24 @@ export class DatabaseStorage implements IStorage {
       avgMonthlyElectricKwh: null,
       avgMonthlyGasTherms: null
     });
+  }
+
+  async insertUtilityReadings(readings: InsertUtilityReading[]): Promise<void> {
+    if (readings.length === 0) return;
+    // Insert in batches of 1000 to avoid query size limits
+    const batchSize = 1000;
+    for (let i = 0; i < readings.length; i += batchSize) {
+      const batch = readings.slice(i, i + batchSize);
+      await db.insert(utilityReadings).values(batch);
+    }
+  }
+
+  async clearUtilityReadings(): Promise<void> {
+    await db.delete(utilityReadings);
+  }
+
+  async getUtilityReadings(): Promise<UtilityReading[]> {
+    return await db.select().from(utilityReadings);
   }
 }
 

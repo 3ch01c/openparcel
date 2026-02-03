@@ -1,6 +1,18 @@
-import { pgTable, text, serial, integer, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, doublePrecision, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export const utilityReadings = pgTable("utility_readings", {
+  id: serial("id").primaryKey(),
+  parcelId: text("parcel_id").notNull(),
+  billDate: date("bill_date").notNull(),
+  serviceCode: integer("service_code").notNull(),
+  actualUsage: doublePrecision("actual_usage").notNull(),
+});
+
+export const insertUtilityReadingSchema = createInsertSchema(utilityReadings).omit({ id: true });
+export type UtilityReading = typeof utilityReadings.$inferSelect;
+export type InsertUtilityReading = z.infer<typeof insertUtilityReadingSchema>;
 
 export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),

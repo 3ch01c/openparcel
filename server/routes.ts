@@ -73,6 +73,9 @@ export async function registerRoutes(
       const electricUsageByParcelMonth: Record<string, Record<string, number>> = {};
       const gasUsageByParcelMonth: Record<string, Record<string, number>> = {};
 
+      // Collect raw readings for storage in utility_readings table
+      const rawReadings: Array<{ parcelId: string; billDate: string; serviceCode: number; actualUsage: number }> = [];
+
       for (const record of records) {
         const serviceCode = record["Service"] || record["SERVICE"] || record["service"];
         const parcelId = record["Parcel"] || record["PARCEL"] || record["parcel"] || record["PARCEL_ID"] || record["parcel_id"] || record["PIN"] || record["pin"];
@@ -84,9 +87,21 @@ export async function registerRoutes(
         const billDate = new Date(billDateStr);
         if (isNaN(billDate.getTime())) continue;
 
+        const serviceCodeNum = parseInt(serviceCode, 10);
+        if (isNaN(serviceCodeNum)) continue;
+
+        // Store raw reading for utility_readings table
+        const formattedDate = billDate.toISOString().split('T')[0];
+        rawReadings.push({
+          parcelId,
+          billDate: formattedDate,
+          serviceCode: serviceCodeNum,
+          actualUsage: usage
+        });
+
         const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
 
-        // Process by service type
+        // Process by service type for averages
         if (serviceCode === "10000") {
           // Electric (kWh)
           if (!electricUsageByParcelMonth[parcelId]) electricUsageByParcelMonth[parcelId] = {};
@@ -107,6 +122,10 @@ export async function registerRoutes(
 
       // Clear all utility data before updating
       await storage.clearUtilityData();
+      await storage.clearUtilityReadings();
+
+      // Store raw readings in utility_readings table
+      await storage.insertUtilityReadings(rawReadings);
 
       let waterCount = 0;
       let electricCount = 0;
@@ -149,12 +168,13 @@ export async function registerRoutes(
       const totalUpdated = waterCount + electricCount + gasCount;
       res.json({
         success: true,
-        message: `Processed ${records.length} records. Updated ${waterCount} parcels with water, ${electricCount} with electric, ${gasCount} with gas data.`,
+        message: `Processed ${records.length} records. Stored ${rawReadings.length} utility readings. Updated ${waterCount} parcels with water, ${electricCount} with electric, ${gasCount} with gas data.`,
         parcelsUpdated: totalUpdated,
         waterParcels: waterCount,
         electricParcels: electricCount,
         gasParcels: gasCount,
         totalRecords: records.length,
+        rawReadingsStored: rawReadings.length,
       });
     } catch (error) {
       console.error("CSV upload failed:", error);
@@ -166,6 +186,7 @@ export async function registerRoutes(
   app.post("/api/clear-utility-data", async (req, res) => {
     try {
       await storage.clearUtilityData();
+      await storage.clearUtilityReadings();
       res.json({ success: true, message: "All utility data cleared (water, electric, gas)" });
     } catch (error) {
       console.error("Clear utility data failed:", error);

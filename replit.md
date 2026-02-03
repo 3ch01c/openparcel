@@ -43,9 +43,9 @@ Preferred communication style: Simple, everyday language.
   - 10000 = Electric (kWh) - processed and stored as avg monthly kWh
   - 20000 = Gas (therms) - processed and stored as avg monthly therms
   - 30000 = Water (100s of gallons) - processed and stored as avg monthly kgal (×0.1 conversion)
-- **Processing**: 
-  - Readings grouped by parcel and month (from Bill Date)
-  - Monthly averages calculated for each utility type
+- **Data Storage**:
+  - Raw readings stored in `utility_readings` table with parcelId, billDate, serviceCode, and actualUsage
+  - Monthly averages calculated and stored on properties table for filtering/display
   - New upload clears all previous utility data before processing
 - **Display**: 
   - Utility usage appears in parcel popups with color-coded values (cyan=water, yellow=electric, orange=gas)
