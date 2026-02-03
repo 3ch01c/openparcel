@@ -1420,6 +1420,8 @@ export default function Dashboard() {
         longitude: p.lng,
         assessmentYear: p.assessmentYear,
         avgMonthlyWaterKgal: p.avgMonthlyWaterKgal,
+        avgMonthlyElectricKwh: p.avgMonthlyElectricKwh,
+        avgMonthlyGasTherms: p.avgMonthlyGasTherms,
       }));
       content = JSON.stringify(jsonData, null, 2);
       mimeType = "application/json";
@@ -1455,6 +1457,8 @@ export default function Dashboard() {
         "Longitude",
         "Assessment Year",
         "Avg Water Usage (kgal/mo)",
+        "Avg Electric Usage (kWh/mo)",
+        "Avg Gas Usage (therms/mo)",
       ];
       const rows = properties.map((p) => [
         p.parcelId,
@@ -1486,6 +1490,8 @@ export default function Dashboard() {
         p.lng,
         p.assessmentYear,
         p.avgMonthlyWaterKgal?.toFixed(2) || "",
+        p.avgMonthlyElectricKwh?.toFixed(0) || "",
+        p.avgMonthlyGasTherms?.toFixed(1) || "",
       ]);
       content = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
       mimeType = "text/csv;charset=utf-8;";

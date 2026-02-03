@@ -228,7 +228,15 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
               ${property.avgMonthlyWaterKgal != null ? `
                 <div style="color: #666;">Avg Water Usage:</div>
-                <div style="font-weight: 500; color: #3b82f6;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
+                <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
+              ` : ""}
+              ${property.avgMonthlyElectricKwh != null ? `
+                <div style="color: #666;">Avg Electric Usage:</div>
+                <div style="font-weight: 500; color: #eab308;">${property.avgMonthlyElectricKwh.toFixed(0)} kWh/mo</div>
+              ` : ""}
+              ${property.avgMonthlyGasTherms != null ? `
+                <div style="color: #666;">Avg Gas Usage:</div>
+                <div style="font-weight: 500; color: #f97316;">${property.avgMonthlyGasTherms.toFixed(1)} therms/mo</div>
               ` : ""}
             </div>
             ${(property.hhExemption || property.vetExemption || isExempt) ? `
@@ -430,7 +438,15 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
                 ${property.avgMonthlyWaterKgal != null ? `
                   <div style="color: #666;">Avg Water Usage:</div>
-                  <div style="font-weight: 500; color: #3b82f6;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
+                  <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
+                ` : ""}
+                ${property.avgMonthlyElectricKwh != null ? `
+                  <div style="color: #666;">Avg Electric Usage:</div>
+                  <div style="font-weight: 500; color: #eab308;">${property.avgMonthlyElectricKwh.toFixed(0)} kWh/mo</div>
+                ` : ""}
+                ${property.avgMonthlyGasTherms != null ? `
+                  <div style="color: #666;">Avg Gas Usage:</div>
+                  <div style="font-weight: 500; color: #f97316;">${property.avgMonthlyGasTherms.toFixed(1)} therms/mo</div>
                 ` : ""}
               </div>
               ${(property.hhExemption || property.vetExemption || isExempt) ? `
