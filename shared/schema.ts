@@ -34,6 +34,8 @@ export const properties = pgTable("properties", {
   ownerZip: text("owner_zip"),
   geometry: text("geometry"),
   avgMonthlyWaterKgal: doublePrecision("avg_monthly_water_kgal"),
+  avgMonthlyElectricKwh: doublePrecision("avg_monthly_electric_kwh"),
+  avgMonthlyGasTherms: doublePrecision("avg_monthly_gas_therms"),
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true });

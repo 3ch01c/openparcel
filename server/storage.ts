@@ -13,7 +13,9 @@ export interface IStorage {
   createProperty(property: InsertProperty): Promise<Property>;
   clearAllProperties(): Promise<void>;
   updatePropertyWaterUsage(parcelId: string, avgMonthlyWaterKgal: number): Promise<void>;
-  clearWaterUsageData(): Promise<void>;
+  updatePropertyElectricUsage(parcelId: string, avgMonthlyElectricKwh: number): Promise<void>;
+  updatePropertyGasUsage(parcelId: string, avgMonthlyGasTherms: number): Promise<void>;
+  clearUtilityData(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -59,8 +61,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.parcelId, parcelId));
   }
 
-  async clearWaterUsageData(): Promise<void> {
-    await db.update(properties).set({ avgMonthlyWaterKgal: null });
+  async updatePropertyElectricUsage(parcelId: string, avgMonthlyElectricKwh: number): Promise<void> {
+    await db.update(properties)
+      .set({ avgMonthlyElectricKwh })
+      .where(eq(properties.parcelId, parcelId));
+  }
+
+  async updatePropertyGasUsage(parcelId: string, avgMonthlyGasTherms: number): Promise<void> {
+    await db.update(properties)
+      .set({ avgMonthlyGasTherms })
+      .where(eq(properties.parcelId, parcelId));
+  }
+
+  async clearUtilityData(): Promise<void> {
+    await db.update(properties).set({ 
+      avgMonthlyWaterKgal: null,
+      avgMonthlyElectricKwh: null,
+      avgMonthlyGasTherms: null
+    });
   }
 }
 
