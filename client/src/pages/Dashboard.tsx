@@ -1303,6 +1303,19 @@ export default function Dashboard() {
     const totalLandValue = properties.reduce((sum, p) => sum + (p.landValue || 0), 0);
     const avgLandValuePerAcre = totalParcelAcres > 0 ? totalLandValue / totalParcelAcres : 0;
 
+    // Utility usage totals and averages
+    const propsWithWater = properties.filter(p => p.avgMonthlyWaterKgal != null && p.avgMonthlyWaterKgal > 0);
+    const totalWaterUsage = propsWithWater.reduce((sum, p) => sum + (p.avgMonthlyWaterKgal || 0), 0);
+    const avgWaterUsage = propsWithWater.length > 0 ? totalWaterUsage / propsWithWater.length : 0;
+    
+    const propsWithElectric = properties.filter(p => p.avgMonthlyElectricKwh != null && p.avgMonthlyElectricKwh > 0);
+    const totalElectricUsage = propsWithElectric.reduce((sum, p) => sum + (p.avgMonthlyElectricKwh || 0), 0);
+    const avgElectricUsage = propsWithElectric.length > 0 ? totalElectricUsage / propsWithElectric.length : 0;
+    
+    const propsWithGas = properties.filter(p => p.avgMonthlyGasTherms != null && p.avgMonthlyGasTherms > 0);
+    const totalGasUsage = propsWithGas.reduce((sum, p) => sum + (p.avgMonthlyGasTherms || 0), 0);
+    const avgGasUsage = propsWithGas.length > 0 ? totalGasUsage / propsWithGas.length : 0;
+
     return {
       totalValue,
       avgValue,
@@ -1347,6 +1360,16 @@ export default function Dashboard() {
       electricUsageChartData,
       gasUsageChartData,
       topLandHoldersData,
+      // Utility usage stats
+      totalWaterUsage,
+      avgWaterUsage,
+      waterParcelCount: propsWithWater.length,
+      totalElectricUsage,
+      avgElectricUsage,
+      electricParcelCount: propsWithElectric.length,
+      totalGasUsage,
+      avgGasUsage,
+      gasParcelCount: propsWithGas.length,
     };
   }, [properties]);
 
@@ -3137,6 +3160,50 @@ export default function Dashboard() {
                 icon={DollarSign}
                 description="All exemption types combined"
               />
+
+              {/* Utility Usage Stats */}
+              {(stats.waterParcelCount > 0 || stats.electricParcelCount > 0 || stats.gasParcelCount > 0) && (
+                <div className="space-y-2 pt-2">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Avg Monthly Utility Usage
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {stats.waterParcelCount > 0 && (
+                      <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-2 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Droplets className="w-3 h-3 text-cyan-500" />
+                          <span className="text-[10px] text-cyan-500 uppercase">Water</span>
+                        </div>
+                        <div className="text-sm font-semibold text-cyan-500">{stats.avgWaterUsage.toFixed(1)}</div>
+                        <div className="text-[10px] text-muted-foreground">kgal/mo</div>
+                        <div className="text-[9px] text-muted-foreground mt-1">{stats.waterParcelCount.toLocaleString()} parcels</div>
+                      </div>
+                    )}
+                    {stats.electricParcelCount > 0 && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Zap className="w-3 h-3 text-yellow-500" />
+                          <span className="text-[10px] text-yellow-500 uppercase">Electric</span>
+                        </div>
+                        <div className="text-sm font-semibold text-yellow-500">{stats.avgElectricUsage.toFixed(0)}</div>
+                        <div className="text-[10px] text-muted-foreground">kWh/mo</div>
+                        <div className="text-[9px] text-muted-foreground mt-1">{stats.electricParcelCount.toLocaleString()} parcels</div>
+                      </div>
+                    )}
+                    {stats.gasParcelCount > 0 && (
+                      <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <Flame className="w-3 h-3 text-orange-500" />
+                          <span className="text-[10px] text-orange-500 uppercase">Gas</span>
+                        </div>
+                        <div className="text-sm font-semibold text-orange-500">{stats.avgGasUsage.toFixed(1)}</div>
+                        <div className="text-[10px] text-muted-foreground">therms/mo</div>
+                        <div className="text-[9px] text-muted-foreground mt-1">{stats.gasParcelCount.toLocaleString()} parcels</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Account Types Chart */}
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
