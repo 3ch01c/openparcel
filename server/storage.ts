@@ -5,13 +5,15 @@ import {
   type Property,
   type PropertyQueryParams
 } from "@shared/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, inArray } from "drizzle-orm";
 
 export interface IStorage {
   getProperties(params?: PropertyQueryParams): Promise<Property[]>;
   getProperty(id: number): Promise<Property | undefined>;
   createProperty(property: InsertProperty): Promise<Property>;
   clearAllProperties(): Promise<void>;
+  updatePropertyWaterUsage(parcelId: string, avgMonthlyWaterKgal: number): Promise<void>;
+  clearWaterUsageData(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -49,6 +51,16 @@ export class DatabaseStorage implements IStorage {
 
   async clearAllProperties(): Promise<void> {
     await db.delete(properties);
+  }
+
+  async updatePropertyWaterUsage(parcelId: string, avgMonthlyWaterKgal: number): Promise<void> {
+    await db.update(properties)
+      .set({ avgMonthlyWaterKgal })
+      .where(eq(properties.parcelId, parcelId));
+  }
+
+  async clearWaterUsageData(): Promise<void> {
+    await db.update(properties).set({ avgMonthlyWaterKgal: null });
   }
 }
 

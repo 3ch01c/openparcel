@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { fetchArcGISData } from "./fetch_data";
+import multer from "multer";
+import { parse } from "csv-parse/sync";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -43,6 +45,77 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Force fetch failed:", error);
       res.status(500).json({ success: false, message: "Failed to fetch data" });
+    }
+  });
+
+  // Utility CSV upload endpoint
+  const upload = multer({ storage: multer.memoryStorage() });
+  
+  app.post("/api/upload-utility-csv", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: "No file uploaded" });
+      }
+
+      const csvContent = req.file.buffer.toString("utf-8");
+      const records = parse(csvContent, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      }) as Array<Record<string, string>>;
+
+      // Group water usage (service 30000) by parcel ID
+      // Water is in 100s of gallons, we need to calculate average monthly in kgal
+      const waterUsageByParcel: Record<string, number[]> = {};
+
+      for (const record of records) {
+        const serviceCode = record["SERVICE"] || record["service"] || record["Service"];
+        const parcelId = record["PARCEL_ID"] || record["parcel_id"] || record["ParcelId"] || record["PIN"] || record["pin"];
+        const usage = parseFloat(record["USAGE"] || record["usage"] || record["Usage"] || "0");
+
+        // Only process water service (30000)
+        if (serviceCode === "30000" && parcelId && !isNaN(usage)) {
+          if (!waterUsageByParcel[parcelId]) {
+            waterUsageByParcel[parcelId] = [];
+          }
+          waterUsageByParcel[parcelId].push(usage);
+        }
+      }
+
+      // Calculate average monthly water usage in kgal for each parcel
+      // Input is in 100s of gallons, convert to kgal (1000 gallons)
+      // 100s of gallons * 100 = gallons, then / 1000 = kgal
+      // So multiply by 0.1 to get kgal
+      let updatedCount = 0;
+      await storage.clearWaterUsageData();
+
+      for (const [parcelId, usages] of Object.entries(waterUsageByParcel)) {
+        const avgUsage = usages.reduce((a, b) => a + b, 0) / usages.length;
+        const avgMonthlyWaterKgal = avgUsage * 0.1; // Convert from 100s of gallons to kgal
+        await storage.updatePropertyWaterUsage(parcelId, avgMonthlyWaterKgal);
+        updatedCount++;
+      }
+
+      res.json({
+        success: true,
+        message: `Processed ${records.length} records, updated ${updatedCount} parcels with water usage data`,
+        parcelsUpdated: updatedCount,
+        totalRecords: records.length,
+      });
+    } catch (error) {
+      console.error("CSV upload failed:", error);
+      res.status(500).json({ success: false, message: "Failed to process CSV file" });
+    }
+  });
+
+  // Clear utility data endpoint
+  app.post("/api/clear-utility-data", async (req, res) => {
+    try {
+      await storage.clearWaterUsageData();
+      res.json({ success: true, message: "Water usage data cleared" });
+    } catch (error) {
+      console.error("Clear utility data failed:", error);
+      res.status(500).json({ success: false, message: "Failed to clear utility data" });
     }
   });
 

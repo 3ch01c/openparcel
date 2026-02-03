@@ -225,6 +225,10 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="font-weight: 500;">${property.zone || "N/A"}</div>
               <div style="color: #666;">Mill Levy:</div>
               <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
+              ${property.avgMonthlyWaterKgal != null ? `
+                <div style="color: #666;">Avg Water Usage:</div>
+                <div style="font-weight: 500; color: #3b82f6;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
+              ` : ""}
             </div>
             ${(property.hhExemption || property.vetExemption || isExempt) ? `
               <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
@@ -422,6 +426,10 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="font-weight: 500;">${property.zone || "N/A"}</div>
                 <div style="color: #666;">Mill Levy:</div>
                 <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
+                ${property.avgMonthlyWaterKgal != null ? `
+                  <div style="color: #666;">Avg Water Usage:</div>
+                  <div style="font-weight: 500; color: #3b82f6;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
+                ` : ""}
               </div>
               ${(property.hhExemption || property.vetExemption || isExempt) ? `
                 <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">

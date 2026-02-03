@@ -33,6 +33,17 @@ Preferred communication style: Simple, everyday language.
 3. Frontend queries /api/properties with optional filters (year, min/max value)
 4. React Query caches responses for 5 minutes
 5. Map displays properties as clustered heatmap markers or individual parcel polygons (toggleable view modes)
+6. Utility consumption data can be uploaded via CSV to join water usage to parcels
+
+### Utility Data Upload
+- **Endpoint**: POST /api/upload-utility-csv
+- **CSV Format**: Columns for SERVICE, PARCEL_ID (or PIN), and USAGE
+- **Service Codes**: 
+  - 10000 = Electric (kWh) - not currently processed
+  - 20000 = Gas (therms) - not currently processed
+  - 30000 = Water (100s of gallons) - processed and stored as avg monthly kgal
+- **Processing**: Multiple water readings per parcel are averaged, then converted from 100s of gallons to kgal (multiply by 0.1)
+- **Display**: Water usage appears in parcel popups and is included in data exports
 
 ### Project Structure
 - `client/` - React frontend application

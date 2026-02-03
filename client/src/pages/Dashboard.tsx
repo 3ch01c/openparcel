@@ -27,6 +27,7 @@ import {
   TrendingUp,
   Home,
   Download,
+  Upload,
   Coffee,
   ChevronDown,
   BarChart3,
@@ -34,6 +35,7 @@ import {
   X,
   PanelLeftClose,
   PanelLeft,
+  Droplets,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -87,6 +89,9 @@ export default function Dashboard() {
   const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 150]);
   const [bldgToLandRatioRange, setBldgToLandRatioRange] = useState<[number, number]>([0, 2]);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
   const [tempMin, setTempMin] = useState("");
@@ -418,6 +423,7 @@ export default function Dashboard() {
     data: rawProperties,
     isLoading,
     isError,
+    refetch,
   } = useProperties({
     year,
     minValue: valueRange[0],
@@ -1210,6 +1216,7 @@ export default function Dashboard() {
         latitude: p.lat,
         longitude: p.lng,
         assessmentYear: p.assessmentYear,
+        avgMonthlyWaterKgal: p.avgMonthlyWaterKgal,
       }));
       content = JSON.stringify(jsonData, null, 2);
       mimeType = "application/json";
@@ -1244,6 +1251,7 @@ export default function Dashboard() {
         "Latitude",
         "Longitude",
         "Assessment Year",
+        "Avg Water Usage (kgal/mo)",
       ];
       const rows = properties.map((p) => [
         p.parcelId,
@@ -1274,6 +1282,7 @@ export default function Dashboard() {
         p.lat,
         p.lng,
         p.assessmentYear,
+        p.avgMonthlyWaterKgal?.toFixed(2) || "",
       ]);
       content = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
       mimeType = "text/csv;charset=utf-8;";
@@ -1289,6 +1298,40 @@ export default function Dashboard() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleUtilityUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadStatus(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/upload-utility-csv", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setUploadStatus({ success: true, message: result.message });
+        refetch();
+      } else {
+        setUploadStatus({ success: false, message: result.message || "Upload failed" });
+      }
+    } catch (error) {
+      setUploadStatus({ success: false, message: "Failed to upload file" });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   if (isError) {
@@ -2478,6 +2521,53 @@ export default function Dashboard() {
                 <Download className="w-4 h-4 mr-2" />
                 Download {properties?.length || 0} Parcels
               </Button>
+            </div>
+          </div>
+
+          {/* Utility Data Upload Section */}
+          <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
+              <Droplets className="w-4 h-4" />
+              <span>Utility Data</span>
+            </div>
+            <div className="space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleUtilityUpload}
+                className="hidden"
+                data-testid="input-utility-csv"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full"
+                size="sm"
+                data-testid="button-upload-utility"
+              >
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                {isUploading ? "Uploading..." : "Upload Utility CSV"}
+              </Button>
+              {uploadStatus && (
+                <div
+                  className={`text-xs p-2 rounded ${
+                    uploadStatus.success
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}
+                  data-testid="text-upload-status"
+                >
+                  {uploadStatus.message}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Upload CSV with SERVICE, PARCEL_ID, USAGE columns. Water (30000) data will be averaged monthly in kgal.
+              </p>
             </div>
           </div>
 
