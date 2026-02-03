@@ -36,6 +36,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   Droplets,
+  Zap,
+  Flame,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -89,6 +91,8 @@ export default function Dashboard() {
   const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 150]);
   const [bldgToLandRatioRange, setBldgToLandRatioRange] = useState<[number, number]>([0, 2]);
   const [waterUsageRange, setWaterUsageRange] = useState<[number, number]>([0, 100]);
+  const [electricUsageRange, setElectricUsageRange] = useState<[number, number]>([0, 5000]);
+  const [gasUsageRange, setGasUsageRange] = useState<[number, number]>([0, 500]);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{ success: boolean; message: string } | null>(null);
@@ -125,6 +129,14 @@ export default function Dashboard() {
   const [editingWaterMax, setEditingWaterMax] = useState(false);
   const [tempWaterMin, setTempWaterMin] = useState("");
   const [tempWaterMax, setTempWaterMax] = useState("");
+  const [editingElectricMin, setEditingElectricMin] = useState(false);
+  const [editingElectricMax, setEditingElectricMax] = useState(false);
+  const [tempElectricMin, setTempElectricMin] = useState("");
+  const [tempElectricMax, setTempElectricMax] = useState("");
+  const [editingGasMin, setEditingGasMin] = useState(false);
+  const [editingGasMax, setEditingGasMax] = useState(false);
+  const [tempGasMin, setTempGasMin] = useState("");
+  const [tempGasMax, setTempGasMax] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -150,6 +162,8 @@ export default function Dashboard() {
     landPerSqft: { min: number; max: number };
     bldgRatio: { min: number; max: number };
     waterUsage: { min: number; max: number };
+    electricUsage: { min: number; max: number };
+    gasUsage: { min: number; max: number };
   } | null>(null);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
@@ -167,6 +181,10 @@ export default function Dashboard() {
   const bldgRatioMaxInputRef = useRef<HTMLInputElement>(null);
   const waterMinInputRef = useRef<HTMLInputElement>(null);
   const waterMaxInputRef = useRef<HTMLInputElement>(null);
+  const electricMinInputRef = useRef<HTMLInputElement>(null);
+  const electricMaxInputRef = useRef<HTMLInputElement>(null);
+  const gasMinInputRef = useRef<HTMLInputElement>(null);
+  const gasMaxInputRef = useRef<HTMLInputElement>(null);
 
   const handleMinClick = () => {
     setTempMin(String(valueRange[0]));
@@ -414,6 +432,68 @@ export default function Dashboard() {
     setEditingWaterMax(false);
   };
 
+  // Electric Usage handlers
+  const handleElectricMinClick = () => {
+    setTempElectricMin(String(electricUsageRange[0]));
+    setEditingElectricMin(true);
+    setTimeout(() => electricMinInputRef.current?.select(), 0);
+  };
+
+  const handleElectricMaxClick = () => {
+    setTempElectricMax(String(electricUsageRange[1]));
+    setEditingElectricMax(true);
+    setTimeout(() => electricMaxInputRef.current?.select(), 0);
+  };
+
+  const handleElectricMinSubmit = () => {
+    const val = parseFloat(tempElectricMin.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, electricUsageRange[1]));
+      setElectricUsageRange([clamped, electricUsageRange[1]]);
+    }
+    setEditingElectricMin(false);
+  };
+
+  const handleElectricMaxSubmit = () => {
+    const val = parseFloat(tempElectricMax.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(electricUsageRange[0], val);
+      setElectricUsageRange([electricUsageRange[0], clamped]);
+    }
+    setEditingElectricMax(false);
+  };
+
+  // Gas Usage handlers
+  const handleGasMinClick = () => {
+    setTempGasMin(String(gasUsageRange[0]));
+    setEditingGasMin(true);
+    setTimeout(() => gasMinInputRef.current?.select(), 0);
+  };
+
+  const handleGasMaxClick = () => {
+    setTempGasMax(String(gasUsageRange[1]));
+    setEditingGasMax(true);
+    setTimeout(() => gasMaxInputRef.current?.select(), 0);
+  };
+
+  const handleGasMinSubmit = () => {
+    const val = parseFloat(tempGasMin.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(0, Math.min(val, gasUsageRange[1]));
+      setGasUsageRange([clamped, gasUsageRange[1]]);
+    }
+    setEditingGasMin(false);
+  };
+
+  const handleGasMaxSubmit = () => {
+    const val = parseFloat(tempGasMax.replace(/[^0-9.]/g, ""));
+    if (!isNaN(val)) {
+      const clamped = Math.max(gasUsageRange[0], val);
+      setGasUsageRange([gasUsageRange[0], clamped]);
+    }
+    setEditingGasMax(false);
+  };
+
   // Calculate land value per sqft for a property
   const getLandValuePerSqft = (p: PropertyResponse) => {
     const landValue = p.landValue || 0;
@@ -493,6 +573,8 @@ export default function Dashboard() {
         landPerSqft: { min: 0, max: 150 },
         bldgRatio: { min: 0, max: 2 },
         waterUsage: { min: 0, max: 100 },
+        electricUsage: { min: 0, max: 5000 },
+        gasUsage: { min: 0, max: 500 },
       };
     }
 
@@ -546,6 +628,14 @@ export default function Dashboard() {
         min: Math.min(...rawProperties.map(p => p.avgMonthlyWaterKgal || 0)),
         max: Math.max(...rawProperties.map(p => p.avgMonthlyWaterKgal || 0)),
       },
+      electricUsage: {
+        min: Math.min(...rawProperties.map(p => p.avgMonthlyElectricKwh || 0)),
+        max: Math.max(...rawProperties.map(p => p.avgMonthlyElectricKwh || 0)),
+      },
+      gasUsage: {
+        min: Math.min(...rawProperties.map(p => p.avgMonthlyGasTherms || 0)),
+        max: Math.max(...rawProperties.map(p => p.avgMonthlyGasTherms || 0)),
+      },
     };
   }, [rawProperties, getLandValuePerSqft, getBldgToLandRatio]);
 
@@ -564,6 +654,8 @@ export default function Dashboard() {
         landPerSqft: { min: unfilteredRanges.landPerSqft.min, max: unfilteredRanges.landPerSqft.max },
         bldgRatio: { min: unfilteredRanges.bldgRatio.min, max: unfilteredRanges.bldgRatio.max },
         waterUsage: { min: unfilteredRanges.waterUsage.min, max: unfilteredRanges.waterUsage.max },
+        electricUsage: { min: unfilteredRanges.electricUsage.min, max: unfilteredRanges.electricUsage.max },
+        gasUsage: { min: unfilteredRanges.gasUsage.min, max: unfilteredRanges.gasUsage.max },
       };
       // Store initial multi-choice options permanently - these will never change after first load
       const accountTypes = new Set<string>();
@@ -594,6 +686,8 @@ export default function Dashboard() {
       setLandValuePerSqftRange([unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max]);
       setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
       setWaterUsageRange([unfilteredRanges.waterUsage.min, unfilteredRanges.waterUsage.max]);
+      setElectricUsageRange([unfilteredRanges.electricUsage.min, unfilteredRanges.electricUsage.max]);
+      setGasUsageRange([unfilteredRanges.gasUsage.min, unfilteredRanges.gasUsage.max]);
       rangesInitialized.current = true;
     }
   }, [rawProperties, unfilteredRanges]);
@@ -613,6 +707,8 @@ export default function Dashboard() {
       const landPerSqft = getLandValuePerSqft(p);
       const bldgRatio = getBldgToLandRatio(p);
       const waterUsage = p.avgMonthlyWaterKgal || 0;
+      const electricUsage = p.avgMonthlyElectricKwh || 0;
+      const gasUsage = p.avgMonthlyGasTherms || 0;
       return (
         tax >= taxRange[0] &&
         tax <= taxRange[1] &&
@@ -627,10 +723,14 @@ export default function Dashboard() {
         bldgRatio >= bldgToLandRatioRange[0] &&
         bldgRatio <= bldgToLandRatioRange[1] &&
         waterUsage >= waterUsageRange[0] &&
-        waterUsage <= waterUsageRange[1]
+        waterUsage <= waterUsageRange[1] &&
+        electricUsage >= electricUsageRange[0] &&
+        electricUsage <= electricUsageRange[1] &&
+        gasUsage >= gasUsageRange[0] &&
+        gasUsage <= gasUsageRange[1]
       );
     });
-  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange]);
+  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange, electricUsageRange, gasUsageRange]);
 
   // For account type counts: apply subdivision, zone, and owner city/state filters (but not account type)
   const propertiesForAccountTypeCounts = useMemo(() => {
@@ -1061,6 +1161,40 @@ export default function Dashboard() {
       binMax: actualWaterMin + (i + 1) * waterStep,
     }));
 
+    // Electric usage histogram
+    const electricUsageValues = properties.map(p => p.avgMonthlyElectricKwh || 0);
+    const actualElectricMin = electricUsageValues.length > 0 ? Math.min(...electricUsageValues) : 0;
+    const actualElectricMax = electricUsageValues.length > 0 ? Math.max(...electricUsageValues) : 5000;
+    const electricDistribution = [0, 0, 0, 0, 0];
+    const electricStep = (actualElectricMax - actualElectricMin) / 5;
+    electricUsageValues.forEach(val => {
+      const bucket = electricStep > 0 ? Math.min(Math.floor((val - actualElectricMin) / electricStep), 4) : 0;
+      electricDistribution[bucket]++;
+    });
+    const electricUsageChartData = electricDistribution.map((count, i) => ({
+      range: `${(actualElectricMin + i * electricStep).toFixed(0)} - ${(actualElectricMin + (i + 1) * electricStep).toFixed(0)}`,
+      count,
+      binMin: actualElectricMin + i * electricStep,
+      binMax: actualElectricMin + (i + 1) * electricStep,
+    }));
+
+    // Gas usage histogram
+    const gasUsageValues = properties.map(p => p.avgMonthlyGasTherms || 0);
+    const actualGasMin = gasUsageValues.length > 0 ? Math.min(...gasUsageValues) : 0;
+    const actualGasMax = gasUsageValues.length > 0 ? Math.max(...gasUsageValues) : 500;
+    const gasDistribution = [0, 0, 0, 0, 0];
+    const gasStep = (actualGasMax - actualGasMin) / 5;
+    gasUsageValues.forEach(val => {
+      const bucket = gasStep > 0 ? Math.min(Math.floor((val - actualGasMin) / gasStep), 4) : 0;
+      gasDistribution[bucket]++;
+    });
+    const gasUsageChartData = gasDistribution.map((count, i) => ({
+      range: `${(actualGasMin + i * gasStep).toFixed(1)} - ${(actualGasMin + (i + 1) * gasStep).toFixed(1)}`,
+      count,
+      binMin: actualGasMin + i * gasStep,
+      binMax: actualGasMin + (i + 1) * gasStep,
+    }));
+
     // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
     // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
     const totalTaxes = properties.reduce((sum, p) => {
@@ -1210,6 +1344,8 @@ export default function Dashboard() {
       landPerSqftChartData,
       bldgRatioChartData,
       waterUsageChartData,
+      electricUsageChartData,
+      gasUsageChartData,
       topLandHoldersData,
     };
   }, [properties]);
@@ -1481,6 +1617,8 @@ export default function Dashboard() {
                     setLandValuePerSqftRange([sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max]);
                     setBldgToLandRatioRange([sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max]);
                     setWaterUsageRange([sliderBounds.waterUsage.min, sliderBounds.waterUsage.max]);
+                    setElectricUsageRange([sliderBounds.electricUsage.min, sliderBounds.electricUsage.max]);
+                    setGasUsageRange([sliderBounds.gasUsage.min, sliderBounds.gasUsage.max]);
                     setSelectedAccountTypes([]);
                     setSelectedSubdivisions([]);
                     setSelectedOwnerCityStates([]);
@@ -2300,6 +2438,202 @@ export default function Dashboard() {
                           onClick={(data: any) => {
                             if (data && data.binMin !== undefined && data.binMax !== undefined) {
                               setWaterUsageRange([data.binMin, data.binMax]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Avg Electric Usage Range */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-yellow-500" />
+                    Avg Electric (kWh/mo)
+                  </label>
+                  <div className="flex items-center gap-1 text-xs">
+                    {editingElectricMin ? (
+                      <input
+                        ref={electricMinInputRef}
+                        value={tempElectricMin}
+                        onChange={(e) => setTempElectricMin(e.target.value)}
+                        onBlur={handleElectricMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleElectricMinSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-yellow-500 text-yellow-500 rounded text-right"
+                        data-testid="input-electric-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleElectricMinClick}
+                        className="text-yellow-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-electric-min"
+                      >
+                        {electricUsageRange[0].toFixed(0)}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingElectricMax ? (
+                      <input
+                        ref={electricMaxInputRef}
+                        value={tempElectricMax}
+                        onChange={(e) => setTempElectricMax(e.target.value)}
+                        onBlur={handleElectricMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleElectricMaxSubmit()
+                        }
+                        className="w-20 px-1 py-0.5 text-xs bg-background border border-yellow-500 text-yellow-500 rounded text-right"
+                        data-testid="input-electric-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleElectricMaxClick}
+                        className="text-yellow-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-electric-max"
+                      >
+                        {electricUsageRange[1].toFixed(0)}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  min={sliderBounds.electricUsage.min}
+                  max={sliderBounds.electricUsage.max}
+                  step={Math.max(1, (sliderBounds.electricUsage.max - sliderBounds.electricUsage.min) / 100)}
+                  value={electricUsageRange}
+                  onValueChange={(val) =>
+                    setElectricUsageRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-yellow-500"
+                  thumbClassName="border-yellow-500"
+                  data-testid="slider-electric-usage"
+                />
+                {stats?.electricUsageChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.electricUsageChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(48 96% 53%)"
+                          radius={[4, 4, 0, 0]}
+                          cursor="pointer"
+                          onClick={(data: any) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setElectricUsageRange([data.binMin, data.binMax]);
+                            }
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Avg Gas Usage Range */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-orange-500" />
+                    Avg Gas (therms/mo)
+                  </label>
+                  <div className="flex items-center gap-1 text-xs">
+                    {editingGasMin ? (
+                      <input
+                        ref={gasMinInputRef}
+                        value={tempGasMin}
+                        onChange={(e) => setTempGasMin(e.target.value)}
+                        onBlur={handleGasMinSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleGasMinSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
+                        data-testid="input-gas-min"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleGasMinClick}
+                        className="text-orange-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-gas-min"
+                      >
+                        {gasUsageRange[0].toFixed(1)}
+                      </button>
+                    )}
+                    <span className="text-muted-foreground">-</span>
+                    {editingGasMax ? (
+                      <input
+                        ref={gasMaxInputRef}
+                        value={tempGasMax}
+                        onChange={(e) => setTempGasMax(e.target.value)}
+                        onBlur={handleGasMaxSubmit}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleGasMaxSubmit()
+                        }
+                        className="w-16 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
+                        data-testid="input-gas-max"
+                      />
+                    ) : (
+                      <button
+                        onClick={handleGasMaxClick}
+                        className="text-orange-500 hover:underline cursor-pointer"
+                        data-testid="button-edit-gas-max"
+                      >
+                        {gasUsageRange[1].toFixed(1)}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Slider
+                  min={sliderBounds.gasUsage.min}
+                  max={sliderBounds.gasUsage.max}
+                  step={Math.max(0.1, (sliderBounds.gasUsage.max - sliderBounds.gasUsage.min) / 100)}
+                  value={gasUsageRange}
+                  onValueChange={(val) =>
+                    setGasUsageRange(val as [number, number])
+                  }
+                  className="py-2"
+                  rangeClassName="bg-orange-500"
+                  thumbClassName="border-orange-500"
+                  data-testid="slider-gas-usage"
+                />
+                {stats?.gasUsageChartData && (
+                  <div className="h-20 mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.gasUsageChartData}>
+                        <XAxis dataKey="range" hide />
+                        <YAxis hide />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(222 47% 11%)",
+                            borderColor: "hsl(217 33% 17%)",
+                            borderRadius: "8px",
+                          }}
+                          itemStyle={{ color: "white" }}
+                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="hsl(24 95% 53%)"
+                          radius={[4, 4, 0, 0]}
+                          cursor="pointer"
+                          onClick={(data: any) => {
+                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
+                              setGasUsageRange([data.binMin, data.binMax]);
                             }
                           }}
                         />
