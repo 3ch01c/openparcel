@@ -78,7 +78,7 @@ export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
-  const [colorMetric, setColorMetric] = useState<ColorMetric>("landValuePerSqft");
+  const [colorMetric, setColorMetric] = useState<ColorMetric>("bldgLandRatio");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 250000000]);
   const [taxRange, setTaxRange] = useState<[number, number]>([0, 500000]);
   const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 1200]);
