@@ -123,6 +123,7 @@ export default function Dashboard() {
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
   const [selectedOwnerCityStates, setSelectedOwnerCityStates] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState("");
+  const [pendingOwnerFilter, setPendingOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
   const rangesInitialized = useRef(false);
   const initialTotalParcelsRef = useRef<number | null>(null);
@@ -2397,18 +2398,45 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-                <input
-                  type="text"
-                  value={ownerFilter}
-                  onChange={(e) => setOwnerFilter(e.target.value)}
-                  placeholder={useRegex ? "e.g. ^SMITH|JONES$" : "Search by owner name..."}
-                  className="w-full px-3 py-2 text-sm bg-background/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-                  data-testid="input-owner-filter"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={pendingOwnerFilter}
+                    onChange={(e) => setPendingOwnerFilter(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setOwnerFilter(pendingOwnerFilter);
+                      }
+                    }}
+                    placeholder={useRegex ? "e.g. ^SMITH|JONES$" : "Search by owner name..."}
+                    className="flex-1 px-3 py-2 text-sm bg-background/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                    data-testid="input-owner-filter"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => setOwnerFilter(pendingOwnerFilter)}
+                    disabled={pendingOwnerFilter === ownerFilter}
+                    data-testid="button-apply-owner-filter"
+                  >
+                    Apply
+                  </Button>
+                </div>
                 {ownerFilter && (
-                  <p className="text-xs text-muted-foreground">
-                    {useRegex ? "Using regex pattern (case-insensitive)" : "Using literal string match"}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      {useRegex ? "Using regex pattern (case-insensitive)" : "Using literal string match"}
+                    </p>
+                    <button
+                      onClick={() => {
+                        setOwnerFilter("");
+                        setPendingOwnerFilter("");
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                      data-testid="button-clear-owner-filter"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 )}
               </div>
                 </div>
