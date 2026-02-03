@@ -200,7 +200,8 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
 
         const popupContent = `
           <div style="min-width: 250px; font-family: system-ui, sans-serif;">
-            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #333;">${property.address || "Unknown Address"}</div>
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
+            <div style="font-size: 11px; color: #888; margin-bottom: 8px;">Parcel ID: ${property.pin || "N/A"}</div>
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; column-gap: 5px; font-size: 12px;">
               <div style="color: #666;">Owner:</div>
@@ -401,7 +402,8 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
 
           const popupContent = `
             <div style="min-width: 250px; font-family: system-ui, sans-serif;">
-              <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #333;">${property.address || "Unknown Address"}</div>
+              <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
+              <div style="font-size: 11px; color: #888; margin-bottom: 8px;">Parcel ID: ${property.pin || "N/A"}</div>
               <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; column-gap: 5px; font-size: 12px;">
                 <div style="color: #666;">Owner:</div>
