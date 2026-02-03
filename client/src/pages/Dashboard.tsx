@@ -2566,7 +2566,7 @@ export default function Dashboard() {
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Upload CSV with SERVICE, PARCEL_ID, USAGE columns. Water (30000) data will be averaged monthly in kgal.
+                Upload CSV with Parcel, Service, Bill Date, Actual Usage columns. Water (30000) data will be averaged in kgal.
               </p>
             </div>
           </div>

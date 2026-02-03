@@ -37,7 +37,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Utility Data Upload
 - **Endpoint**: POST /api/upload-utility-csv
-- **CSV Format**: Columns for SERVICE, PARCEL_ID (or PIN), and USAGE
+- **CSV Format**: Columns for Parcel, Service, Bill Date, and Actual Usage
 - **Service Codes**: 
   - 10000 = Electric (kWh) - not currently processed
   - 20000 = Gas (therms) - not currently processed

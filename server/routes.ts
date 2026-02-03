@@ -69,9 +69,9 @@ export async function registerRoutes(
       const waterUsageByParcel: Record<string, number[]> = {};
 
       for (const record of records) {
-        const serviceCode = record["SERVICE"] || record["service"] || record["Service"];
-        const parcelId = record["PARCEL_ID"] || record["parcel_id"] || record["ParcelId"] || record["PIN"] || record["pin"];
-        const usage = parseFloat(record["USAGE"] || record["usage"] || record["Usage"] || "0");
+        const serviceCode = record["Service"] || record["SERVICE"] || record["service"];
+        const parcelId = record["Parcel"] || record["PARCEL"] || record["parcel"] || record["PARCEL_ID"] || record["parcel_id"] || record["PIN"] || record["pin"];
+        const usage = parseFloat(record["Actual Usage"] || record["ACTUAL USAGE"] || record["actual usage"] || record["USAGE"] || record["usage"] || record["Usage"] || "0");
 
         // Only process water service (30000)
         if (serviceCode === "30000" && parcelId && !isNaN(usage)) {
