@@ -5,7 +5,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { PropertyResponse } from "@shared/schema";
-import { type ColorMetric, getMetricValue } from "@/lib/map-metrics";
+import { type ColorMetric, getMetricValue, getZoneColor, isCategoricalMetric } from "@/lib/map-metrics";
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -105,10 +105,17 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
       clusterGroupRef.current = null;
     }
 
-    // Calculate min/max values for the selected color metric from filtered data
-    const metricValues = validPoints.map(p => getMetricValue(p, colorMetric));
-    const minMetricValue = Math.min(...metricValues);
-    const maxMetricValue = Math.max(...metricValues);
+    // For categorical metrics (zone), build a sorted list for consistent coloring
+    const zoneList = isCategoricalMetric(colorMetric) 
+      ? Array.from(new Set(validPoints.map(p => p.zone).filter(Boolean) as string[])).sort()
+      : [];
+
+    // Calculate min/max values for numeric metrics
+    const metricValues = !isCategoricalMetric(colorMetric) 
+      ? validPoints.map(p => getMetricValue(p, colorMetric))
+      : [];
+    const minMetricValue = metricValues.length > 0 ? Math.min(...metricValues) : 0;
+    const maxMetricValue = metricValues.length > 0 ? Math.max(...metricValues) : 1;
 
     try {
       const clusterGroup = L.markerClusterGroup({
@@ -148,8 +155,9 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
       });
 
       validPoints.forEach((property) => {
-        const metricValue = getMetricValue(property, colorMetric);
-        const color = getMarkerColor(metricValue, minMetricValue, maxMetricValue);
+        const color = isCategoricalMetric(colorMetric)
+          ? getZoneColor(property.zone, zoneList)
+          : getMarkerColor(getMetricValue(property, colorMetric), minMetricValue, maxMetricValue);
         
         const markerIcon = L.divIcon({
           className: "custom-marker",
@@ -328,10 +336,17 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
       polygonLayerRef.current = null;
     }
 
-    // Calculate min/max values for the selected color metric from filtered data
-    const metricValues = validPoints.map(p => getMetricValue(p, colorMetric));
-    const minMetricValue = Math.min(...metricValues);
-    const maxMetricValue = Math.max(...metricValues);
+    // For categorical metrics (zone), build a sorted list for consistent coloring
+    const zoneList = isCategoricalMetric(colorMetric) 
+      ? Array.from(new Set(validPoints.map(p => p.zone).filter(Boolean) as string[])).sort()
+      : [];
+
+    // Calculate min/max values for numeric metrics
+    const metricValues = !isCategoricalMetric(colorMetric) 
+      ? validPoints.map(p => getMetricValue(p, colorMetric))
+      : [];
+    const minMetricValue = metricValues.length > 0 ? Math.min(...metricValues) : 0;
+    const maxMetricValue = metricValues.length > 0 ? Math.max(...metricValues) : 1;
 
     try {
       const layerGroup = L.layerGroup();
@@ -345,8 +360,9 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
             ring.map(([lng, lat]) => [lat, lng] as [number, number])
           );
 
-          const metricValue = getMetricValue(property, colorMetric);
-          const color = getMarkerColor(metricValue, minMetricValue, maxMetricValue);
+          const color = isCategoricalMetric(colorMetric)
+            ? getZoneColor(property.zone, zoneList)
+            : getMarkerColor(getMetricValue(property, colorMetric), minMetricValue, maxMetricValue);
 
           const polygon = L.polygon(latLngs, {
             color: color,

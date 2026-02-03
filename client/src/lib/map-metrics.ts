@@ -1,6 +1,6 @@
 import type { PropertyResponse } from "@shared/schema";
 
-export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio";
+export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio" | "zone";
 
 export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   assessedValue: "Assessed Value",
@@ -9,7 +9,28 @@ export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   taxAssessed: "Tax Assessed",
   landValuePerSqft: "Land Value/Sqft",
   bldgLandRatio: "Bldg/Land Sqft Ratio",
+  zone: "Zone",
 };
+
+// Categorical color palette for zone coloring (25 distinct colors)
+const CATEGORICAL_COLORS = [
+  "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
+  "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
+  "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000",
+  "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080",
+  "#ffffff", "#000000", "#a9a9a9", "#ff6347", "#20b2aa"
+];
+
+export function getZoneColor(zone: string | null | undefined, zoneList: string[]): string {
+  if (!zone) return "#808080"; // Gray for unknown
+  const index = zoneList.indexOf(zone);
+  if (index === -1) return "#808080";
+  return CATEGORICAL_COLORS[index % CATEGORICAL_COLORS.length];
+}
+
+export function isCategoricalMetric(metric: ColorMetric): boolean {
+  return metric === "zone";
+}
 
 export function getMetricValue(property: PropertyResponse, metric: ColorMetric): number {
   const landSqft = (property.parcelArea || 0) * 43560;
