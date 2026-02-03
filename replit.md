@@ -37,13 +37,21 @@ Preferred communication style: Simple, everyday language.
 
 ### Utility Data Upload
 - **Endpoint**: POST /api/upload-utility-csv
-- **CSV Format**: Columns for Parcel, Service, Bill Date, and Actual Usage
+- **CSV Format**: Columns for Parcel, Service, Bill Date, and Actual Usage (case-insensitive headers)
+- **Max File Size**: 50MB
 - **Service Codes**: 
-  - 10000 = Electric (kWh) - not currently processed
-  - 20000 = Gas (therms) - not currently processed
-  - 30000 = Water (100s of gallons) - processed and stored as avg monthly kgal
-- **Processing**: Multiple water readings per parcel are averaged, then converted from 100s of gallons to kgal (multiply by 0.1)
-- **Display**: Water usage appears in parcel popups and is included in data exports
+  - 10000 = Electric (kWh) - processed and stored as avg monthly kWh
+  - 20000 = Gas (therms) - processed and stored as avg monthly therms
+  - 30000 = Water (100s of gallons) - processed and stored as avg monthly kgal (×0.1 conversion)
+- **Processing**: 
+  - Readings grouped by parcel and month (from Bill Date)
+  - Monthly averages calculated for each utility type
+  - New upload clears all previous utility data before processing
+- **Display**: 
+  - Utility usage appears in parcel popups with color-coded values (cyan=water, yellow=electric, orange=gas)
+  - Range filters with dual-thumb sliders, editable inputs, and clickable histogram bars for each utility type
+  - Color-by metric options for water, electric, and gas usage on map visualization
+  - All three utility fields included in CSV/JSON exports
 
 ### Project Structure
 - `client/` - React frontend application
