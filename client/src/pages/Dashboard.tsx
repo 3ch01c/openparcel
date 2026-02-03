@@ -1480,6 +1480,7 @@ export default function Dashboard() {
                     setImprovementValueRange([sliderBounds.improvementValue.min, sliderBounds.improvementValue.max]);
                     setLandValuePerSqftRange([sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max]);
                     setBldgToLandRatioRange([sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max]);
+                    setWaterUsageRange([sliderBounds.waterUsage.min, sliderBounds.waterUsage.max]);
                     setSelectedAccountTypes([]);
                     setSelectedSubdivisions([]);
                     setSelectedOwnerCityStates([]);
