@@ -64,21 +64,33 @@ export async function registerRoutes(
         trim: true,
       }) as Array<Record<string, string>>;
 
-      // Group water usage (service 30000) by parcel ID
-      // Water is in 100s of gallons, we need to calculate average monthly in kgal
-      const waterUsageByParcel: Record<string, number[]> = {};
+      // Group water usage (service 30000) by parcel ID and month
+      // Each record is a monthly usage, so group by parcel -> month -> sum usage
+      // Then average across months to get average monthly usage
+      // Structure: { parcelId: { "YYYY-MM": totalUsage } }
+      const waterUsageByParcelMonth: Record<string, Record<string, number>> = {};
 
       for (const record of records) {
         const serviceCode = record["Service"] || record["SERVICE"] || record["service"];
         const parcelId = record["Parcel"] || record["PARCEL"] || record["parcel"] || record["PARCEL_ID"] || record["parcel_id"] || record["PIN"] || record["pin"];
         const usage = parseFloat(record["Actual Usage"] || record["ACTUAL USAGE"] || record["actual usage"] || record["USAGE"] || record["usage"] || record["Usage"] || "0");
+        const billDateStr = record["Bill Date"] || record["BILL DATE"] || record["bill date"] || record["BillDate"] || "";
 
         // Only process water service (30000)
-        if (serviceCode === "30000" && parcelId && !isNaN(usage)) {
-          if (!waterUsageByParcel[parcelId]) {
-            waterUsageByParcel[parcelId] = [];
+        if (serviceCode === "30000" && parcelId && !isNaN(usage) && billDateStr) {
+          // Parse bill date to get year-month key
+          const billDate = new Date(billDateStr);
+          if (!isNaN(billDate.getTime())) {
+            const monthKey = `${billDate.getFullYear()}-${String(billDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!waterUsageByParcelMonth[parcelId]) {
+              waterUsageByParcelMonth[parcelId] = {};
+            }
+            if (!waterUsageByParcelMonth[parcelId][monthKey]) {
+              waterUsageByParcelMonth[parcelId][monthKey] = 0;
+            }
+            waterUsageByParcelMonth[parcelId][monthKey] += usage;
           }
-          waterUsageByParcel[parcelId].push(usage);
         }
       }
 
@@ -89,11 +101,15 @@ export async function registerRoutes(
       let updatedCount = 0;
       await storage.clearWaterUsageData();
 
-      for (const [parcelId, usages] of Object.entries(waterUsageByParcel)) {
-        const avgUsage = usages.reduce((a, b) => a + b, 0) / usages.length;
-        const avgMonthlyWaterKgal = avgUsage * 0.1; // Convert from 100s of gallons to kgal
-        await storage.updatePropertyWaterUsage(parcelId, avgMonthlyWaterKgal);
-        updatedCount++;
+      for (const [parcelId, monthlyUsage] of Object.entries(waterUsageByParcelMonth)) {
+        const months = Object.values(monthlyUsage);
+        if (months.length > 0) {
+          const totalUsage = months.reduce((a, b) => a + b, 0);
+          const avgMonthlyUsage = totalUsage / months.length;
+          const avgMonthlyWaterKgal = avgMonthlyUsage * 0.1; // Convert from 100s of gallons to kgal
+          await storage.updatePropertyWaterUsage(parcelId, avgMonthlyWaterKgal);
+          updatedCount++;
+        }
       }
 
       res.json({
