@@ -1,6 +1,6 @@
 import type { PropertyResponse } from "@shared/schema";
 
-export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio" | "zone";
+export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio" | "zone" | "waterUsage";
 
 export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   assessedValue: "Assessed Value",
@@ -10,6 +10,7 @@ export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   landValuePerSqft: "Land Value/Sqft",
   bldgLandRatio: "Bldg/Land Sqft Ratio",
   zone: "Zone",
+  waterUsage: "Avg Water Usage (kgal/mo)",
 };
 
 // Categorical color palette for zone coloring (25 distinct colors)
@@ -54,6 +55,8 @@ export function getMetricValue(property: PropertyResponse, metric: ColorMetric):
       return landSqft > 0 ? (property.landValue || 0) / landSqft : 0;
     case "bldgLandRatio":
       return landSqft > 0 ? buildingSqft / landSqft : 0;
+    case "waterUsage":
+      return property.avgMonthlyWaterKgal || 0;
     default:
       return 0;
   }
