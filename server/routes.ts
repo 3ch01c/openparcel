@@ -75,20 +75,32 @@ export async function registerRoutes(
 
       // Collect raw readings for storage in utility_readings table
       const rawReadings: Array<{ parcelId: string; billDate: string; serviceCode: number; actualUsage: number }> = [];
+      let skippedRecords = 0;
 
       for (const record of records) {
         const serviceCode = record["Service"] || record["SERVICE"] || record["service"];
         const parcelId = record["Parcel"] || record["PARCEL"] || record["parcel"] || record["PARCEL_ID"] || record["parcel_id"] || record["PIN"] || record["pin"];
-        const usage = parseFloat(record["Actual Usage"] || record["ACTUAL USAGE"] || record["actual usage"] || record["USAGE"] || record["usage"] || record["Usage"] || "0");
+        const usageStr = record["Actual Usage"] || record["ACTUAL USAGE"] || record["actual usage"] || record["USAGE"] || record["usage"] || record["Usage"] || "";
+        const usage = parseFloat(usageStr);
         const billDateStr = record["Bill Date"] || record["BILL DATE"] || record["bill date"] || record["BillDate"] || "";
 
-        if (!parcelId || isNaN(usage) || !billDateStr) continue;
+        // Skip records missing required values
+        if (!parcelId || !usageStr || isNaN(usage) || !billDateStr) {
+          skippedRecords++;
+          continue;
+        }
 
         const billDate = new Date(billDateStr);
-        if (isNaN(billDate.getTime())) continue;
+        if (isNaN(billDate.getTime())) {
+          skippedRecords++;
+          continue;
+        }
 
         const serviceCodeNum = parseInt(serviceCode, 10);
-        if (isNaN(serviceCodeNum)) continue;
+        if (isNaN(serviceCodeNum)) {
+          skippedRecords++;
+          continue;
+        }
 
         // Store raw reading for utility_readings table
         const formattedDate = billDate.toISOString().split('T')[0];
@@ -166,15 +178,17 @@ export async function registerRoutes(
       }
 
       const totalUpdated = waterCount + electricCount + gasCount;
+      const skippedMsg = skippedRecords > 0 ? ` Skipped ${skippedRecords} records with missing required values.` : "";
       res.json({
         success: true,
-        message: `Processed ${records.length} records. Stored ${rawReadings.length} utility readings. Updated ${waterCount} parcels with water, ${electricCount} with electric, ${gasCount} with gas data.`,
+        message: `Processed ${records.length} records. Stored ${rawReadings.length} utility readings. Updated ${waterCount} parcels with water, ${electricCount} with electric, ${gasCount} with gas data.${skippedMsg}`,
         parcelsUpdated: totalUpdated,
         waterParcels: waterCount,
         electricParcels: electricCount,
         gasParcels: gasCount,
         totalRecords: records.length,
         rawReadingsStored: rawReadings.length,
+        recordsSkipped: skippedRecords,
       });
     } catch (error) {
       console.error("CSV upload failed:", error);
