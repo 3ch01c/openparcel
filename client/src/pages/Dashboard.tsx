@@ -5,6 +5,7 @@ import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapCo
 import { type ColorMetric, COLOR_METRIC_LABELS } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
+import { RangeFilter } from "@/components/RangeFilter";
 import { Slider } from "@/components/ui/slider";
 import {
   Collapsible,
@@ -1393,6 +1394,79 @@ export default function Dashboard() {
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(val);
+
+  // Auto-update slider thumbs to filtered data bounds when categorical filters change
+  // This only triggers when non-range filters (zone, subdivision, account type, etc.) change
+  // The range filters themselves won't trigger this to avoid infinite loops
+  const prevCategoricalFiltersRef = useRef<string>("");
+  
+  useEffect(() => {
+    if (!stats || !rangesInitialized.current) return;
+    
+    // Create a key from categorical filters only (not range filters)
+    const categoricalKey = JSON.stringify({
+      year,
+      selectedAccountTypes,
+      selectedSubdivisions,
+      selectedZones,
+      selectedOwnerCityStates,
+      ownerSearchTerm: appliedOwnerSearch,
+    });
+    
+    // Only update ranges when categorical filters change
+    if (categoricalKey === prevCategoricalFiltersRef.current) return;
+    prevCategoricalFiltersRef.current = categoricalKey;
+    
+    // Update assessed value range to filtered bounds
+    if (stats.minAssessedValue !== undefined && stats.maxAssessedValue !== undefined) {
+      setValueRange([stats.minAssessedValue, stats.maxAssessedValue]);
+    }
+    
+    // Update tax range to filtered bounds
+    if (stats.minTaxValue !== undefined && stats.maxTaxValue !== undefined) {
+      setTaxRange([stats.minTaxValue, stats.maxTaxValue]);
+    }
+    
+    // Update parcel area range to filtered bounds
+    if (stats.minParcelArea !== undefined && stats.maxParcelArea !== undefined) {
+      setParcelAreaRange([stats.minParcelArea, stats.maxParcelArea]);
+    }
+    
+    // Update land value range to filtered bounds
+    if (stats.minLandValue !== undefined && stats.maxLandValue !== undefined) {
+      setLandValueRange([stats.minLandValue, stats.maxLandValue]);
+    }
+    
+    // Update improvement value range to filtered bounds
+    if (stats.minImprovementValue !== undefined && stats.maxImprovementValue !== undefined) {
+      setImprovementValueRange([stats.minImprovementValue, stats.maxImprovementValue]);
+    }
+    
+    // Update land per sqft range to filtered bounds
+    if (stats.minLandPerSqft !== undefined && stats.maxLandPerSqft !== undefined) {
+      setLandValuePerSqftRange([stats.minLandPerSqft, stats.maxLandPerSqft]);
+    }
+    
+    // Update bldg ratio range to filtered bounds
+    if (stats.minBldgRatio !== undefined && stats.maxBldgRatio !== undefined) {
+      setBldgToLandRatioRange([stats.minBldgRatio, stats.maxBldgRatio]);
+    }
+    
+    // Update water usage range to filtered bounds
+    if (stats.minWaterUsage !== undefined && stats.maxWaterUsage !== undefined) {
+      setWaterUsageRange([stats.minWaterUsage, stats.maxWaterUsage]);
+    }
+    
+    // Update electric usage range to filtered bounds
+    if (stats.minElectricUsage !== undefined && stats.maxElectricUsage !== undefined) {
+      setElectricUsageRange([stats.minElectricUsage, stats.maxElectricUsage]);
+    }
+    
+    // Update gas usage range to filtered bounds
+    if (stats.minGasUsage !== undefined && stats.maxGasUsage !== undefined) {
+      setGasUsageRange([stats.minGasUsage, stats.maxGasUsage]);
+    }
+  }, [stats, year, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, appliedOwnerSearch]);
 
   // Calculate property tax for a single property using its mill levy
   // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
