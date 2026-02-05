@@ -696,10 +696,11 @@ export default function Dashboard() {
   // Use initial bounds for sliders (falls back to unfilteredRanges if not yet initialized)
   const sliderBounds = initialBoundsRef.current || unfilteredRanges;
 
-  // Filter properties by value, tax range, parcel area, land value, improvement value, land value per sqft, and bldg ratio (without account type filter)
+  // Filter properties by range filters (without account type filter)
   // Used to calculate account type counts based on current other filters
   const propertiesWithoutAccountTypeFilter = useMemo(() => {
     if (!rawProperties) return [];
+    
     return rawProperties.filter((p) => {
       const tax = getPropertyTax(p);
       const parcelArea = p.parcelArea || 0;
@@ -710,25 +711,17 @@ export default function Dashboard() {
       const waterUsage = p.avgMonthlyWaterKgal || 0;
       const electricUsage = p.avgMonthlyElectricKwh || 0;
       const gasUsage = p.avgMonthlyGasTherms || 0;
+      
       return (
-        tax >= taxRange[0] &&
-        tax <= taxRange[1] &&
-        parcelArea >= parcelAreaRange[0] &&
-        parcelArea <= parcelAreaRange[1] &&
-        landValue >= landValueRange[0] &&
-        landValue <= landValueRange[1] &&
-        improvementValue >= improvementValueRange[0] &&
-        improvementValue <= improvementValueRange[1] &&
-        landPerSqft >= landValuePerSqftRange[0] &&
-        landPerSqft <= landValuePerSqftRange[1] &&
-        bldgRatio >= bldgToLandRatioRange[0] &&
-        bldgRatio <= bldgToLandRatioRange[1] &&
-        waterUsage >= waterUsageRange[0] &&
-        waterUsage <= waterUsageRange[1] &&
-        electricUsage >= electricUsageRange[0] &&
-        electricUsage <= electricUsageRange[1] &&
-        gasUsage >= gasUsageRange[0] &&
-        gasUsage <= gasUsageRange[1]
+        tax >= taxRange[0] && tax <= taxRange[1] &&
+        parcelArea >= parcelAreaRange[0] && parcelArea <= parcelAreaRange[1] &&
+        landValue >= landValueRange[0] && landValue <= landValueRange[1] &&
+        improvementValue >= improvementValueRange[0] && improvementValue <= improvementValueRange[1] &&
+        landPerSqft >= landValuePerSqftRange[0] && landPerSqft <= landValuePerSqftRange[1] &&
+        bldgRatio >= bldgToLandRatioRange[0] && bldgRatio <= bldgToLandRatioRange[1] &&
+        waterUsage >= waterUsageRange[0] && waterUsage <= waterUsageRange[1] &&
+        electricUsage >= electricUsageRange[0] && electricUsage <= electricUsageRange[1] &&
+        gasUsage >= gasUsageRange[0] && gasUsage <= gasUsageRange[1]
       );
     });
   }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange, electricUsageRange, gasUsageRange]);
@@ -1410,63 +1403,47 @@ export default function Dashboard() {
       selectedSubdivisions,
       selectedZones,
       selectedOwnerCityStates,
-      ownerSearchTerm: appliedOwnerSearch,
+      ownerSearchTerm: ownerFilter,
     });
     
     // Only update ranges when categorical filters change
     if (categoricalKey === prevCategoricalFiltersRef.current) return;
     prevCategoricalFiltersRef.current = categoricalKey;
     
-    // Update assessed value range to filtered bounds
+    // Update all range filter values to match the filtered data bounds
+    // This causes one extra filter cycle, but since ranges are set to the
+    // exact min/max of the filtered data, the result is functionally the same
     if (stats.minAssessedValue !== undefined && stats.maxAssessedValue !== undefined) {
       setValueRange([stats.minAssessedValue, stats.maxAssessedValue]);
     }
-    
-    // Update tax range to filtered bounds
     if (stats.minTaxValue !== undefined && stats.maxTaxValue !== undefined) {
       setTaxRange([stats.minTaxValue, stats.maxTaxValue]);
     }
-    
-    // Update parcel area range to filtered bounds
     if (stats.minParcelArea !== undefined && stats.maxParcelArea !== undefined) {
       setParcelAreaRange([stats.minParcelArea, stats.maxParcelArea]);
     }
-    
-    // Update land value range to filtered bounds
     if (stats.minLandValue !== undefined && stats.maxLandValue !== undefined) {
       setLandValueRange([stats.minLandValue, stats.maxLandValue]);
     }
-    
-    // Update improvement value range to filtered bounds
     if (stats.minImprovementValue !== undefined && stats.maxImprovementValue !== undefined) {
       setImprovementValueRange([stats.minImprovementValue, stats.maxImprovementValue]);
     }
-    
-    // Update land per sqft range to filtered bounds
     if (stats.minLandPerSqft !== undefined && stats.maxLandPerSqft !== undefined) {
       setLandValuePerSqftRange([stats.minLandPerSqft, stats.maxLandPerSqft]);
     }
-    
-    // Update bldg ratio range to filtered bounds
     if (stats.minBldgRatio !== undefined && stats.maxBldgRatio !== undefined) {
       setBldgToLandRatioRange([stats.minBldgRatio, stats.maxBldgRatio]);
     }
-    
-    // Update water usage range to filtered bounds
     if (stats.minWaterUsage !== undefined && stats.maxWaterUsage !== undefined) {
       setWaterUsageRange([stats.minWaterUsage, stats.maxWaterUsage]);
     }
-    
-    // Update electric usage range to filtered bounds
     if (stats.minElectricUsage !== undefined && stats.maxElectricUsage !== undefined) {
       setElectricUsageRange([stats.minElectricUsage, stats.maxElectricUsage]);
     }
-    
-    // Update gas usage range to filtered bounds
     if (stats.minGasUsage !== undefined && stats.maxGasUsage !== undefined) {
       setGasUsageRange([stats.minGasUsage, stats.maxGasUsage]);
     }
-  }, [stats, year, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, appliedOwnerSearch]);
+  }, [stats, year, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, ownerFilter]);
 
   // Calculate property tax for a single property using its mill levy
   // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
