@@ -1896,992 +1896,173 @@ export default function Dashboard() {
                 </Select>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Assessed Value Range
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingMin ? (
-                      <input
-                        ref={minInputRef}
-                        type="text"
-                        value={tempMin}
-                        onChange={(e) => setTempMin(e.target.value)}
-                        onBlur={handleMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleMinSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
-                        data-testid="input-min-value"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleMinClick}
-                        className="text-primary hover:underline cursor-pointer"
-                        data-testid="button-edit-min"
-                      >
-                        {formatCurrencyShort(valueRange[0])}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingMax ? (
-                      <input
-                        ref={maxInputRef}
-                        type="text"
-                        value={tempMax}
-                        onChange={(e) => setTempMax(e.target.value)}
-                        onBlur={handleMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleMaxSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-primary rounded text-right"
-                        data-testid="input-max-value"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleMaxClick}
-                        className="text-primary hover:underline cursor-pointer"
-                        data-testid="button-edit-max"
-                      >
-                        {formatCurrencyShort(valueRange[1])}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.assessedValue.min}
-                  max={sliderBounds.assessedValue.max}
-                  step={Math.max(1, Math.round((sliderBounds.assessedValue.max - sliderBounds.assessedValue.min) / 100))}
-                  value={valueRange}
-                  onValueChange={(val) =>
-                    setValueRange(val as [number, number])
-                  }
-                  className="py-2"
-                  data-testid="slider-value-range"
-                />
-                {stats?.chartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.chartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(199 89% 48%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Assessed Value Range"
+                colorHsl="hsl(199 89% 48%)"
+                rangeClassName="bg-primary"
+                thumbClassName="border-primary"
+                sliderMin={sliderBounds.assessedValue.min}
+                sliderMax={sliderBounds.assessedValue.max}
+                filteredMin={stats?.chartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.chartData?.[stats.chartData.length - 1]?.binMax ?? 5000000}
+                value={valueRange}
+                onChange={setValueRange}
+                histogramData={stats?.chartData}
+                formatValue={formatCurrencyShort}
+                testIdPrefix="value-range"
+              />
 
-              {/* Land Value Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Land Value
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingLandValueMin ? (
-                      <input
-                        ref={landValueMinInputRef}
-                        type="text"
-                        value={tempLandValueMin}
-                        onChange={(e) => setTempLandValueMin(e.target.value)}
-                        onBlur={handleLandValueMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandValueMinSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
-                        data-testid="input-land-value-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleLandValueMinClick}
-                        className="text-teal-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-value-min"
-                      >
-                        {formatCurrencyShort(landValueRange[0])}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingLandValueMax ? (
-                      <input
-                        ref={landValueMaxInputRef}
-                        type="text"
-                        value={tempLandValueMax}
-                        onChange={(e) => setTempLandValueMax(e.target.value)}
-                        onBlur={handleLandValueMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandValueMaxSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
-                        data-testid="input-land-value-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleLandValueMaxClick}
-                        className="text-teal-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-value-max"
-                      >
-                        {formatCurrencyShort(landValueRange[1])}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.landValue.min}
-                  max={sliderBounds.landValue.max}
-                  step={Math.max(1, Math.round((sliderBounds.landValue.max - sliderBounds.landValue.min) / 100))}
-                  value={landValueRange}
-                  onValueChange={(val) =>
-                    setLandValueRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-teal-500"
-                  thumbClassName="border-teal-500"
-                  data-testid="slider-land-value"
-                />
-                {stats?.landChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.landChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(173 80% 40%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setLandValueRange([data.binMin, Math.min(data.binMax, 2000000)]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Land Value"
+                colorHsl="hsl(173 80% 40%)"
+                rangeClassName="bg-teal-500"
+                thumbClassName="border-teal-500"
+                sliderMin={sliderBounds.landValue.min}
+                sliderMax={sliderBounds.landValue.max}
+                filteredMin={stats?.landChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.landChartData?.[stats.landChartData?.length - 1]?.binMax ?? 2000000}
+                value={landValueRange}
+                onChange={setLandValueRange}
+                histogramData={stats?.landChartData}
+                formatValue={formatCurrencyShort}
+                testIdPrefix="land-value"
+              />
 
-              {/* Improvement Value Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Improvement Value
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingImprovementMin ? (
-                      <input
-                        ref={improvementMinInputRef}
-                        type="text"
-                        value={tempImprovementMin}
-                        onChange={(e) => setTempImprovementMin(e.target.value)}
-                        onBlur={handleImprovementMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleImprovementMinSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
-                        data-testid="input-improvement-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleImprovementMinClick}
-                        className="text-orange-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-improvement-min"
-                      >
-                        {formatCurrencyShort(improvementValueRange[0])}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingImprovementMax ? (
-                      <input
-                        ref={improvementMaxInputRef}
-                        type="text"
-                        value={tempImprovementMax}
-                        onChange={(e) => setTempImprovementMax(e.target.value)}
-                        onBlur={handleImprovementMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleImprovementMaxSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
-                        data-testid="input-improvement-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleImprovementMaxClick}
-                        className="text-orange-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-improvement-max"
-                      >
-                        {formatCurrencyShort(improvementValueRange[1])}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.improvementValue.min}
-                  max={sliderBounds.improvementValue.max}
-                  step={Math.max(1, Math.round((sliderBounds.improvementValue.max - sliderBounds.improvementValue.min) / 100))}
-                  value={improvementValueRange}
-                  onValueChange={(val) =>
-                    setImprovementValueRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-orange-500"
-                  thumbClassName="border-orange-500"
-                  data-testid="slider-improvement-value"
-                />
-                {stats?.improvementChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.improvementChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(24 95% 50%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setImprovementValueRange([data.binMin, Math.min(data.binMax, 5000000)]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Improvement Value"
+                colorHsl="hsl(24 95% 50%)"
+                rangeClassName="bg-orange-500"
+                thumbClassName="border-orange-500"
+                sliderMin={sliderBounds.improvementValue.min}
+                sliderMax={sliderBounds.improvementValue.max}
+                filteredMin={stats?.improvementChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.improvementChartData?.[stats.improvementChartData?.length - 1]?.binMax ?? 5000000}
+                value={improvementValueRange}
+                onChange={setImprovementValueRange}
+                histogramData={stats?.improvementChartData}
+                formatValue={formatCurrencyShort}
+                testIdPrefix="improvement-value"
+              />
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Tax Assessed
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingTaxMin ? (
-                      <input
-                        ref={taxMinInputRef}
-                        type="text"
-                        value={tempTaxMin}
-                        onChange={(e) => setTempTaxMin(e.target.value)}
-                        onBlur={handleTaxMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleTaxMinSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-green-500 text-green-500 rounded text-right"
-                        data-testid="input-tax-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleTaxMinClick}
-                        className="text-green-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-tax-min"
-                      >
-                        {formatCurrencyShort(taxRange[0])}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingTaxMax ? (
-                      <input
-                        ref={taxMaxInputRef}
-                        type="text"
-                        value={tempTaxMax}
-                        onChange={(e) => setTempTaxMax(e.target.value)}
-                        onBlur={handleTaxMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleTaxMaxSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-green-500 text-green-500 rounded text-right"
-                        data-testid="input-tax-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleTaxMaxClick}
-                        className="text-green-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-tax-max"
-                      >
-                        {formatCurrencyShort(taxRange[1])}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.tax.min}
-                  max={sliderBounds.tax.max}
-                  step={Math.max(0.01, (sliderBounds.tax.max - sliderBounds.tax.min) / 100)}
-                  value={taxRange}
-                  onValueChange={(val) =>
-                    setTaxRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-green-500"
-                  thumbClassName="border-green-500"
-                  data-testid="slider-tax-range"
-                />
-                {stats?.taxChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.taxChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(142 71% 45%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setTaxRange([data.binMin, Math.min(data.binMax, 50000)]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Tax Assessed"
+                colorHsl="hsl(142 71% 45%)"
+                rangeClassName="bg-green-500"
+                thumbClassName="border-green-500"
+                sliderMin={sliderBounds.tax.min}
+                sliderMax={sliderBounds.tax.max}
+                filteredMin={stats?.taxChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.taxChartData?.[stats.taxChartData?.length - 1]?.binMax ?? 50000}
+                value={taxRange}
+                onChange={setTaxRange}
+                histogramData={stats?.taxChartData}
+                formatValue={formatCurrencyShort}
+                testIdPrefix="tax-range"
+              />
 
-              {/* Parcel Area Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Parcel Area (Acres)
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingParcelMin ? (
-                      <input
-                        ref={parcelMinInputRef}
-                        type="text"
-                        value={tempParcelMin}
-                        onChange={(e) => setTempParcelMin(e.target.value)}
-                        onBlur={handleParcelMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleParcelMinSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
-                        data-testid="input-parcel-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleParcelMinClick}
-                        className="text-purple-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-parcel-min"
-                      >
-                        {parcelAreaRange[0].toFixed(2)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingParcelMax ? (
-                      <input
-                        ref={parcelMaxInputRef}
-                        type="text"
-                        value={tempParcelMax}
-                        onChange={(e) => setTempParcelMax(e.target.value)}
-                        onBlur={handleParcelMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleParcelMaxSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-purple-500 text-purple-500 rounded text-right"
-                        data-testid="input-parcel-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleParcelMaxClick}
-                        className="text-purple-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-parcel-max"
-                      >
-                        {parcelAreaRange[1].toFixed(2)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground text-[10px]">ac</span>
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.parcelArea.min}
-                  max={sliderBounds.parcelArea.max}
-                  step={Math.max(0.01, (sliderBounds.parcelArea.max - sliderBounds.parcelArea.min) / 100)}
-                  value={parcelAreaRange}
-                  onValueChange={(val) =>
-                    setParcelAreaRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-purple-500"
-                  thumbClassName="border-purple-500"
-                  data-testid="slider-parcel-area"
-                />
-                {stats?.parcelChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.parcelChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(271 81% 56%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setParcelAreaRange([data.binMin, Math.min(data.binMax, 1200)]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Parcel Area (Acres)"
+                colorHsl="hsl(271 81% 56%)"
+                rangeClassName="bg-purple-500"
+                thumbClassName="border-purple-500"
+                sliderMin={sliderBounds.parcelArea.min}
+                sliderMax={sliderBounds.parcelArea.max}
+                filteredMin={stats?.parcelChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.parcelChartData?.[stats.parcelChartData?.length - 1]?.binMax ?? 1200}
+                value={parcelAreaRange}
+                onChange={setParcelAreaRange}
+                histogramData={stats?.parcelChartData}
+                decimals={2}
+                unit="ac"
+                testIdPrefix="parcel-area"
+                inputWidth="w-16"
+              />
 
-              {/* Land Value Per Sqft Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Land Value/Sqft
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingLandPerSqftMin ? (
-                      <input
-                        ref={landPerSqftMinInputRef}
-                        type="text"
-                        value={tempLandPerSqftMin}
-                        onChange={(e) => setTempLandPerSqftMin(e.target.value)}
-                        onBlur={handleLandPerSqftMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandPerSqftMinSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
-                        data-testid="input-land-per-sqft-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleLandPerSqftMinClick}
-                        className="text-teal-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-per-sqft-min"
-                      >
-                        ${landValuePerSqftRange[0].toFixed(2)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingLandPerSqftMax ? (
-                      <input
-                        ref={landPerSqftMaxInputRef}
-                        type="text"
-                        value={tempLandPerSqftMax}
-                        onChange={(e) => setTempLandPerSqftMax(e.target.value)}
-                        onBlur={handleLandPerSqftMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleLandPerSqftMaxSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-teal-500 text-teal-500 rounded text-right"
-                        data-testid="input-land-per-sqft-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleLandPerSqftMaxClick}
-                        className="text-teal-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-land-per-sqft-max"
-                      >
-                        ${landValuePerSqftRange[1].toFixed(2)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground text-[10px]">/sf</span>
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.landPerSqft.min}
-                  max={sliderBounds.landPerSqft.max}
-                  step={Math.max(0.01, (sliderBounds.landPerSqft.max - sliderBounds.landPerSqft.min) / 100)}
-                  value={landValuePerSqftRange}
-                  onValueChange={(val) =>
-                    setLandValuePerSqftRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-teal-500"
-                  thumbClassName="border-teal-500"
-                  data-testid="slider-land-per-sqft"
-                />
-                {stats?.landPerSqftChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.landPerSqftChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(173 80% 40%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setLandValuePerSqftRange([data.binMin, Math.min(data.binMax, 150)]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Land Value/Sqft"
+                colorHsl="hsl(173 80% 40%)"
+                rangeClassName="bg-teal-500"
+                thumbClassName="border-teal-500"
+                sliderMin={sliderBounds.landPerSqft.min}
+                sliderMax={sliderBounds.landPerSqft.max}
+                filteredMin={stats?.landPerSqftChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.landPerSqftChartData?.[stats.landPerSqftChartData?.length - 1]?.binMax ?? 150}
+                value={landValuePerSqftRange}
+                onChange={setLandValuePerSqftRange}
+                histogramData={stats?.landPerSqftChartData}
+                formatValue={(v) => `$${v.toFixed(2)}`}
+                decimals={2}
+                unit="/sf"
+                testIdPrefix="land-per-sqft"
+                inputWidth="w-16"
+              />
 
-              {/* Building Sqft to Land Sqft Ratio Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Bldg/Land Sqft Ratio
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingBldgRatioMin ? (
-                      <input
-                        ref={bldgRatioMinInputRef}
-                        type="text"
-                        value={tempBldgRatioMin}
-                        onChange={(e) => setTempBldgRatioMin(e.target.value)}
-                        onBlur={handleBldgRatioMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleBldgRatioMinSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-pink-500 text-pink-500 rounded text-right"
-                        data-testid="input-bldg-ratio-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleBldgRatioMinClick}
-                        className="text-pink-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-bldg-ratio-min"
-                      >
-                        {bldgToLandRatioRange[0].toFixed(3)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingBldgRatioMax ? (
-                      <input
-                        ref={bldgRatioMaxInputRef}
-                        type="text"
-                        value={tempBldgRatioMax}
-                        onChange={(e) => setTempBldgRatioMax(e.target.value)}
-                        onBlur={handleBldgRatioMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleBldgRatioMaxSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-pink-500 text-pink-500 rounded text-right"
-                        data-testid="input-bldg-ratio-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleBldgRatioMaxClick}
-                        className="text-pink-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-bldg-ratio-max"
-                      >
-                        {bldgToLandRatioRange[1].toFixed(3)}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.bldgRatio.min}
-                  max={sliderBounds.bldgRatio.max}
-                  step={Math.max(0.001, (sliderBounds.bldgRatio.max - sliderBounds.bldgRatio.min) / 100)}
-                  value={bldgToLandRatioRange}
-                  onValueChange={(val) =>
-                    setBldgToLandRatioRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-pink-500"
-                  thumbClassName="border-pink-500"
-                  data-testid="slider-bldg-ratio"
-                />
-                {stats?.bldgRatioChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.bldgRatioChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(330 81% 60%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setBldgToLandRatioRange([data.binMin, Math.min(data.binMax, 2)]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Bldg/Land Sqft Ratio"
+                colorHsl="hsl(330 81% 60%)"
+                rangeClassName="bg-pink-500"
+                thumbClassName="border-pink-500"
+                sliderMin={sliderBounds.bldgRatio.min}
+                sliderMax={sliderBounds.bldgRatio.max}
+                filteredMin={stats?.bldgRatioChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.bldgRatioChartData?.[stats.bldgRatioChartData?.length - 1]?.binMax ?? 2}
+                value={bldgToLandRatioRange}
+                onChange={setBldgToLandRatioRange}
+                histogramData={stats?.bldgRatioChartData}
+                decimals={3}
+                testIdPrefix="bldg-ratio"
+                inputWidth="w-16"
+              />
 
-              {/* Avg Monthly Water Usage Filter */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Droplets className="w-3 h-3" />
-                    Avg Water (kgal/mo)
-                  </label>
-                  <div className="flex items-center gap-1 text-xs font-mono">
-                    {editingWaterMin ? (
-                      <input
-                        ref={waterMinInputRef}
-                        type="text"
-                        value={tempWaterMin}
-                        onChange={(e) => setTempWaterMin(e.target.value)}
-                        onBlur={handleWaterMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleWaterMinSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-cyan-500 text-cyan-500 rounded text-right"
-                        data-testid="input-water-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleWaterMinClick}
-                        className="text-cyan-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-water-min"
-                      >
-                        {waterUsageRange[0].toFixed(1)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingWaterMax ? (
-                      <input
-                        ref={waterMaxInputRef}
-                        type="text"
-                        value={tempWaterMax}
-                        onChange={(e) => setTempWaterMax(e.target.value)}
-                        onBlur={handleWaterMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleWaterMaxSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-cyan-500 text-cyan-500 rounded text-right"
-                        data-testid="input-water-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleWaterMaxClick}
-                        className="text-cyan-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-water-max"
-                      >
-                        {waterUsageRange[1].toFixed(1)}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.waterUsage.min}
-                  max={sliderBounds.waterUsage.max}
-                  step={Math.max(0.1, (sliderBounds.waterUsage.max - sliderBounds.waterUsage.min) / 100)}
-                  value={waterUsageRange}
-                  onValueChange={(val) =>
-                    setWaterUsageRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-cyan-500"
-                  thumbClassName="border-cyan-500"
-                  data-testid="slider-water-usage"
-                />
-                {stats?.waterUsageChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.waterUsageChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(187 85% 53%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setWaterUsageRange([data.binMin, data.binMax]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Avg Water (kgal/mo)"
+                colorHsl="hsl(187 85% 53%)"
+                rangeClassName="bg-cyan-500"
+                thumbClassName="border-cyan-500"
+                sliderMin={sliderBounds.waterUsage.min}
+                sliderMax={sliderBounds.waterUsage.max}
+                filteredMin={stats?.waterUsageChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.waterUsageChartData?.[stats.waterUsageChartData?.length - 1]?.binMax ?? 100}
+                value={waterUsageRange}
+                onChange={setWaterUsageRange}
+                histogramData={stats?.waterUsageChartData}
+                decimals={1}
+                testIdPrefix="water-usage"
+                inputWidth="w-16"
+              />
 
-              {/* Avg Electric Usage Range */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-yellow-500" />
-                    Avg Electric (kWh/mo)
-                  </label>
-                  <div className="flex items-center gap-1 text-xs">
-                    {editingElectricMin ? (
-                      <input
-                        ref={electricMinInputRef}
-                        value={tempElectricMin}
-                        onChange={(e) => setTempElectricMin(e.target.value)}
-                        onBlur={handleElectricMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleElectricMinSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-yellow-500 text-yellow-500 rounded text-right"
-                        data-testid="input-electric-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleElectricMinClick}
-                        className="text-yellow-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-electric-min"
-                      >
-                        {electricUsageRange[0].toFixed(0)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingElectricMax ? (
-                      <input
-                        ref={electricMaxInputRef}
-                        value={tempElectricMax}
-                        onChange={(e) => setTempElectricMax(e.target.value)}
-                        onBlur={handleElectricMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleElectricMaxSubmit()
-                        }
-                        className="w-20 px-1 py-0.5 text-xs bg-background border border-yellow-500 text-yellow-500 rounded text-right"
-                        data-testid="input-electric-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleElectricMaxClick}
-                        className="text-yellow-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-electric-max"
-                      >
-                        {electricUsageRange[1].toFixed(0)}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.electricUsage.min}
-                  max={sliderBounds.electricUsage.max}
-                  step={Math.max(1, (sliderBounds.electricUsage.max - sliderBounds.electricUsage.min) / 100)}
-                  value={electricUsageRange}
-                  onValueChange={(val) =>
-                    setElectricUsageRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-yellow-500"
-                  thumbClassName="border-yellow-500"
-                  data-testid="slider-electric-usage"
-                />
-                {stats?.electricUsageChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.electricUsageChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(48 96% 53%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setElectricUsageRange([data.binMin, data.binMax]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Avg Electric (kWh/mo)"
+                colorHsl="hsl(48 96% 53%)"
+                rangeClassName="bg-yellow-500"
+                thumbClassName="border-yellow-500"
+                sliderMin={sliderBounds.electricUsage.min}
+                sliderMax={sliderBounds.electricUsage.max}
+                filteredMin={stats?.electricUsageChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.electricUsageChartData?.[stats.electricUsageChartData?.length - 1]?.binMax ?? 5000}
+                value={electricUsageRange}
+                onChange={setElectricUsageRange}
+                histogramData={stats?.electricUsageChartData}
+                decimals={0}
+                testIdPrefix="electric-usage"
+              />
 
-              {/* Avg Gas Usage Range */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-orange-500" />
-                    Avg Gas (therms/mo)
-                  </label>
-                  <div className="flex items-center gap-1 text-xs">
-                    {editingGasMin ? (
-                      <input
-                        ref={gasMinInputRef}
-                        value={tempGasMin}
-                        onChange={(e) => setTempGasMin(e.target.value)}
-                        onBlur={handleGasMinSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleGasMinSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
-                        data-testid="input-gas-min"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleGasMinClick}
-                        className="text-orange-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-gas-min"
-                      >
-                        {gasUsageRange[0].toFixed(1)}
-                      </button>
-                    )}
-                    <span className="text-muted-foreground">-</span>
-                    {editingGasMax ? (
-                      <input
-                        ref={gasMaxInputRef}
-                        value={tempGasMax}
-                        onChange={(e) => setTempGasMax(e.target.value)}
-                        onBlur={handleGasMaxSubmit}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleGasMaxSubmit()
-                        }
-                        className="w-16 px-1 py-0.5 text-xs bg-background border border-orange-500 text-orange-500 rounded text-right"
-                        data-testid="input-gas-max"
-                      />
-                    ) : (
-                      <button
-                        onClick={handleGasMaxClick}
-                        className="text-orange-500 hover:underline cursor-pointer"
-                        data-testid="button-edit-gas-max"
-                      >
-                        {gasUsageRange[1].toFixed(1)}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <Slider
-                  min={sliderBounds.gasUsage.min}
-                  max={sliderBounds.gasUsage.max}
-                  step={Math.max(0.1, (sliderBounds.gasUsage.max - sliderBounds.gasUsage.min) / 100)}
-                  value={gasUsageRange}
-                  onValueChange={(val) =>
-                    setGasUsageRange(val as [number, number])
-                  }
-                  className="py-2"
-                  rangeClassName="bg-orange-500"
-                  thumbClassName="border-orange-500"
-                  data-testid="slider-gas-usage"
-                />
-                {stats?.gasUsageChartData && (
-                  <div className="h-20 mt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.gasUsageChartData}>
-                        <XAxis dataKey="range" hide />
-                        <YAxis hide />
-                        <RechartsTooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(222 47% 11%)",
-                            borderColor: "hsl(217 33% 17%)",
-                            borderRadius: "8px",
-                          }}
-                          itemStyle={{ color: "white" }}
-                          cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="hsl(24 95% 53%)"
-                          radius={[4, 4, 0, 0]}
-                          cursor="pointer"
-                          onClick={(data: any) => {
-                            if (data && data.binMin !== undefined && data.binMax !== undefined) {
-                              setGasUsageRange([data.binMin, data.binMax]);
-                            }
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
+              <RangeFilter
+                title="Avg Gas (therms/mo)"
+                colorHsl="hsl(24 95% 53%)"
+                rangeClassName="bg-orange-500"
+                thumbClassName="border-orange-500"
+                sliderMin={sliderBounds.gasUsage.min}
+                sliderMax={sliderBounds.gasUsage.max}
+                filteredMin={stats?.gasUsageChartData?.[0]?.binMin ?? 0}
+                filteredMax={stats?.gasUsageChartData?.[stats.gasUsageChartData?.length - 1]?.binMax ?? 500}
+                value={gasUsageRange}
+                onChange={setGasUsageRange}
+                histogramData={stats?.gasUsageChartData}
+                decimals={1}
+                testIdPrefix="gas-usage"
+                inputWidth="w-16"
+              />
 
               {/* Water Per SF Range Filter */}
               <RangeFilter
