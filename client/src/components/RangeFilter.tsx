@@ -68,9 +68,28 @@ export function RangeFilter({
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
 
-  const format = formatValue || ((v: number) => 
-    decimals > 0 ? v.toFixed(decimals) : v.toLocaleString()
-  );
+  // Smart formatting: show enough precision to display at least one non-zero digit (max 3 decimals)
+  const smartFormat = (v: number): string => {
+    if (v === 0) return decimals > 0 ? v.toFixed(decimals) : "0";
+    
+    const absVal = Math.abs(v);
+    // For values >= 1, use the specified decimals
+    if (absVal >= 1) {
+      return decimals > 0 ? v.toFixed(decimals) : v.toLocaleString();
+    }
+    
+    // For values < 1, find precision needed to show at least one non-zero digit (max 3)
+    for (let d = 1; d <= 3; d++) {
+      const formatted = v.toFixed(d);
+      const lastDigit = formatted[formatted.length - 1];
+      if (lastDigit !== '0') {
+        return formatted;
+      }
+    }
+    return v.toFixed(3); // Max precision of one thousandth
+  };
+
+  const format = formatValue || smartFormat;
 
   const parse = parseValue || ((s: string) => {
     const cleaned = s.replace(/[^0-9.-]/g, "");
@@ -178,46 +197,42 @@ export function RangeFilter({
           {unit && <span className="text-muted-foreground text-[10px]">{unit}</span>}
         </div>
       </div>
-      {expanded && (
-        <>
-          <Slider
-            min={sliderMin}
-            max={sliderMax}
-            step={calculatedStep}
-            value={value}
-            onValueChange={(val) => onChange(val as [number, number])}
-            className="py-2"
-            rangeClassName={rangeClassName}
-            thumbClassName={thumbClassName}
-            data-testid={`slider-${testIdPrefix}`}
-          />
-          {histogramData && histogramData.length > 0 && (
-            <div className="h-20 mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={histogramData}>
-                  <XAxis dataKey="range" hide />
-                  <YAxis hide />
-                  <RechartsTooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(222 47% 11%)",
-                      borderColor: "hsl(217 33% 17%)",
-                      borderRadius: "8px",
-                    }}
-                    itemStyle={{ color: "white" }}
-                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill={colorHsl}
-                    radius={[4, 4, 0, 0]}
-                    cursor="pointer"
-                    onClick={handleHistogramClick}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </>
+      <Slider
+        min={sliderMin}
+        max={sliderMax}
+        step={calculatedStep}
+        value={value}
+        onValueChange={(val) => onChange(val as [number, number])}
+        className="py-2"
+        rangeClassName={rangeClassName}
+        thumbClassName={thumbClassName}
+        data-testid={`slider-${testIdPrefix}`}
+      />
+      {expanded && histogramData && histogramData.length > 0 && (
+        <div className="h-20 mt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={histogramData}>
+              <XAxis dataKey="range" hide />
+              <YAxis hide />
+              <RechartsTooltip
+                contentStyle={{
+                  backgroundColor: "hsl(222 47% 11%)",
+                  borderColor: "hsl(217 33% 17%)",
+                  borderRadius: "8px",
+                }}
+                itemStyle={{ color: "white" }}
+                cursor={{ fill: "rgba(255,255,255,0.05)" }}
+              />
+              <Bar
+                dataKey="count"
+                fill={colorHsl}
+                radius={[4, 4, 0, 0]}
+                cursor="pointer"
+                onClick={handleHistogramClick}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );
