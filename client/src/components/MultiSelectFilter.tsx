@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MultiSelectOption {
@@ -15,6 +15,7 @@ interface MultiSelectFilterProps {
   testIdPrefix: string;
   emptyMessage?: string;
   selectedMessage?: (count: number) => string;
+  defaultExpanded?: boolean;
 }
 
 export function MultiSelectFilter({
@@ -25,9 +26,11 @@ export function MultiSelectFilter({
   testIdPrefix,
   emptyMessage = "All shown",
   selectedMessage = (count) => `${count} selected`,
+  defaultExpanded = true,
 }: MultiSelectFilterProps) {
   // Pending selections (not yet applied)
   const [pendingSelections, setPendingSelections] = useState<string[]>(selectedValues);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   
   // Track if there are unapplied changes
   const hasChanges = useMemo(() => {
@@ -69,72 +72,83 @@ export function MultiSelectFilter({
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
-        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          data-testid={`button-toggle-${testIdPrefix}`}
+        >
+          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
           {title}
-        </label>
+        </button>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleSelectAll}
-            className="text-xs text-muted-foreground hover:text-primary"
-            data-testid={`button-select-all-${testIdPrefix}`}
-          >
-            All
-          </button>
-          <button
-            onClick={handleSelectNone}
-            className="text-xs text-muted-foreground hover:text-primary"
-            data-testid={`button-select-none-${testIdPrefix}`}
-          >
-            None
-          </button>
+          <span className="text-xs text-muted-foreground">
+            {pendingSelections.length === 0
+              ? emptyMessage
+              : selectedMessage(pendingSelections.length)}
+          </span>
         </div>
       </div>
-      <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
-        {options.map((option) => {
-          const isSelected = pendingSelections.includes(option.value);
-          return (
+      {expanded && (
+        <>
+          <div className="flex justify-end gap-2">
             <button
-              key={option.value}
-              onClick={() => handleToggle(option.value)}
-              className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
-                isSelected
-                  ? "bg-primary/20 text-primary"
-                  : "hover:bg-secondary text-muted-foreground hover:text-foreground"
-              }`}
-              data-testid={`button-${testIdPrefix}-${formatTestId(option.value)}`}
+              onClick={handleSelectAll}
+              className="text-xs text-muted-foreground hover:text-primary"
+              data-testid={`button-select-all-${testIdPrefix}`}
             >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-4 h-4 rounded border flex items-center justify-center ${
-                    isSelected
-                      ? "bg-primary border-primary"
-                      : "border-muted-foreground"
-                  }`}
-                >
-                  {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                </div>
-                <span className="truncate">{option.value}</span>
-              </div>
-              <span className="text-muted-foreground ml-2">({option.count})</span>
+              All
             </button>
-          );
-        })}
-      </div>
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          {pendingSelections.length === 0
-            ? emptyMessage
-            : selectedMessage(pendingSelections.length)}
-        </p>
-        <Button
-          size="sm"
-          onClick={handleApply}
-          disabled={!hasChanges}
-          data-testid={`button-apply-${testIdPrefix}`}
-        >
-          Apply
-        </Button>
-      </div>
+            <button
+              onClick={handleSelectNone}
+              className="text-xs text-muted-foreground hover:text-primary"
+              data-testid={`button-select-none-${testIdPrefix}`}
+            >
+              None
+            </button>
+          </div>
+          <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
+            {options.map((option) => {
+              const isSelected = pendingSelections.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => handleToggle(option.value)}
+                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
+                    isSelected
+                      ? "bg-primary/20 text-primary"
+                      : "hover:bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                  data-testid={`button-${testIdPrefix}-${formatTestId(option.value)}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-4 h-4 rounded border flex items-center justify-center ${
+                        isSelected
+                          ? "bg-primary border-primary"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                    <span className="truncate">{option.value}</span>
+                  </div>
+                  <span className="text-muted-foreground ml-2">({option.count})</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={handleApply}
+              disabled={!hasChanges}
+              data-testid={`button-apply-${testIdPrefix}`}
+            >
+              Apply
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

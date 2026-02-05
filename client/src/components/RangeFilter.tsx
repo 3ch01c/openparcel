@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { ChevronDown } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
   BarChart,
@@ -35,6 +36,7 @@ interface RangeFilterProps {
   decimals?: number;
   testIdPrefix: string;
   inputWidth?: string;
+  defaultExpanded?: boolean;
 }
 
 export function RangeFilter({
@@ -56,11 +58,13 @@ export function RangeFilter({
   decimals = 0,
   testIdPrefix,
   inputWidth = "w-20",
+  defaultExpanded = true,
 }: RangeFilterProps) {
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
   const [tempMin, setTempMin] = useState("");
   const [tempMax, setTempMax] = useState("");
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,11 +119,16 @@ export function RangeFilter({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
-        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          data-testid={`button-toggle-${testIdPrefix}`}
+        >
+          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
           {title}
-        </label>
+        </button>
         <div className="flex items-center gap-1 text-xs font-mono">
           {editingMin ? (
             <input
@@ -169,42 +178,46 @@ export function RangeFilter({
           {unit && <span className="text-muted-foreground text-[10px]">{unit}</span>}
         </div>
       </div>
-      <Slider
-        min={sliderMin}
-        max={sliderMax}
-        step={calculatedStep}
-        value={value}
-        onValueChange={(val) => onChange(val as [number, number])}
-        className="py-2"
-        rangeClassName={rangeClassName}
-        thumbClassName={thumbClassName}
-        data-testid={`slider-${testIdPrefix}`}
-      />
-      {histogramData && histogramData.length > 0 && (
-        <div className="h-20 mt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={histogramData}>
-              <XAxis dataKey="range" hide />
-              <YAxis hide />
-              <RechartsTooltip
-                contentStyle={{
-                  backgroundColor: "hsl(222 47% 11%)",
-                  borderColor: "hsl(217 33% 17%)",
-                  borderRadius: "8px",
-                }}
-                itemStyle={{ color: "white" }}
-                cursor={{ fill: "rgba(255,255,255,0.05)" }}
-              />
-              <Bar
-                dataKey="count"
-                fill={colorHsl}
-                radius={[4, 4, 0, 0]}
-                cursor="pointer"
-                onClick={handleHistogramClick}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      {expanded && (
+        <>
+          <Slider
+            min={sliderMin}
+            max={sliderMax}
+            step={calculatedStep}
+            value={value}
+            onValueChange={(val) => onChange(val as [number, number])}
+            className="py-2"
+            rangeClassName={rangeClassName}
+            thumbClassName={thumbClassName}
+            data-testid={`slider-${testIdPrefix}`}
+          />
+          {histogramData && histogramData.length > 0 && (
+            <div className="h-20 mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={histogramData}>
+                  <XAxis dataKey="range" hide />
+                  <YAxis hide />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(222 47% 11%)",
+                      borderColor: "hsl(217 33% 17%)",
+                      borderRadius: "8px",
+                    }}
+                    itemStyle={{ color: "white" }}
+                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    fill={colorHsl}
+                    radius={[4, 4, 0, 0]}
+                    cursor="pointer"
+                    onClick={handleHistogramClick}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
