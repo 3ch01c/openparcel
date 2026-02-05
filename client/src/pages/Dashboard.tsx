@@ -6,6 +6,7 @@ import { type ColorMetric, COLOR_METRIC_LABELS } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { RangeFilter } from "@/components/RangeFilter";
+import { MultiSelectFilter } from "@/components/MultiSelectFilter";
 import { Slider } from "@/components/ui/slider";
 import {
   Collapsible,
@@ -32,7 +33,6 @@ import {
   Coffee,
   ChevronDown,
   BarChart3,
-  Check,
   X,
   PanelLeftClose,
   PanelLeft,
@@ -835,6 +835,40 @@ export default function Dashboard() {
     
     return filtered;
   }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedZones]);
+
+  // Create options arrays with counts for multi-select filters
+  const accountTypeOptions = useMemo(() => {
+    return uniqueAccountTypes.map((type) => ({
+      value: type,
+      count: propertiesForAccountTypeCounts.filter((p) => p.accountType === type).length,
+    }));
+  }, [uniqueAccountTypes, propertiesForAccountTypeCounts]);
+
+  const subdivisionOptions = useMemo(() => {
+    return uniqueSubdivisions.map((subdiv) => ({
+      value: subdiv,
+      count: propertiesForSubdivisionCounts.filter((p) => p.subdiv === subdiv).length,
+    }));
+  }, [uniqueSubdivisions, propertiesForSubdivisionCounts]);
+
+  const zoneOptions = useMemo(() => {
+    return uniqueZones.map((zone) => ({
+      value: zone,
+      count: propertiesForZoneCounts.filter((p) => p.zone === zone).length,
+    }));
+  }, [uniqueZones, propertiesForZoneCounts]);
+
+  const ownerCityStateOptions = useMemo(() => {
+    return uniqueOwnerCityStates.map((cityState) => ({
+      value: cityState,
+      count: propertiesForOwnerCityStateCounts.filter((p) => {
+        const city = p.ownerCity?.trim() || "";
+        const state = p.ownerState?.trim() || "";
+        const combined = [city, state].filter(Boolean).join(", ");
+        return combined === cityState;
+      }).length,
+    }));
+  }, [uniqueOwnerCityStates, propertiesForOwnerCityStateCounts]);
 
   // Filter properties by tax range, land sqft, account types, and owner (client-side)
   const properties = useMemo(() => {
@@ -2735,309 +2769,60 @@ export default function Dashboard() {
               </div>
 
               {/* Account Type Multi-Select */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Account Type
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedAccountTypes([...uniqueAccountTypes]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-all-account-types"
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedAccountTypes([]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-none-account-types"
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
-                  {uniqueAccountTypes.map((type) => {
-                    const isSelected = selectedAccountTypes.includes(type);
-                    const count = propertiesForAccountTypeCounts.filter((p) => p.accountType === type).length;
-                    return (
-                      <button
-                        key={type}
-                        onClick={() => {
-                          setSelectedAccountTypes((prev) =>
-                            isSelected
-                              ? prev.filter((t) => t !== type)
-                              : [...prev, type]
-                          );
-                          triggerRangeUpdate();
-                        }}
-                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
-                          isSelected
-                            ? "bg-primary/20 text-primary"
-                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
-                        }`}
-                        data-testid={`button-account-type-${type.replace(/\s+/g, '-').toLowerCase()}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center ${
-                              isSelected
-                                ? "bg-primary border-primary"
-                                : "border-muted-foreground"
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                          </div>
-                          <span className="truncate">{type}</span>
-                        </div>
-                        <span className="text-muted-foreground ml-2">({count})</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {selectedAccountTypes.length === 0
-                    ? "All types shown"
-                    : `${selectedAccountTypes.length} type${selectedAccountTypes.length > 1 ? "s" : ""} selected`}
-                </p>
-              </div>
+              <MultiSelectFilter
+                title="Account Type"
+                options={accountTypeOptions}
+                selectedValues={selectedAccountTypes}
+                onApply={(values) => {
+                  setSelectedAccountTypes(values);
+                  triggerRangeUpdate();
+                }}
+                testIdPrefix="account-types"
+                emptyMessage="All types shown"
+                selectedMessage={(count) => `${count} type${count > 1 ? "s" : ""} selected`}
+              />
 
               {/* Subdivision Multi-Select */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Subdivision
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedSubdivisions([...uniqueSubdivisions]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-all-subdivisions"
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedSubdivisions([]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-none-subdivisions"
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
-                  {uniqueSubdivisions.map((subdiv) => {
-                    const isSelected = selectedSubdivisions.includes(subdiv);
-                    const count = propertiesForSubdivisionCounts.filter((p) => p.subdiv === subdiv).length;
-                    return (
-                      <button
-                        key={subdiv}
-                        onClick={() => {
-                          setSelectedSubdivisions((prev) =>
-                            isSelected
-                              ? prev.filter((s) => s !== subdiv)
-                              : [...prev, subdiv]
-                          );
-                          triggerRangeUpdate();
-                        }}
-                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
-                          isSelected
-                            ? "bg-primary/20 text-primary"
-                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
-                        }`}
-                        data-testid={`button-subdivision-${subdiv.replace(/\s+/g, '-').toLowerCase()}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center ${
-                              isSelected
-                                ? "bg-primary border-primary"
-                                : "border-muted-foreground"
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                          </div>
-                          <span className="truncate">{subdiv}</span>
-                        </div>
-                        <span className="text-muted-foreground ml-2">({count})</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {selectedSubdivisions.length === 0
-                    ? "All subdivisions shown"
-                    : `${selectedSubdivisions.length} subdivision${selectedSubdivisions.length > 1 ? "s" : ""} selected`}
-                </p>
-              </div>
+              <MultiSelectFilter
+                title="Subdivision"
+                options={subdivisionOptions}
+                selectedValues={selectedSubdivisions}
+                onApply={(values) => {
+                  setSelectedSubdivisions(values);
+                  triggerRangeUpdate();
+                }}
+                testIdPrefix="subdivisions"
+                emptyMessage="All subdivisions shown"
+                selectedMessage={(count) => `${count} subdivision${count > 1 ? "s" : ""} selected`}
+              />
 
               {/* Zone Multi-Select */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Zone
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedZones([...uniqueZones]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-all-zones"
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedZones([]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-none-zones"
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
-                  {uniqueZones.map((zone) => {
-                    const isSelected = selectedZones.includes(zone);
-                    const count = propertiesForZoneCounts.filter((p) => p.zone === zone).length;
-                    return (
-                      <button
-                        key={zone}
-                        onClick={() => {
-                          setSelectedZones((prev) =>
-                            isSelected
-                              ? prev.filter((z) => z !== zone)
-                              : [...prev, zone]
-                          );
-                          triggerRangeUpdate();
-                        }}
-                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
-                          isSelected
-                            ? "bg-primary/20 text-primary"
-                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
-                        }`}
-                        data-testid={`button-zone-${zone.replace(/\s+/g, '-').toLowerCase()}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center ${
-                              isSelected
-                                ? "bg-primary border-primary"
-                                : "border-muted-foreground"
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                          </div>
-                          <span className="truncate">{zone}</span>
-                        </div>
-                        <span className="text-muted-foreground ml-2">({count})</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {selectedZones.length === 0
-                    ? "All zones shown"
-                    : `${selectedZones.length} zone${selectedZones.length > 1 ? "s" : ""} selected`}
-                </p>
-              </div>
+              <MultiSelectFilter
+                title="Zone"
+                options={zoneOptions}
+                selectedValues={selectedZones}
+                onApply={(values) => {
+                  setSelectedZones(values);
+                  triggerRangeUpdate();
+                }}
+                testIdPrefix="zones"
+                emptyMessage="All zones shown"
+                selectedMessage={(count) => `${count} zone${count > 1 ? "s" : ""} selected`}
+              />
 
               {/* Owner City/State Filter */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Owner City/State
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedOwnerCityStates([...uniqueOwnerCityStates]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-all-owner-city-states"
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedOwnerCityStates([]);
-                        triggerRangeUpdate();
-                      }}
-                      className="text-xs text-muted-foreground hover:text-primary"
-                      data-testid="button-select-none-owner-city-states"
-                    >
-                      None
-                    </button>
-                  </div>
-                </div>
-                <div className="max-h-40 overflow-y-auto bg-background/50 rounded-md border border-border p-2 space-y-1">
-                  {uniqueOwnerCityStates.map((cityState) => {
-                    const isSelected = selectedOwnerCityStates.includes(cityState);
-                    const count = propertiesForOwnerCityStateCounts.filter((p) => {
-                      const city = p.ownerCity?.trim() || "";
-                      const state = p.ownerState?.trim() || "";
-                      const combined = [city, state].filter(Boolean).join(", ");
-                      return combined === cityState;
-                    }).length;
-                    return (
-                      <button
-                        key={cityState}
-                        onClick={() => {
-                          setSelectedOwnerCityStates((prev) =>
-                            isSelected
-                              ? prev.filter((cs) => cs !== cityState)
-                              : [...prev, cityState]
-                          );
-                          triggerRangeUpdate();
-                        }}
-                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
-                          isSelected
-                            ? "bg-primary/20 text-primary"
-                            : "hover:bg-secondary text-muted-foreground hover:text-foreground"
-                        }`}
-                        data-testid={`button-owner-city-state-${cityState.replace(/[\s,]+/g, '-').toLowerCase()}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center ${
-                              isSelected
-                                ? "bg-primary border-primary"
-                                : "border-muted-foreground"
-                            }`}
-                          >
-                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                          </div>
-                          <span className="truncate">{cityState}</span>
-                        </div>
-                        <span className="text-muted-foreground ml-2">({count})</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {selectedOwnerCityStates.length === 0
-                    ? "All locations shown"
-                    : `${selectedOwnerCityStates.length} location${selectedOwnerCityStates.length > 1 ? "s" : ""} selected`}
-                </p>
-              </div>
+              <MultiSelectFilter
+                title="Owner City/State"
+                options={ownerCityStateOptions}
+                selectedValues={selectedOwnerCityStates}
+                onApply={(values) => {
+                  setSelectedOwnerCityStates(values);
+                  triggerRangeUpdate();
+                }}
+                testIdPrefix="owner-city-states"
+                emptyMessage="All locations shown"
+                selectedMessage={(count) => `${count} location${count > 1 ? "s" : ""} selected`}
+              />
 
               {/* Owner Filter */}
               <div className="space-y-2">
