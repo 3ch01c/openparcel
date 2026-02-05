@@ -1419,39 +1419,50 @@ export default function Dashboard() {
     let extension: string;
 
     if (exportFormat === "json") {
-      const jsonData = properties.map((p) => ({
-        parcelId: p.parcelId,
-        address: p.address,
-        acct: p.acct,
-        legal: p.legal,
-        accountType: p.accountType,
-        ownerType: p.ownerType,
-        zone: p.zone,
-        subdiv: p.subdiv,
-        owner: p.owner,
-        ownerAddress1: p.ownerAddress1,
-        ownerCity: p.ownerCity,
-        ownerState: p.ownerState,
-        ownerZip: p.ownerZip,
-        assessedValue: p.assessedValue,
-        landValue: p.landValue,
-        improvementValue: p.improvementValue,
-        landTaxable: p.landTaxable,
-        buildingTaxable: p.buildingTaxable,
-        totalTaxable: p.totalTaxable,
-        hhExemption: p.hhExemption,
-        vetExemption: p.vetExemption,
-        parcelAreaAcres: p.parcelArea,
-        landSqft: p.landSqft,
-        buildingSqft: p.buildingSqft,
-        millLevy: p.millLevy,
-        latitude: p.lat,
-        longitude: p.lng,
-        assessmentYear: p.assessmentYear,
-        avgMonthlyWaterKgal: p.avgMonthlyWaterKgal,
-        avgMonthlyElectricKwh: p.avgMonthlyElectricKwh,
-        avgMonthlyGasTherms: p.avgMonthlyGasTherms,
-      }));
+      const jsonData = properties.map((p) => {
+        let geometry = null;
+        if (p.geometry) {
+          try {
+            geometry = JSON.parse(p.geometry);
+          } catch {
+            geometry = p.geometry;
+          }
+        }
+        return {
+          parcelId: p.parcelId,
+          address: p.address,
+          acct: p.acct,
+          legal: p.legal,
+          accountType: p.accountType,
+          ownerType: p.ownerType,
+          zone: p.zone,
+          subdiv: p.subdiv,
+          owner: p.owner,
+          ownerAddress1: p.ownerAddress1,
+          ownerCity: p.ownerCity,
+          ownerState: p.ownerState,
+          ownerZip: p.ownerZip,
+          assessedValue: p.assessedValue,
+          landValue: p.landValue,
+          improvementValue: p.improvementValue,
+          landTaxable: p.landTaxable,
+          buildingTaxable: p.buildingTaxable,
+          totalTaxable: p.totalTaxable,
+          hhExemption: p.hhExemption,
+          vetExemption: p.vetExemption,
+          parcelAreaAcres: p.parcelArea,
+          landSqft: p.landSqft,
+          buildingSqft: p.buildingSqft,
+          millLevy: p.millLevy,
+          latitude: p.lat,
+          longitude: p.lng,
+          assessmentYear: p.assessmentYear,
+          avgMonthlyWaterKgal: p.avgMonthlyWaterKgal,
+          avgMonthlyElectricKwh: p.avgMonthlyElectricKwh,
+          avgMonthlyGasTherms: p.avgMonthlyGasTherms,
+          geometry: geometry,
+        };
+      });
       content = JSON.stringify(jsonData, null, 2);
       mimeType = "application/json";
       extension = "json";
