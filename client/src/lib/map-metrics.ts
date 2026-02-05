@@ -1,6 +1,6 @@
 import type { PropertyResponse } from "@shared/schema";
 
-export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio" | "zone" | "waterUsage" | "electricUsage" | "gasUsage";
+export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio" | "zone" | "waterUsage" | "electricUsage" | "gasUsage" | "waterPerBldgSf" | "electricPerBldgSf" | "gasPerBldgSf";
 
 export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   assessedValue: "Assessed Value",
@@ -13,6 +13,9 @@ export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   waterUsage: "Avg Water (kgal/mo)",
   electricUsage: "Avg Electric (kWh/mo)",
   gasUsage: "Avg Gas (therms/mo)",
+  waterPerBldgSf: "Water/Bldg SF (gal/mo)",
+  electricPerBldgSf: "Electric/Bldg SF (kWh/mo)",
+  gasPerBldgSf: "Gas/Bldg SF (therms/mo)",
 };
 
 // Categorical color palette for zone coloring (25 distinct colors)
@@ -63,6 +66,13 @@ export function getMetricValue(property: PropertyResponse, metric: ColorMetric):
       return property.avgMonthlyElectricKwh || 0;
     case "gasUsage":
       return property.avgMonthlyGasTherms || 0;
+    case "waterPerBldgSf":
+      // Convert kgal to gallons (×1000) and divide by building SF
+      return buildingSqft > 0 ? ((property.avgMonthlyWaterKgal || 0) * 1000) / buildingSqft : 0;
+    case "electricPerBldgSf":
+      return buildingSqft > 0 ? (property.avgMonthlyElectricKwh || 0) / buildingSqft : 0;
+    case "gasPerBldgSf":
+      return buildingSqft > 0 ? (property.avgMonthlyGasTherms || 0) / buildingSqft : 0;
     default:
       return 0;
   }
