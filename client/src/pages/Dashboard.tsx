@@ -149,6 +149,7 @@ export default function Dashboard() {
   const [pendingOwnerFilter, setPendingOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
   const rangesInitialized = useRef(false);
+  const pendingRangeUpdateRef = useRef(false); // Flag to trigger range update after user applies categorical filter
   const initialTotalParcelsRef = useRef<number | null>(null);
   const initialAccountTypesRef = useRef<string[] | null>(null);
   const initialSubdivisionsRef = useRef<string[] | null>(null);
@@ -1388,31 +1389,15 @@ export default function Dashboard() {
       maximumFractionDigits: 0,
     }).format(val);
 
-  // Auto-update slider thumbs to filtered data bounds when categorical filters change
-  // This only triggers when non-range filters (zone, subdivision, account type, etc.) change
-  // The range filters themselves won't trigger this to avoid infinite loops
-  const prevCategoricalFiltersRef = useRef<string>("");
-  
+  // Update range sliders to match filtered data bounds
+  // Only called when pendingRangeUpdateRef is set (triggered by user action)
   useEffect(() => {
-    if (!stats || !rangesInitialized.current) return;
+    if (!stats || !rangesInitialized.current || !pendingRangeUpdateRef.current) return;
     
-    // Create a key from categorical filters only (not range filters)
-    const categoricalKey = JSON.stringify({
-      year,
-      selectedAccountTypes,
-      selectedSubdivisions,
-      selectedZones,
-      selectedOwnerCityStates,
-      ownerSearchTerm: ownerFilter,
-    });
-    
-    // Only update ranges when categorical filters change
-    if (categoricalKey === prevCategoricalFiltersRef.current) return;
-    prevCategoricalFiltersRef.current = categoricalKey;
+    // Clear the flag immediately to prevent re-triggering
+    pendingRangeUpdateRef.current = false;
     
     // Update all range filter values to match the filtered data bounds
-    // This causes one extra filter cycle, but since ranges are set to the
-    // exact min/max of the filtered data, the result is functionally the same
     if (stats.minAssessedValue !== undefined && stats.maxAssessedValue !== undefined) {
       setValueRange([stats.minAssessedValue, stats.maxAssessedValue]);
     }
@@ -1443,7 +1428,12 @@ export default function Dashboard() {
     if (stats.minGasUsage !== undefined && stats.maxGasUsage !== undefined) {
       setGasUsageRange([stats.minGasUsage, stats.maxGasUsage]);
     }
-  }, [stats, year, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, ownerFilter]);
+  }, [stats]);
+  
+  // Trigger range update after stats recalculate (called by user interactions)
+  const triggerRangeUpdate = () => {
+    pendingRangeUpdateRef.current = true;
+  };
 
   // Calculate property tax for a single property using its mill levy
   // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
@@ -1721,6 +1711,7 @@ export default function Dashboard() {
                     setSelectedOwnerCityStates([]);
                     setOwnerFilter("");
                     setUseRegex(false);
+                    triggerRangeUpdate();
                   }}
                   className="text-xs text-muted-foreground hover:text-primary"
                   data-testid="button-reset-all-filters"
@@ -1737,7 +1728,10 @@ export default function Dashboard() {
                 </label>
                 <Select
                   value={year.toString()}
-                  onValueChange={(v) => setYear(Number(v))}
+                  onValueChange={(v) => {
+                    setYear(Number(v));
+                    triggerRangeUpdate();
+                  }}
                 >
                   <SelectTrigger
                     className="w-full bg-background/50 border-border"
@@ -2748,14 +2742,20 @@ export default function Dashboard() {
                   </label>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setSelectedAccountTypes([...uniqueAccountTypes])}
+                      onClick={() => {
+                        setSelectedAccountTypes([...uniqueAccountTypes]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-all-account-types"
                     >
                       All
                     </button>
                     <button
-                      onClick={() => setSelectedAccountTypes([])}
+                      onClick={() => {
+                        setSelectedAccountTypes([]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-none-account-types"
                     >
@@ -2770,13 +2770,14 @@ export default function Dashboard() {
                     return (
                       <button
                         key={type}
-                        onClick={() =>
+                        onClick={() => {
                           setSelectedAccountTypes((prev) =>
                             isSelected
                               ? prev.filter((t) => t !== type)
                               : [...prev, type]
-                          )
-                        }
+                          );
+                          triggerRangeUpdate();
+                        }}
                         className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
                           isSelected
                             ? "bg-primary/20 text-primary"
@@ -2816,14 +2817,20 @@ export default function Dashboard() {
                   </label>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setSelectedSubdivisions([...uniqueSubdivisions])}
+                      onClick={() => {
+                        setSelectedSubdivisions([...uniqueSubdivisions]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-all-subdivisions"
                     >
                       All
                     </button>
                     <button
-                      onClick={() => setSelectedSubdivisions([])}
+                      onClick={() => {
+                        setSelectedSubdivisions([]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-none-subdivisions"
                     >
@@ -2838,13 +2845,14 @@ export default function Dashboard() {
                     return (
                       <button
                         key={subdiv}
-                        onClick={() =>
+                        onClick={() => {
                           setSelectedSubdivisions((prev) =>
                             isSelected
                               ? prev.filter((s) => s !== subdiv)
                               : [...prev, subdiv]
-                          )
-                        }
+                          );
+                          triggerRangeUpdate();
+                        }}
                         className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
                           isSelected
                             ? "bg-primary/20 text-primary"
@@ -2884,14 +2892,20 @@ export default function Dashboard() {
                   </label>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setSelectedZones([...uniqueZones])}
+                      onClick={() => {
+                        setSelectedZones([...uniqueZones]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-all-zones"
                     >
                       All
                     </button>
                     <button
-                      onClick={() => setSelectedZones([])}
+                      onClick={() => {
+                        setSelectedZones([]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-none-zones"
                     >
@@ -2906,13 +2920,14 @@ export default function Dashboard() {
                     return (
                       <button
                         key={zone}
-                        onClick={() =>
+                        onClick={() => {
                           setSelectedZones((prev) =>
                             isSelected
                               ? prev.filter((z) => z !== zone)
                               : [...prev, zone]
-                          )
-                        }
+                          );
+                          triggerRangeUpdate();
+                        }}
                         className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
                           isSelected
                             ? "bg-primary/20 text-primary"
@@ -2952,14 +2967,20 @@ export default function Dashboard() {
                   </label>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setSelectedOwnerCityStates([...uniqueOwnerCityStates])}
+                      onClick={() => {
+                        setSelectedOwnerCityStates([...uniqueOwnerCityStates]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-all-owner-city-states"
                     >
                       All
                     </button>
                     <button
-                      onClick={() => setSelectedOwnerCityStates([])}
+                      onClick={() => {
+                        setSelectedOwnerCityStates([]);
+                        triggerRangeUpdate();
+                      }}
                       className="text-xs text-muted-foreground hover:text-primary"
                       data-testid="button-select-none-owner-city-states"
                     >
@@ -2979,13 +3000,14 @@ export default function Dashboard() {
                     return (
                       <button
                         key={cityState}
-                        onClick={() =>
+                        onClick={() => {
                           setSelectedOwnerCityStates((prev) =>
                             isSelected
                               ? prev.filter((cs) => cs !== cityState)
                               : [...prev, cityState]
-                          )
-                        }
+                          );
+                          triggerRangeUpdate();
+                        }}
                         className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-colors ${
                           isSelected
                             ? "bg-primary/20 text-primary"
@@ -3048,6 +3070,7 @@ export default function Dashboard() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         setOwnerFilter(pendingOwnerFilter);
+                        triggerRangeUpdate();
                       }
                     }}
                     placeholder={useRegex ? "e.g. ^SMITH|JONES$" : "Search by owner name..."}
@@ -3056,7 +3079,10 @@ export default function Dashboard() {
                   />
                   <Button
                     size="sm"
-                    onClick={() => setOwnerFilter(pendingOwnerFilter)}
+                    onClick={() => {
+                      setOwnerFilter(pendingOwnerFilter);
+                      triggerRangeUpdate();
+                    }}
                     disabled={pendingOwnerFilter === ownerFilter}
                     data-testid="button-apply-owner-filter"
                   >
@@ -3072,6 +3098,7 @@ export default function Dashboard() {
                       onClick={() => {
                         setOwnerFilter("");
                         setPendingOwnerFilter("");
+                        triggerRangeUpdate();
                       }}
                       className="text-xs text-muted-foreground hover:text-foreground"
                       data-testid="button-clear-owner-filter"

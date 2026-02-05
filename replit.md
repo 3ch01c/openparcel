@@ -65,6 +65,12 @@ Preferred communication style: Simple, everyday language.
 - **Dark Theme**: Premium dark color palette with CSS custom properties for theming
 - **Responsive Design**: Mobile-first approach with use-mobile hook for breakpoint detection
 
+### Filter Behavior
+- **Range Filter Auto-Update**: When a user applies a categorical filter (year, account type, subdivision, zone, owner city/state, or owner search), all range filter sliders automatically update their thumb positions to match the filtered data's min/max bounds
+- **User-Event Driven**: Auto-updates only trigger on explicit user actions (clicking buttons, pressing Enter, releasing sliders, clicking histogram bars) - not on state changes
+- **Implementation**: Uses `pendingRangeUpdateRef` flag set by `triggerRangeUpdate()` at user interaction points; the useEffect only updates ranges when this flag is set, then clears it immediately to prevent cascading updates
+- **Slider Bounds**: The slider track bounds remain fixed at the initial (unfiltered) data range, while the thumb positions update to show filtered data bounds
+
 ## External Dependencies
 
 ### Database
