@@ -79,6 +79,8 @@ export function getMetricValue(property: PropertyResponse, metric: ColorMetric):
     case "gasPerBldgSf":
       if (property.avgMonthlyGasTherms == null || buildingSqft == null || buildingSqft <= 0) return null;
       return property.avgMonthlyGasTherms / buildingSqft;
+    case "zone":
+      return property.zone ? 1 : null;
     default:
       return null;
   }

@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
-import { type ColorMetric, COLOR_METRIC_LABELS } from "@/lib/map-metrics";
+import { type ColorMetric, COLOR_METRIC_LABELS, getMetricValue } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { RangeFilter } from "@/components/RangeFilter";
@@ -632,19 +632,23 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     if (!properties || properties.length === 0) return null;
 
-    const totalValue = properties.reduce(
+    const metricDefinedProps = properties.filter(p => getMetricValue(p, colorMetric) != null);
+    const metricExcludedCount = properties.length - metricDefinedProps.length;
+    const statsProps = metricDefinedProps;
+
+    const totalValue = statsProps.reduce(
       (acc, curr) => acc + curr.assessedValue,
       0,
     );
-    const avgValue = properties.length > 0 ? totalValue / properties.length : 0;
-    const maxVal = Math.max(...properties.map((p) => p.assessedValue));
+    const avgValue = statsProps.length > 0 ? totalValue / statsProps.length : 0;
+    const maxVal = Math.max(...statsProps.map((p) => p.assessedValue));
 
     // Simple distribution for chart - start from current filter min
-    const minVal = Math.min(...properties.map((p) => p.assessedValue));
+    const minVal = Math.min(...statsProps.map((p) => p.assessedValue));
     const distribution = [0, 0, 0, 0, 0];
     const rangeSpan = maxVal - minVal;
     const step = rangeSpan / 5;
-    properties.forEach((p) => {
+    statsProps.forEach((p) => {
       const bucket =
         step > 0
           ? Math.min(Math.floor((p.assessedValue - minVal) / step), 4)
@@ -662,7 +666,7 @@ export default function Dashboard() {
     const nnf = (arr: (number | null | undefined)[]): number[] => arr.filter((v): v is number => v != null);
 
     // Tax histogram data (5 bins from 0 to max tax)
-    const taxValues = nnf(properties.map(p => getPropertyTax(p)));
+    const taxValues = nnf(statsProps.map(p => getPropertyTax(p)));
     // Tax histogram uses actual min/max from filtered data
     const actualTaxMin = taxValues.length > 0 ? Math.min(...taxValues) : 0;
     const actualTaxMax = taxValues.length > 0 ? Math.max(...taxValues) : 1;
@@ -680,7 +684,7 @@ export default function Dashboard() {
     }));
 
     // Parcel area histogram uses actual min/max from filtered data
-    const parcelAreas = nnf(properties.map(p => p.parcelArea));
+    const parcelAreas = nnf(statsProps.map(p => p.parcelArea));
     const actualParcelMin = parcelAreas.length > 0 ? Math.min(...parcelAreas) : 0;
     const actualParcelMax = parcelAreas.length > 0 ? Math.max(...parcelAreas) : 1;
     const parcelDistribution = [0, 0, 0, 0, 0];
@@ -697,7 +701,7 @@ export default function Dashboard() {
     }));
 
     // Land value histogram
-    const landValues = nnf(properties.map(p => p.landValue));
+    const landValues = nnf(statsProps.map(p => p.landValue));
     const actualLandMin = landValues.length > 0 ? Math.min(...landValues) : 0;
     const actualLandMax = landValues.length > 0 ? Math.max(...landValues) : 1;
     const landDistribution = [0, 0, 0, 0, 0];
@@ -714,7 +718,7 @@ export default function Dashboard() {
     }));
 
     // Improvement value histogram
-    const improvementValues = nnf(properties.map(p => p.improvementValue));
+    const improvementValues = nnf(statsProps.map(p => p.improvementValue));
     const actualImpMin = improvementValues.length > 0 ? Math.min(...improvementValues) : 0;
     const actualImpMax = improvementValues.length > 0 ? Math.max(...improvementValues) : 1;
     const improvementDistribution = [0, 0, 0, 0, 0];
@@ -731,7 +735,7 @@ export default function Dashboard() {
     }));
 
     // Land value per sqft histogram
-    const landPerSqftValues = nnf(properties.map(p => getLandValuePerSqft(p)));
+    const landPerSqftValues = nnf(statsProps.map(p => getLandValuePerSqft(p)));
     const actualLandPerSqftMin = landPerSqftValues.length > 0 ? Math.min(...landPerSqftValues) : 0;
     const actualLandPerSqftMax = landPerSqftValues.length > 0 ? Math.max(...landPerSqftValues) : 1;
     const landPerSqftDistribution = [0, 0, 0, 0, 0];
@@ -748,7 +752,7 @@ export default function Dashboard() {
     }));
 
     // Building sqft to land sqft ratio histogram
-    const bldgRatioValues = nnf(properties.map(p => getBldgToLandRatio(p)));
+    const bldgRatioValues = nnf(statsProps.map(p => getBldgToLandRatio(p)));
     const actualBldgRatioMin = bldgRatioValues.length > 0 ? Math.min(...bldgRatioValues) : 0;
     const actualBldgRatioMax = bldgRatioValues.length > 0 ? Math.max(...bldgRatioValues) : 1;
     const bldgRatioDistribution = [0, 0, 0, 0, 0];
@@ -765,7 +769,7 @@ export default function Dashboard() {
     }));
 
     // Water usage histogram
-    const waterUsageValues = nnf(properties.map(p => p.avgMonthlyWaterKgal));
+    const waterUsageValues = nnf(statsProps.map(p => p.avgMonthlyWaterKgal));
     const actualWaterMin = waterUsageValues.length > 0 ? Math.min(...waterUsageValues) : 0;
     const actualWaterMax = waterUsageValues.length > 0 ? Math.max(...waterUsageValues) : 100;
     const waterDistribution = [0, 0, 0, 0, 0];
@@ -782,7 +786,7 @@ export default function Dashboard() {
     }));
 
     // Electric usage histogram
-    const electricUsageValues = nnf(properties.map(p => p.avgMonthlyElectricKwh));
+    const electricUsageValues = nnf(statsProps.map(p => p.avgMonthlyElectricKwh));
     const actualElectricMin = electricUsageValues.length > 0 ? Math.min(...electricUsageValues) : 0;
     const actualElectricMax = electricUsageValues.length > 0 ? Math.max(...electricUsageValues) : 5000;
     const electricDistribution = [0, 0, 0, 0, 0];
@@ -799,7 +803,7 @@ export default function Dashboard() {
     }));
 
     // Gas usage histogram
-    const gasUsageValues = nnf(properties.map(p => p.avgMonthlyGasTherms));
+    const gasUsageValues = nnf(statsProps.map(p => p.avgMonthlyGasTherms));
     const actualGasMin = gasUsageValues.length > 0 ? Math.min(...gasUsageValues) : 0;
     const actualGasMax = gasUsageValues.length > 0 ? Math.max(...gasUsageValues) : 500;
     const gasDistribution = [0, 0, 0, 0, 0];
@@ -816,7 +820,7 @@ export default function Dashboard() {
     }));
 
     // Water per building SF histogram
-    const waterPerSfValues = nnf(properties.map(p => {
+    const waterPerSfValues = nnf(statsProps.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
       return (p.avgMonthlyWaterKgal * 1000) / p.buildingSqft;
     }));
@@ -836,7 +840,7 @@ export default function Dashboard() {
     }));
 
     // Electric per building SF histogram
-    const electricPerSfValues = nnf(properties.map(p => {
+    const electricPerSfValues = nnf(statsProps.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyElectricKwh == null) return null;
       return p.avgMonthlyElectricKwh / p.buildingSqft;
     }));
@@ -856,7 +860,7 @@ export default function Dashboard() {
     }));
 
     // Gas per building SF histogram
-    const gasPerSfValues = nnf(properties.map(p => {
+    const gasPerSfValues = nnf(statsProps.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyGasTherms == null) return null;
       return p.avgMonthlyGasTherms / p.buildingSqft;
     }));
@@ -875,15 +879,15 @@ export default function Dashboard() {
       binMax: actualGasPerSfMin + (i + 1) * gasPerSfStep,
     }));
 
-    // Calculate total taxes using per-parcel mill levy (excluding EXEMPT properties)
+    // Calculate total taxes using per-parcel mill levy (excluding EXEMPT statsProps)
     // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
-    const totalTaxes = properties.reduce((sum, p) => {
+    const totalTaxes = statsProps.reduce((sum, p) => {
       const totalTaxable = p.totalTaxable || 0;
       const hhExemptValue = p.hhExemption || 0;
       const vetExemptValue = p.vetExemption || 0;
       const parcelMillLevy = p.millLevy || 28.714;
       const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
-      if (isExemptAccount) return sum; // EXEMPT properties pay $0 tax
+      if (isExemptAccount) return sum; // EXEMPT statsProps pay $0 tax
       
       const grossTax = (totalTaxable * parcelMillLevy) / 1000;
       const hhExemptionAmount = (hhExemptValue * parcelMillLevy) / 1000;
@@ -891,27 +895,27 @@ export default function Dashboard() {
       
       return sum + Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
     }, 0);
-    const avgTaxes = properties.length > 0 ? totalTaxes / properties.length : 0;
+    const avgTaxes = statsProps.length > 0 ? totalTaxes / statsProps.length : 0;
     const taxPctOfTotal = totalValue > 0 ? (totalTaxes / totalValue) * 100 : 0;
     const taxPctOfAvg = avgValue > 0 ? (avgTaxes / avgValue) * 100 : 0;
 
-    // Count properties with HH exemption and calculate total tax savings
-    const hhExemptionCount = properties.filter(p => (p.hhExemption || 0) > 0).length;
-    const totalHhExemption = properties.reduce((sum, p) => {
+    // Count statsProps with HH exemption and calculate total tax savings
+    const hhExemptionCount = statsProps.filter(p => (p.hhExemption || 0) > 0).length;
+    const totalHhExemption = statsProps.reduce((sum, p) => {
       const parcelMillLevy = p.millLevy || 28.714;
       return sum + ((p.hhExemption || 0) * parcelMillLevy) / 1000;
     }, 0);
     
-    // Count properties with Vet exemption and calculate total tax savings
-    const vetExemptionCount = properties.filter(p => (p.vetExemption || 0) > 0).length;
-    const totalVetExemption = properties.reduce((sum, p) => {
+    // Count statsProps with Vet exemption and calculate total tax savings
+    const vetExemptionCount = statsProps.filter(p => (p.vetExemption || 0) > 0).length;
+    const totalVetExemption = statsProps.reduce((sum, p) => {
       const parcelMillLevy = p.millLevy || 28.714;
       return sum + ((p.vetExemption || 0) * parcelMillLevy) / 1000;
     }, 0);
     
     // Calculate EXEMPT account type exemptions (grouped by account type)
     const exemptAccountExemptions: Record<string, number> = {};
-    properties.forEach(p => {
+    statsProps.forEach(p => {
       const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
       if (isExemptAccount && p.accountType) {
         const totalTaxable = p.totalTaxable || 0;
@@ -928,7 +932,7 @@ export default function Dashboard() {
       ...Object.entries(exemptAccountExemptions).map(([type, value]) => ({
         type,
         value,
-        count: properties.filter(p => p.accountType === type).length,
+        count: statsProps.filter(p => p.accountType === type).length,
       })),
     ].filter(d => d.value > 0);
     
@@ -938,7 +942,7 @@ export default function Dashboard() {
 
     // Aggregate account types
     const accountTypeCounts: Record<string, number> = {};
-    properties.forEach(p => {
+    statsProps.forEach(p => {
       const acctType = p.accountType || "Unknown";
       accountTypeCounts[acctType] = (accountTypeCounts[acctType] || 0) + 1;
     });
@@ -949,14 +953,14 @@ export default function Dashboard() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10); // Top 10 account types
 
-    // Count properties with no improvement value (land only)
-    const landOnlyProps = properties.filter(p => (p.improvementValue || 0) === 0);
+    // Count statsProps with no improvement value (land only)
+    const landOnlyProps = statsProps.filter(p => (p.improvementValue || 0) === 0);
     const noImprovementCount = landOnlyProps.length;
     const totalLandOnlyAcres = landOnlyProps.reduce((sum, p) => sum + (p.parcelArea || 0), 0);
 
     // Top land holders - aggregate parcel area (acres) by owner
     const landByOwner: Record<string, { totalAcres: number; propertyCount: number }> = {};
-    properties.forEach(p => {
+    statsProps.forEach(p => {
       const owner = p.owner || "Unknown";
       if (!landByOwner[owner]) {
         landByOwner[owner] = { totalAcres: 0, propertyCount: 0 };
@@ -976,30 +980,31 @@ export default function Dashboard() {
       .slice(0, 10);
 
     // Total parcel area (acres)
-    const totalParcelAcres = properties.reduce((sum, p) => sum + (p.parcelArea || 0), 0);
-    const avgParcelAcres = properties.length > 0 ? totalParcelAcres / properties.length : 0;
+    const totalParcelAcres = statsProps.reduce((sum, p) => sum + (p.parcelArea || 0), 0);
+    const avgParcelAcres = statsProps.length > 0 ? totalParcelAcres / statsProps.length : 0;
     
     // Total land value and avg per acre
-    const totalLandValue = properties.reduce((sum, p) => sum + (p.landValue || 0), 0);
+    const totalLandValue = statsProps.reduce((sum, p) => sum + (p.landValue || 0), 0);
     const avgLandValuePerAcre = totalParcelAcres > 0 ? totalLandValue / totalParcelAcres : 0;
 
     // Utility usage totals and averages
-    const propsWithWater = properties.filter(p => p.avgMonthlyWaterKgal != null && p.avgMonthlyWaterKgal > 0);
+    const propsWithWater = statsProps.filter(p => p.avgMonthlyWaterKgal != null && p.avgMonthlyWaterKgal > 0);
     const totalWaterUsage = propsWithWater.reduce((sum, p) => sum + (p.avgMonthlyWaterKgal || 0), 0);
     const avgWaterUsage = propsWithWater.length > 0 ? totalWaterUsage / propsWithWater.length : 0;
     
-    const propsWithElectric = properties.filter(p => p.avgMonthlyElectricKwh != null && p.avgMonthlyElectricKwh > 0);
+    const propsWithElectric = statsProps.filter(p => p.avgMonthlyElectricKwh != null && p.avgMonthlyElectricKwh > 0);
     const totalElectricUsage = propsWithElectric.reduce((sum, p) => sum + (p.avgMonthlyElectricKwh || 0), 0);
     const avgElectricUsage = propsWithElectric.length > 0 ? totalElectricUsage / propsWithElectric.length : 0;
     
-    const propsWithGas = properties.filter(p => p.avgMonthlyGasTherms != null && p.avgMonthlyGasTherms > 0);
+    const propsWithGas = statsProps.filter(p => p.avgMonthlyGasTherms != null && p.avgMonthlyGasTherms > 0);
     const totalGasUsage = propsWithGas.reduce((sum, p) => sum + (p.avgMonthlyGasTherms || 0), 0);
     const avgGasUsage = propsWithGas.length > 0 ? totalGasUsage / propsWithGas.length : 0;
 
     return {
       totalValue,
       avgValue,
-      count: properties.length,
+      count: statsProps.length,
+      metricExcludedCount,
       chartData,
       minAssessedValue: minVal,
       maxAssessedValue: maxVal,
@@ -1066,7 +1071,7 @@ export default function Dashboard() {
       avgGasUsage,
       gasParcelCount: propsWithGas.length,
     };
-  }, [properties]);
+  }, [properties, colorMetric]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {
@@ -1914,7 +1919,9 @@ export default function Dashboard() {
                   title="Parcels"
                   value={stats.count.toLocaleString()}
                   icon={Home}
-                  description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
+                  description={stats.metricExcludedCount > 0
+                    ? `${stats.metricExcludedCount.toLocaleString()} excluded (no ${COLOR_METRIC_LABELS[colorMetric]} data)`
+                    : `out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
                 />
                 <StatsCard
                   title="Acreage"
