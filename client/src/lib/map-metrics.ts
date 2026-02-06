@@ -38,42 +38,48 @@ export function isCategoricalMetric(metric: ColorMetric): boolean {
   return metric === "zone";
 }
 
-export function getMetricValue(property: PropertyResponse, metric: ColorMetric): number {
-  const landSqft = (property.parcelArea || 0) * 43560;
-  const buildingSqft = property.buildingSqft || 0;
+export function getMetricValue(property: PropertyResponse, metric: ColorMetric): number | null {
+  const landSqft = property.parcelArea != null ? property.parcelArea * 43560 : (property.landSqft ?? null);
+  const buildingSqft = property.buildingSqft ?? null;
   const millLevy = property.millLevy || 28.714;
   const isExempt = property.accountType?.toUpperCase().includes("EXEMPT") || false;
-  const hhExemptAmount = (property.hhExemption || 0) * millLevy / 1000;
-  const vetExemptAmount = (property.vetExemption || 0) * millLevy / 1000;
-  const taxAssessed = isExempt ? 0 : Math.max(0, (property.totalTaxable || 0) * millLevy / 1000 - hhExemptAmount - vetExemptAmount);
 
   switch (metric) {
     case "assessedValue":
-      return property.assessedValue || 0;
+      return property.assessedValue ?? null;
     case "landValue":
-      return property.landValue || 0;
+      return property.landValue ?? null;
     case "improvementValue":
-      return property.improvementValue || 0;
-    case "taxAssessed":
-      return taxAssessed;
+      return property.improvementValue ?? null;
+    case "taxAssessed": {
+      if (property.totalTaxable == null) return null;
+      if (isExempt) return 0;
+      const hhExemptAmount = (property.hhExemption || 0) * millLevy / 1000;
+      const vetExemptAmount = (property.vetExemption || 0) * millLevy / 1000;
+      return Math.max(0, property.totalTaxable * millLevy / 1000 - hhExemptAmount - vetExemptAmount);
+    }
     case "landValuePerSqft":
-      return landSqft > 0 ? (property.landValue || 0) / landSqft : 0;
+      if (property.landValue == null || landSqft == null) return null;
+      return landSqft > 0 ? property.landValue / landSqft : null;
     case "bldgLandRatio":
-      return landSqft > 0 ? buildingSqft / landSqft : 0;
+      if (buildingSqft == null || landSqft == null) return null;
+      return landSqft > 0 ? buildingSqft / landSqft : null;
     case "waterUsage":
-      return property.avgMonthlyWaterKgal || 0;
+      return property.avgMonthlyWaterKgal ?? null;
     case "electricUsage":
-      return property.avgMonthlyElectricKwh || 0;
+      return property.avgMonthlyElectricKwh ?? null;
     case "gasUsage":
-      return property.avgMonthlyGasTherms || 0;
+      return property.avgMonthlyGasTherms ?? null;
     case "waterPerBldgSf":
-      // Convert kgal to gallons (×1000) and divide by building SF
-      return buildingSqft > 0 ? ((property.avgMonthlyWaterKgal || 0) * 1000) / buildingSqft : 0;
+      if (property.avgMonthlyWaterKgal == null || buildingSqft == null || buildingSqft <= 0) return null;
+      return (property.avgMonthlyWaterKgal * 1000) / buildingSqft;
     case "electricPerBldgSf":
-      return buildingSqft > 0 ? (property.avgMonthlyElectricKwh || 0) / buildingSqft : 0;
+      if (property.avgMonthlyElectricKwh == null || buildingSqft == null || buildingSqft <= 0) return null;
+      return property.avgMonthlyElectricKwh / buildingSqft;
     case "gasPerBldgSf":
-      return buildingSqft > 0 ? (property.avgMonthlyGasTherms || 0) / buildingSqft : 0;
+      if (property.avgMonthlyGasTherms == null || buildingSqft == null || buildingSqft <= 0) return null;
+      return property.avgMonthlyGasTherms / buildingSqft;
     default:
-      return 0;
+      return null;
   }
 }

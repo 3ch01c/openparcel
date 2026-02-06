@@ -7,6 +7,13 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { PropertyResponse } from "@shared/schema";
 import { type ColorMetric, getMetricValue, getZoneColor, isCategoricalMetric } from "@/lib/map-metrics";
 
+const fmtCur = (v: number | null | undefined) => v != null ? `$${v.toLocaleString()}` : "N/A";
+const fmtNum = (v: number | null | undefined, decimals = 2) => v != null ? v.toFixed(decimals) : "N/A";
+const perSqft = (value: number | null | undefined, sqft: number | null | undefined): string | null => {
+  if (value == null || sqft == null || sqft <= 0) return null;
+  return `$${(value / sqft).toFixed(2)}/sqft`;
+};
+
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
@@ -33,14 +40,6 @@ interface PolygonLayerProps {
   colorMetric?: ColorMetric;
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function getMarkerColor(value: number, minValue: number, maxValue: number): string {
   // Viridis colorblind-safe palette (purple → teal → yellow)
@@ -110,9 +109,9 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
       ? Array.from(new Set(validPoints.map(p => p.zone).filter(Boolean) as string[])).sort()
       : [];
 
-    // Calculate min/max values for numeric metrics
+    // Calculate min/max values for numeric metrics (only from non-null values)
     const metricValues = !isCategoricalMetric(colorMetric) 
-      ? validPoints.map(p => getMetricValue(p, colorMetric))
+      ? validPoints.map(p => getMetricValue(p, colorMetric)).filter((v): v is number => v != null)
       : [];
     const minMetricValue = metricValues.length > 0 ? Math.min(...metricValues) : 0;
     const maxMetricValue = metricValues.length > 0 ? Math.max(...metricValues) : 1;
@@ -155,9 +154,13 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
       });
 
       validPoints.forEach((property) => {
-        const color = isCategoricalMetric(colorMetric)
-          ? getZoneColor(property.zone, zoneList)
-          : getMarkerColor(getMetricValue(property, colorMetric), minMetricValue, maxMetricValue);
+        const metricVal = getMetricValue(property, colorMetric);
+        const hasMetricData = isCategoricalMetric(colorMetric) || metricVal != null;
+        const color = !hasMetricData
+          ? "transparent"
+          : isCategoricalMetric(colorMetric)
+            ? getZoneColor(property.zone, zoneList)
+            : getMarkerColor(metricVal!, minMetricValue, maxMetricValue);
         
         const markerIcon = L.divIcon({
           className: "custom-marker",
@@ -166,7 +169,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            border: 2px solid white;
+            border: 2px solid ${hasMetricData ? 'white' : 'rgba(255,255,255,0.2)'};
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           "></div>`,
           iconSize: [12, 12],
@@ -175,18 +178,19 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
 
         const marker = L.marker([property.lat, property.lng], { icon: markerIcon });
 
-        const hhExemptAmount = (property.hhExemption || 0) * (property.millLevy || 28.714) / 1000;
-        const vetExemptAmount = (property.vetExemption || 0) * (property.millLevy || 28.714) / 1000;
+        const ml = property.millLevy ?? 28.714;
+        const hhExemptAmount = property.hhExemption != null ? (property.hhExemption * ml) / 1000 : null;
+        const vetExemptAmount = property.vetExemption != null ? (property.vetExemption * ml) / 1000 : null;
         const isExempt = property.accountType?.toUpperCase().includes("EXEMPT") || false;
-        const taxExemptAmount = isExempt ? (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 : 0;
-        const taxAssessed = isExempt ? 0 : Math.max(0, (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 - hhExemptAmount - vetExemptAmount);
+        const taxExemptAmount = isExempt && property.totalTaxable != null ? (property.totalTaxable * ml) / 1000 : null;
+        const grossTax = property.totalTaxable != null ? (property.totalTaxable * ml) / 1000 : null;
+        const taxAssessed = isExempt ? 0 : grossTax != null ? Math.max(0, grossTax - (hhExemptAmount || 0) - (vetExemptAmount || 0)) : null;
         
-        const parcelArea = property.parcelArea || 0;
-        const landSqft = parcelArea * 43560;
-        const buildingSqft = property.buildingSqft || 0;
-        const landPerSqft = landSqft > 0 ? (property.landValue || 0) / landSqft : 0;
-        const improvementPerSqft = buildingSqft > 0 ? (property.improvementValue || 0) / buildingSqft : 0;
-        const taxPerSqft = landSqft > 0 ? taxAssessed / landSqft : 0;
+        const parcelArea = property.parcelArea;
+        const landSqft = parcelArea != null ? parcelArea * 43560 : null;
+        const landPerSqftStr = perSqft(property.landValue, landSqft);
+        const improvPerSqftStr = perSqft(property.improvementValue, property.buildingSqft);
+        const taxPerSqftStr = taxAssessed != null && landSqft != null && landSqft > 0 ? `$${(taxAssessed / landSqft).toFixed(4)}/sqft` : null;
 
         const ownerAddressParts = [
           property.ownerAddress1,
@@ -209,15 +213,15 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="color: #666;">Owner Address:</div>
               <div style="font-weight: 500;">${ownerAddress}</div>
               <div style="color: #666;">Assessed Value:</div>
-              <div style="font-weight: 500;">${formatCurrency(property.assessedValue)}</div>
+              <div style="font-weight: 500;">${fmtCur(property.assessedValue)}</div>
               <div style="color: #666;">Land Value:</div>
-              <div style="font-weight: 500;">${formatCurrency(property.landValue || 0)} <span style="color: #888;">($${landPerSqft.toFixed(2)}/sqft)</span></div>
+              <div style="font-weight: 500;">${fmtCur(property.landValue)}${landPerSqftStr ? ` <span style="color: #888;">(${landPerSqftStr})</span>` : ""}</div>
               <div style="color: #666;">Improvement:</div>
-              <div style="font-weight: 500;">${formatCurrency(property.improvementValue || 0)} <span style="color: #888;">($${improvementPerSqft.toFixed(2)}/sqft)</span></div>
+              <div style="font-weight: 500;">${fmtCur(property.improvementValue)}${improvPerSqftStr ? ` <span style="color: #888;">(${improvPerSqftStr})</span>` : ""}</div>
               <div style="color: #666;">Tax Assessed:</div>
-              <div style="font-weight: 500; color: #22c55e;">${formatCurrency(taxAssessed)} <span style="color: #888;">($${taxPerSqft.toFixed(4)}/sqft)</span></div>
+              <div style="font-weight: 500; color: #22c55e;">${fmtCur(taxAssessed)}${taxPerSqftStr ? ` <span style="color: #888;">(${taxPerSqftStr})</span>` : ""}</div>
               <div style="color: #666;">Parcel Area:</div>
-              <div style="font-weight: 500;">${parcelArea.toFixed(2)} acres</div>
+              <div style="font-weight: 500;">${parcelArea != null ? parcelArea.toFixed(2) + " acres" : "N/A"}</div>
               <div style="color: #666;">Account Type:</div>
               <div style="font-weight: 500;">${property.accountType || "N/A"}</div>
               <div style="color: #666;">Subdivision:</div>
@@ -225,7 +229,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="color: #666;">Zone:</div>
               <div style="font-weight: 500;">${property.zone || "N/A"}</div>
               <div style="color: #666;">Mill Levy:</div>
-              <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
+              <div style="font-weight: 500;">${fmtNum(property.millLevy ?? 28.714, 3)}</div>
               ${property.avgMonthlyWaterKgal != null ? `
                 <div style="color: #666;">Avg Water Usage:</div>
                 <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
@@ -242,9 +246,9 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
             ${(property.hhExemption || property.vetExemption || isExempt) ? `
               <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
               <div style="font-size: 11px; color: #888;">
-                ${property.hhExemption ? `<div>HH Exemption: ${formatCurrency(hhExemptAmount)}</div>` : ""}
-                ${property.vetExemption ? `<div>Vet Exemption: ${formatCurrency(vetExemptAmount)}</div>` : ""}
-                ${isExempt ? `<div>Tax Exempt: ${formatCurrency(taxExemptAmount)}</div>` : ""}
+                ${hhExemptAmount != null ? `<div>HH Exemption: ${fmtCur(hhExemptAmount)}</div>` : ""}
+                ${vetExemptAmount != null ? `<div>Vet Exemption: ${fmtCur(vetExemptAmount)}</div>` : ""}
+                ${taxExemptAmount != null ? `<div>Tax Exempt: ${fmtCur(taxExemptAmount)}</div>` : ""}
               </div>
             ` : ""}
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
@@ -354,9 +358,9 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
       ? Array.from(new Set(validPoints.map(p => p.zone).filter(Boolean) as string[])).sort()
       : [];
 
-    // Calculate min/max values for numeric metrics
+    // Calculate min/max values for numeric metrics (only from non-null values)
     const metricValues = !isCategoricalMetric(colorMetric) 
-      ? validPoints.map(p => getMetricValue(p, colorMetric))
+      ? validPoints.map(p => getMetricValue(p, colorMetric)).filter((v): v is number => v != null)
       : [];
     const minMetricValue = metricValues.length > 0 ? Math.min(...metricValues) : 0;
     const maxMetricValue = metricValues.length > 0 ? Math.max(...metricValues) : 1;
@@ -373,30 +377,35 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
             ring.map(([lng, lat]) => [lat, lng] as [number, number])
           );
 
-          const color = isCategoricalMetric(colorMetric)
-            ? getZoneColor(property.zone, zoneList)
-            : getMarkerColor(getMetricValue(property, colorMetric), minMetricValue, maxMetricValue);
+          const metricVal = getMetricValue(property, colorMetric);
+          const hasMetricData = isCategoricalMetric(colorMetric) || metricVal != null;
+          const color = !hasMetricData
+            ? "transparent"
+            : isCategoricalMetric(colorMetric)
+              ? getZoneColor(property.zone, zoneList)
+              : getMarkerColor(metricVal!, minMetricValue, maxMetricValue);
 
           const polygon = L.polygon(latLngs, {
-            color: color,
+            color: hasMetricData ? color : "rgba(128,128,128,0.3)",
             weight: 1,
-            opacity: 0.8,
+            opacity: hasMetricData ? 0.8 : 0.3,
             fillColor: color,
-            fillOpacity: 0.4,
+            fillOpacity: hasMetricData ? 0.4 : 0,
           });
 
-          const hhExemptAmount = (property.hhExemption || 0) * (property.millLevy || 28.714) / 1000;
-          const vetExemptAmount = (property.vetExemption || 0) * (property.millLevy || 28.714) / 1000;
+          const ml = property.millLevy ?? 28.714;
+          const hhExemptAmount = property.hhExemption != null ? (property.hhExemption * ml) / 1000 : null;
+          const vetExemptAmount = property.vetExemption != null ? (property.vetExemption * ml) / 1000 : null;
           const isExempt = property.accountType?.toUpperCase().includes("EXEMPT") || false;
-          const taxExemptAmount = isExempt ? (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 : 0;
-          const taxAssessed = isExempt ? 0 : Math.max(0, (property.totalTaxable || 0) * (property.millLevy || 28.714) / 1000 - hhExemptAmount - vetExemptAmount);
+          const taxExemptAmount = isExempt && property.totalTaxable != null ? (property.totalTaxable * ml) / 1000 : null;
+          const grossTax = property.totalTaxable != null ? (property.totalTaxable * ml) / 1000 : null;
+          const taxAssessed = isExempt ? 0 : grossTax != null ? Math.max(0, grossTax - (hhExemptAmount || 0) - (vetExemptAmount || 0)) : null;
           
-          const parcelArea = property.parcelArea || 0;
-          const landSqft = parcelArea * 43560;
-          const buildingSqft = property.buildingSqft || 0;
-          const landPerSqft = landSqft > 0 ? (property.landValue || 0) / landSqft : 0;
-          const improvementPerSqft = buildingSqft > 0 ? (property.improvementValue || 0) / buildingSqft : 0;
-          const taxPerSqft = landSqft > 0 ? taxAssessed / landSqft : 0;
+          const parcelArea = property.parcelArea;
+          const landSqft = parcelArea != null ? parcelArea * 43560 : null;
+          const landPerSqftStr = perSqft(property.landValue, landSqft);
+          const improvPerSqftStr = perSqft(property.improvementValue, property.buildingSqft);
+          const taxPerSqftStr = taxAssessed != null && landSqft != null && landSqft > 0 ? `$${(taxAssessed / landSqft).toFixed(4)}/sqft` : null;
 
           const ownerAddressParts = [
             property.ownerAddress1,
@@ -419,15 +428,15 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="color: #666;">Owner Address:</div>
                 <div style="font-weight: 500;">${ownerAddress}</div>
                 <div style="color: #666;">Assessed Value:</div>
-                <div style="font-weight: 500;">${formatCurrency(property.assessedValue)}</div>
+                <div style="font-weight: 500;">${fmtCur(property.assessedValue)}</div>
                 <div style="color: #666;">Land Value:</div>
-                <div style="font-weight: 500;">${formatCurrency(property.landValue || 0)} <span style="color: #888;">($${landPerSqft.toFixed(2)}/sqft)</span></div>
+                <div style="font-weight: 500;">${fmtCur(property.landValue)}${landPerSqftStr ? ` <span style="color: #888;">(${landPerSqftStr})</span>` : ""}</div>
                 <div style="color: #666;">Improvement:</div>
-                <div style="font-weight: 500;">${formatCurrency(property.improvementValue || 0)} <span style="color: #888;">($${improvementPerSqft.toFixed(2)}/sqft)</span></div>
+                <div style="font-weight: 500;">${fmtCur(property.improvementValue)}${improvPerSqftStr ? ` <span style="color: #888;">(${improvPerSqftStr})</span>` : ""}</div>
                 <div style="color: #666;">Tax Assessed:</div>
-                <div style="font-weight: 500; color: #22c55e;">${formatCurrency(taxAssessed)} <span style="color: #888;">($${taxPerSqft.toFixed(4)}/sqft)</span></div>
+                <div style="font-weight: 500; color: #22c55e;">${fmtCur(taxAssessed)}${taxPerSqftStr ? ` <span style="color: #888;">(${taxPerSqftStr})</span>` : ""}</div>
                 <div style="color: #666;">Parcel Area:</div>
-                <div style="font-weight: 500;">${parcelArea.toFixed(2)} acres</div>
+                <div style="font-weight: 500;">${parcelArea != null ? parcelArea.toFixed(2) + " acres" : "N/A"}</div>
                 <div style="color: #666;">Account Type:</div>
                 <div style="font-weight: 500;">${property.accountType || "N/A"}</div>
                 <div style="color: #666;">Subdivision:</div>
@@ -435,7 +444,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="color: #666;">Zone:</div>
                 <div style="font-weight: 500;">${property.zone || "N/A"}</div>
                 <div style="color: #666;">Mill Levy:</div>
-                <div style="font-weight: 500;">${(property.millLevy || 28.714).toFixed(3)}</div>
+                <div style="font-weight: 500;">${fmtNum(property.millLevy ?? 28.714, 3)}</div>
                 ${property.avgMonthlyWaterKgal != null ? `
                   <div style="color: #666;">Avg Water Usage:</div>
                   <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
@@ -452,9 +461,9 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
               ${(property.hhExemption || property.vetExemption || isExempt) ? `
                 <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
                 <div style="font-size: 11px; color: #888;">
-                  ${property.hhExemption ? `<div>HH Exemption: ${formatCurrency(hhExemptAmount)}</div>` : ""}
-                  ${property.vetExemption ? `<div>Vet Exemption: ${formatCurrency(vetExemptAmount)}</div>` : ""}
-                  ${isExempt ? `<div>Tax Exempt: ${formatCurrency(taxExemptAmount)}</div>` : ""}
+                  ${hhExemptAmount != null ? `<div>HH Exemption: ${fmtCur(hhExemptAmount)}</div>` : ""}
+                  ${vetExemptAmount != null ? `<div>Vet Exemption: ${fmtCur(vetExemptAmount)}</div>` : ""}
+                  ${taxExemptAmount != null ? `<div>Tax Exempt: ${fmtCur(taxExemptAmount)}</div>` : ""}
                 </div>
               ` : ""}
               <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">

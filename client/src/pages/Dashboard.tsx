@@ -133,35 +133,28 @@ export default function Dashboard() {
     electricPerSf: { min: number; max: number };
     gasPerSf: { min: number; max: number };
   } | null>(null);
-  // Calculate land value per sqft for a property
-  const getLandValuePerSqft = (p: PropertyResponse) => {
-    const landValue = p.landValue || 0;
-    const landSqft = p.landSqft || (p.parcelArea || 0) * 43560;
-    return landSqft > 0 ? landValue / landSqft : 0;
+  const getLandValuePerSqft = (p: PropertyResponse): number | null => {
+    if (p.landValue == null) return null;
+    const landSqft = p.landSqft || (p.parcelArea != null ? p.parcelArea * 43560 : null);
+    if (landSqft == null || landSqft <= 0) return null;
+    return p.landValue / landSqft;
   };
 
-  // Calculate building sqft to land sqft ratio
-  const getBldgToLandRatio = (p: PropertyResponse) => {
-    const bldgSqft = p.buildingSqft || 0;
-    const landSqft = p.landSqft || (p.parcelArea || 0) * 43560;
-    return landSqft > 0 ? bldgSqft / landSqft : 0;
+  const getBldgToLandRatio = (p: PropertyResponse): number | null => {
+    if (p.buildingSqft == null) return null;
+    const landSqft = p.landSqft || (p.parcelArea != null ? p.parcelArea * 43560 : null);
+    if (landSqft == null || landSqft <= 0) return null;
+    return p.buildingSqft / landSqft;
   };
 
-  // Calculate property tax for a single property
-  // Formula: (Total Taxable × Mill Levy) - (HH Exemption × Mill Levy) - (Vet Exemption × Mill Levy)
-  const getPropertyTax = (p: PropertyResponse) => {
-    const totalTaxable = p.totalTaxable || 0;
-    const hhExemptValue = p.hhExemption || 0;
-    const vetExemptValue = p.vetExemption || 0;
-    const millLevy = p.millLevy || 28.714;
+  const getPropertyTax = (p: PropertyResponse): number | null => {
+    if (p.totalTaxable == null) return null;
     const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
     if (isExemptAccount) return 0;
-    
-    // Calculate tax amounts
-    const grossTax = (totalTaxable * millLevy) / 1000;
-    const hhExemptionAmount = (hhExemptValue * millLevy) / 1000;
-    const vetExemptionAmount = (vetExemptValue * millLevy) / 1000;
-    
+    const millLevy = p.millLevy || 28.714;
+    const grossTax = (p.totalTaxable * millLevy) / 1000;
+    const hhExemptionAmount = ((p.hhExemption || 0) * millLevy) / 1000;
+    const vetExemptionAmount = ((p.vetExemption || 0) * millLevy) / 1000;
     return Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
   };
   
@@ -217,94 +210,40 @@ export default function Dashboard() {
       };
     }
 
-    // Calculate tax values
-    const taxValues = rawProperties.map(p => {
-      const totalTaxable = p.totalTaxable || 0;
-      const hhExempt = p.hhExemption || 0;
-      const vetExempt = p.vetExemption || 0;
-      const parcelMillLevy = p.millLevy || 28.714;
-      const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
-      if (isExemptAccount) return 0;
-      return Math.max(0, totalTaxable - hhExempt - vetExempt) * parcelMillLevy / 1000;
-    });
+    const nn = (arr: (number | null | undefined)[]): number[] => arr.filter((v): v is number => v != null);
+    const rangeOf = (vals: number[]) => vals.length > 0 ? { min: Math.min(...vals), max: Math.max(...vals) } : { min: 0, max: 0 };
 
-    // Calculate land per sqft values
-    const landPerSqftValues = rawProperties.map(p => getLandValuePerSqft(p));
+    const taxValues = nn(rawProperties.map(p => getPropertyTax(p)));
+    const landPerSqftValues = nn(rawProperties.map(p => getLandValuePerSqft(p)));
+    const bldgRatioValues = nn(rawProperties.map(p => getBldgToLandRatio(p)));
 
-    // Calculate bldg ratio values
-    const bldgRatioValues = rawProperties.map(p => getBldgToLandRatio(p));
+    const waterPerSfValues = nn(rawProperties.map(p => {
+      if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
+      return (p.avgMonthlyWaterKgal * 1000) / p.buildingSqft;
+    }));
+    const electricPerSfValues = nn(rawProperties.map(p => {
+      if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyElectricKwh == null) return null;
+      return p.avgMonthlyElectricKwh / p.buildingSqft;
+    }));
+    const gasPerSfValues = nn(rawProperties.map(p => {
+      if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyGasTherms == null) return null;
+      return p.avgMonthlyGasTherms / p.buildingSqft;
+    }));
 
     return {
-      assessedValue: {
-        min: Math.min(...rawProperties.map(p => p.assessedValue)),
-        max: Math.max(...rawProperties.map(p => p.assessedValue)),
-      },
-      tax: {
-        min: Math.min(...taxValues),
-        max: Math.max(...taxValues),
-      },
-      parcelArea: {
-        min: Math.min(...rawProperties.map(p => p.parcelArea || 0)),
-        max: Math.max(...rawProperties.map(p => p.parcelArea || 0)),
-      },
-      landValue: {
-        min: Math.min(...rawProperties.map(p => p.landValue || 0)),
-        max: Math.max(...rawProperties.map(p => p.landValue || 0)),
-      },
-      improvementValue: {
-        min: Math.min(...rawProperties.map(p => p.improvementValue || 0)),
-        max: Math.max(...rawProperties.map(p => p.improvementValue || 0)),
-      },
-      landPerSqft: {
-        min: Math.min(...landPerSqftValues),
-        max: Math.max(...landPerSqftValues),
-      },
-      bldgRatio: {
-        min: Math.min(...bldgRatioValues),
-        max: Math.max(...bldgRatioValues),
-      },
-      waterUsage: {
-        min: Math.min(...rawProperties.map(p => p.avgMonthlyWaterKgal || 0)),
-        max: Math.max(...rawProperties.map(p => p.avgMonthlyWaterKgal || 0)),
-      },
-      electricUsage: {
-        min: Math.min(...rawProperties.map(p => p.avgMonthlyElectricKwh || 0)),
-        max: Math.max(...rawProperties.map(p => p.avgMonthlyElectricKwh || 0)),
-      },
-      gasUsage: {
-        min: Math.min(...rawProperties.map(p => p.avgMonthlyGasTherms || 0)),
-        max: Math.max(...rawProperties.map(p => p.avgMonthlyGasTherms || 0)),
-      },
-      waterPerSf: {
-        min: Math.min(...rawProperties.map(p => {
-          const bldgSf = p.buildingSqft || 0;
-          return bldgSf > 0 ? ((p.avgMonthlyWaterKgal || 0) * 1000) / bldgSf : 0;
-        })),
-        max: Math.max(...rawProperties.map(p => {
-          const bldgSf = p.buildingSqft || 0;
-          return bldgSf > 0 ? ((p.avgMonthlyWaterKgal || 0) * 1000) / bldgSf : 0;
-        })),
-      },
-      electricPerSf: {
-        min: Math.min(...rawProperties.map(p => {
-          const bldgSf = p.buildingSqft || 0;
-          return bldgSf > 0 ? (p.avgMonthlyElectricKwh || 0) / bldgSf : 0;
-        })),
-        max: Math.max(...rawProperties.map(p => {
-          const bldgSf = p.buildingSqft || 0;
-          return bldgSf > 0 ? (p.avgMonthlyElectricKwh || 0) / bldgSf : 0;
-        })),
-      },
-      gasPerSf: {
-        min: Math.min(...rawProperties.map(p => {
-          const bldgSf = p.buildingSqft || 0;
-          return bldgSf > 0 ? (p.avgMonthlyGasTherms || 0) / bldgSf : 0;
-        })),
-        max: Math.max(...rawProperties.map(p => {
-          const bldgSf = p.buildingSqft || 0;
-          return bldgSf > 0 ? (p.avgMonthlyGasTherms || 0) / bldgSf : 0;
-        })),
-      },
+      assessedValue: rangeOf(nn(rawProperties.map(p => p.assessedValue))),
+      tax: rangeOf(taxValues),
+      parcelArea: rangeOf(nn(rawProperties.map(p => p.parcelArea))),
+      landValue: rangeOf(nn(rawProperties.map(p => p.landValue))),
+      improvementValue: rangeOf(nn(rawProperties.map(p => p.improvementValue))),
+      landPerSqft: rangeOf(landPerSqftValues),
+      bldgRatio: rangeOf(bldgRatioValues),
+      waterUsage: rangeOf(nn(rawProperties.map(p => p.avgMonthlyWaterKgal))),
+      electricUsage: rangeOf(nn(rawProperties.map(p => p.avgMonthlyElectricKwh))),
+      gasUsage: rangeOf(nn(rawProperties.map(p => p.avgMonthlyGasTherms))),
+      waterPerSf: rangeOf(waterPerSfValues),
+      electricPerSf: rangeOf(electricPerSfValues),
+      gasPerSf: rangeOf(gasPerSfValues),
     };
   }, [rawProperties, getLandValuePerSqft, getBldgToLandRatio]);
 
@@ -375,34 +314,34 @@ export default function Dashboard() {
   const propertiesWithoutAccountTypeFilter = useMemo(() => {
     if (!rawProperties) return [];
     
+    const inRange = (val: number | null | undefined, range: [number, number]) =>
+      val == null || (val >= range[0] && val <= range[1]);
+
     return rawProperties.filter((p) => {
       const tax = getPropertyTax(p);
-      const parcelArea = p.parcelArea || 0;
-      const landValue = p.landValue || 0;
-      const improvementValue = p.improvementValue || 0;
       const landPerSqft = getLandValuePerSqft(p);
       const bldgRatio = getBldgToLandRatio(p);
-      const waterUsage = p.avgMonthlyWaterKgal || 0;
-      const electricUsage = p.avgMonthlyElectricKwh || 0;
-      const gasUsage = p.avgMonthlyGasTherms || 0;
-      const bldgSf = p.buildingSqft || 0;
-      const waterPerSf = bldgSf > 0 ? ((p.avgMonthlyWaterKgal || 0) * 1000) / bldgSf : 0;
-      const electricPerSf = bldgSf > 0 ? (p.avgMonthlyElectricKwh || 0) / bldgSf : 0;
-      const gasPerSf = bldgSf > 0 ? (p.avgMonthlyGasTherms || 0) / bldgSf : 0;
+      const bldgSf = p.buildingSqft;
+      const waterPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyWaterKgal != null)
+        ? (p.avgMonthlyWaterKgal * 1000) / bldgSf : null;
+      const electricPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyElectricKwh != null)
+        ? p.avgMonthlyElectricKwh / bldgSf : null;
+      const gasPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyGasTherms != null)
+        ? p.avgMonthlyGasTherms / bldgSf : null;
       
       return (
-        tax >= taxRange[0] && tax <= taxRange[1] &&
-        parcelArea >= parcelAreaRange[0] && parcelArea <= parcelAreaRange[1] &&
-        landValue >= landValueRange[0] && landValue <= landValueRange[1] &&
-        improvementValue >= improvementValueRange[0] && improvementValue <= improvementValueRange[1] &&
-        landPerSqft >= landValuePerSqftRange[0] && landPerSqft <= landValuePerSqftRange[1] &&
-        bldgRatio >= bldgToLandRatioRange[0] && bldgRatio <= bldgToLandRatioRange[1] &&
-        waterUsage >= waterUsageRange[0] && waterUsage <= waterUsageRange[1] &&
-        electricUsage >= electricUsageRange[0] && electricUsage <= electricUsageRange[1] &&
-        gasUsage >= gasUsageRange[0] && gasUsage <= gasUsageRange[1] &&
-        waterPerSf >= waterPerSfRange[0] && waterPerSf <= waterPerSfRange[1] &&
-        electricPerSf >= electricPerSfRange[0] && electricPerSf <= electricPerSfRange[1] &&
-        gasPerSf >= gasPerSfRange[0] && gasPerSf <= gasPerSfRange[1]
+        inRange(tax, taxRange) &&
+        inRange(p.parcelArea, parcelAreaRange) &&
+        inRange(p.landValue, landValueRange) &&
+        inRange(p.improvementValue, improvementValueRange) &&
+        inRange(landPerSqft, landValuePerSqftRange) &&
+        inRange(bldgRatio, bldgToLandRatioRange) &&
+        inRange(p.avgMonthlyWaterKgal, waterUsageRange) &&
+        inRange(p.avgMonthlyElectricKwh, electricUsageRange) &&
+        inRange(p.avgMonthlyGasTherms, gasUsageRange) &&
+        inRange(waterPerSf, waterPerSfRange) &&
+        inRange(electricPerSf, electricPerSfRange) &&
+        inRange(gasPerSf, gasPerSfRange)
       );
     });
   }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange, electricUsageRange, gasUsageRange, waterPerSfRange, electricPerSfRange, gasPerSfRange]);
@@ -616,44 +555,17 @@ export default function Dashboard() {
       return unfilteredRanges;
     }
 
-    // Calculate tax values for filtered data
-    const taxValues = properties.map(p => getPropertyTax(p));
-
-    // Calculate land per sqft values for filtered data
-    const landPerSqftValues = properties.map(p => getLandValuePerSqft(p));
-
-    // Calculate bldg ratio values for filtered data
-    const bldgRatioValues = properties.map(p => getBldgToLandRatio(p));
+    const nn = (arr: (number | null | undefined)[]): number[] => arr.filter((v): v is number => v != null);
+    const rangeOf = (vals: number[]) => vals.length > 0 ? { min: Math.min(...vals), max: Math.max(...vals) } : { min: 0, max: 0 };
 
     return {
-      assessedValue: {
-        min: Math.min(...properties.map(p => p.assessedValue)),
-        max: Math.max(...properties.map(p => p.assessedValue)),
-      },
-      tax: {
-        min: Math.min(...taxValues),
-        max: Math.max(...taxValues),
-      },
-      parcelArea: {
-        min: Math.min(...properties.map(p => p.parcelArea || 0)),
-        max: Math.max(...properties.map(p => p.parcelArea || 0)),
-      },
-      landValue: {
-        min: Math.min(...properties.map(p => p.landValue || 0)),
-        max: Math.max(...properties.map(p => p.landValue || 0)),
-      },
-      improvementValue: {
-        min: Math.min(...properties.map(p => p.improvementValue || 0)),
-        max: Math.max(...properties.map(p => p.improvementValue || 0)),
-      },
-      landPerSqft: {
-        min: Math.min(...landPerSqftValues),
-        max: Math.max(...landPerSqftValues),
-      },
-      bldgRatio: {
-        min: Math.min(...bldgRatioValues),
-        max: Math.max(...bldgRatioValues),
-      },
+      assessedValue: rangeOf(nn(properties.map(p => p.assessedValue))),
+      tax: rangeOf(nn(properties.map(p => getPropertyTax(p)))),
+      parcelArea: rangeOf(nn(properties.map(p => p.parcelArea))),
+      landValue: rangeOf(nn(properties.map(p => p.landValue))),
+      improvementValue: rangeOf(nn(properties.map(p => p.improvementValue))),
+      landPerSqft: rangeOf(nn(properties.map(p => getLandValuePerSqft(p)))),
+      bldgRatio: rangeOf(nn(properties.map(p => getBldgToLandRatio(p)))),
     };
   }, [properties, unfilteredRanges, getPropertyTax, getLandValuePerSqft, getBldgToLandRatio]);
 
@@ -742,16 +654,10 @@ export default function Dashboard() {
       binMax: Math.round(minVal + (i + 1) * step),
     }));
 
+    const nnf = (arr: (number | null | undefined)[]): number[] => arr.filter((v): v is number => v != null);
+
     // Tax histogram data (5 bins from 0 to max tax)
-    const taxValues = properties.map(p => {
-      const totalTaxable = p.totalTaxable || 0;
-      const hhExempt = p.hhExemption || 0;
-      const vetExempt = p.vetExemption || 0;
-      const parcelMillLevy = p.millLevy || 28.714;
-      const isExemptAccount = p.accountType?.toUpperCase().includes("EXEMPT") || false;
-      if (isExemptAccount) return 0;
-      return Math.max(0, totalTaxable - hhExempt - vetExempt) * parcelMillLevy / 1000;
-    });
+    const taxValues = nnf(properties.map(p => getPropertyTax(p)));
     // Tax histogram uses actual min/max from filtered data
     const actualTaxMin = taxValues.length > 0 ? Math.min(...taxValues) : 0;
     const actualTaxMax = taxValues.length > 0 ? Math.max(...taxValues) : 1;
@@ -769,7 +675,7 @@ export default function Dashboard() {
     }));
 
     // Parcel area histogram uses actual min/max from filtered data
-    const parcelAreas = properties.map(p => p.parcelArea || 0);
+    const parcelAreas = nnf(properties.map(p => p.parcelArea));
     const actualParcelMin = parcelAreas.length > 0 ? Math.min(...parcelAreas) : 0;
     const actualParcelMax = parcelAreas.length > 0 ? Math.max(...parcelAreas) : 1;
     const parcelDistribution = [0, 0, 0, 0, 0];
@@ -786,7 +692,7 @@ export default function Dashboard() {
     }));
 
     // Land value histogram
-    const landValues = properties.map(p => p.landValue || 0);
+    const landValues = nnf(properties.map(p => p.landValue));
     const actualLandMin = landValues.length > 0 ? Math.min(...landValues) : 0;
     const actualLandMax = landValues.length > 0 ? Math.max(...landValues) : 1;
     const landDistribution = [0, 0, 0, 0, 0];
@@ -803,7 +709,7 @@ export default function Dashboard() {
     }));
 
     // Improvement value histogram
-    const improvementValues = properties.map(p => p.improvementValue || 0);
+    const improvementValues = nnf(properties.map(p => p.improvementValue));
     const actualImpMin = improvementValues.length > 0 ? Math.min(...improvementValues) : 0;
     const actualImpMax = improvementValues.length > 0 ? Math.max(...improvementValues) : 1;
     const improvementDistribution = [0, 0, 0, 0, 0];
@@ -820,7 +726,7 @@ export default function Dashboard() {
     }));
 
     // Land value per sqft histogram
-    const landPerSqftValues = properties.map(p => getLandValuePerSqft(p));
+    const landPerSqftValues = nnf(properties.map(p => getLandValuePerSqft(p)));
     const actualLandPerSqftMin = landPerSqftValues.length > 0 ? Math.min(...landPerSqftValues) : 0;
     const actualLandPerSqftMax = landPerSqftValues.length > 0 ? Math.max(...landPerSqftValues) : 1;
     const landPerSqftDistribution = [0, 0, 0, 0, 0];
@@ -837,7 +743,7 @@ export default function Dashboard() {
     }));
 
     // Building sqft to land sqft ratio histogram
-    const bldgRatioValues = properties.map(p => getBldgToLandRatio(p));
+    const bldgRatioValues = nnf(properties.map(p => getBldgToLandRatio(p)));
     const actualBldgRatioMin = bldgRatioValues.length > 0 ? Math.min(...bldgRatioValues) : 0;
     const actualBldgRatioMax = bldgRatioValues.length > 0 ? Math.max(...bldgRatioValues) : 1;
     const bldgRatioDistribution = [0, 0, 0, 0, 0];
@@ -854,7 +760,7 @@ export default function Dashboard() {
     }));
 
     // Water usage histogram
-    const waterUsageValues = properties.map(p => p.avgMonthlyWaterKgal || 0);
+    const waterUsageValues = nnf(properties.map(p => p.avgMonthlyWaterKgal));
     const actualWaterMin = waterUsageValues.length > 0 ? Math.min(...waterUsageValues) : 0;
     const actualWaterMax = waterUsageValues.length > 0 ? Math.max(...waterUsageValues) : 100;
     const waterDistribution = [0, 0, 0, 0, 0];
@@ -871,7 +777,7 @@ export default function Dashboard() {
     }));
 
     // Electric usage histogram
-    const electricUsageValues = properties.map(p => p.avgMonthlyElectricKwh || 0);
+    const electricUsageValues = nnf(properties.map(p => p.avgMonthlyElectricKwh));
     const actualElectricMin = electricUsageValues.length > 0 ? Math.min(...electricUsageValues) : 0;
     const actualElectricMax = electricUsageValues.length > 0 ? Math.max(...electricUsageValues) : 5000;
     const electricDistribution = [0, 0, 0, 0, 0];
@@ -888,7 +794,7 @@ export default function Dashboard() {
     }));
 
     // Gas usage histogram
-    const gasUsageValues = properties.map(p => p.avgMonthlyGasTherms || 0);
+    const gasUsageValues = nnf(properties.map(p => p.avgMonthlyGasTherms));
     const actualGasMin = gasUsageValues.length > 0 ? Math.min(...gasUsageValues) : 0;
     const actualGasMax = gasUsageValues.length > 0 ? Math.max(...gasUsageValues) : 500;
     const gasDistribution = [0, 0, 0, 0, 0];
@@ -905,10 +811,10 @@ export default function Dashboard() {
     }));
 
     // Water per building SF histogram
-    const waterPerSfValues = properties.map(p => {
-      const bldgSf = p.buildingSqft || 0;
-      return bldgSf > 0 ? ((p.avgMonthlyWaterKgal || 0) * 1000) / bldgSf : 0;
-    });
+    const waterPerSfValues = nnf(properties.map(p => {
+      if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
+      return (p.avgMonthlyWaterKgal * 1000) / p.buildingSqft;
+    }));
     const actualWaterPerSfMin = waterPerSfValues.length > 0 ? Math.min(...waterPerSfValues) : 0;
     const actualWaterPerSfMax = waterPerSfValues.length > 0 ? Math.max(...waterPerSfValues) : 10;
     const waterPerSfDistribution = [0, 0, 0, 0, 0];
@@ -925,10 +831,10 @@ export default function Dashboard() {
     }));
 
     // Electric per building SF histogram
-    const electricPerSfValues = properties.map(p => {
-      const bldgSf = p.buildingSqft || 0;
-      return bldgSf > 0 ? (p.avgMonthlyElectricKwh || 0) / bldgSf : 0;
-    });
+    const electricPerSfValues = nnf(properties.map(p => {
+      if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyElectricKwh == null) return null;
+      return p.avgMonthlyElectricKwh / p.buildingSqft;
+    }));
     const actualElectricPerSfMin = electricPerSfValues.length > 0 ? Math.min(...electricPerSfValues) : 0;
     const actualElectricPerSfMax = electricPerSfValues.length > 0 ? Math.max(...electricPerSfValues) : 5;
     const electricPerSfDistribution = [0, 0, 0, 0, 0];
@@ -945,10 +851,10 @@ export default function Dashboard() {
     }));
 
     // Gas per building SF histogram
-    const gasPerSfValues = properties.map(p => {
-      const bldgSf = p.buildingSqft || 0;
-      return bldgSf > 0 ? (p.avgMonthlyGasTherms || 0) / bldgSf : 0;
-    });
+    const gasPerSfValues = nnf(properties.map(p => {
+      if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyGasTherms == null) return null;
+      return p.avgMonthlyGasTherms / p.buildingSqft;
+    }));
     const actualGasPerSfMin = gasPerSfValues.length > 0 ? Math.min(...gasPerSfValues) : 0;
     const actualGasPerSfMax = gasPerSfValues.length > 0 ? Math.max(...gasPerSfValues) : 1;
     const gasPerSfDistribution = [0, 0, 0, 0, 0];
