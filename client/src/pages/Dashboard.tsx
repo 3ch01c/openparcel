@@ -1920,7 +1920,7 @@ export default function Dashboard() {
                   value={stats.count.toLocaleString()}
                   icon={Home}
                   description={stats.metricExcludedCount > 0
-                    ? `${stats.metricExcludedCount.toLocaleString()} excluded (missing data)`
+                    ? `${stats.metricExcludedCount.toLocaleString()} unknown`
                     : `out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
                 />
                 <StatsCard
