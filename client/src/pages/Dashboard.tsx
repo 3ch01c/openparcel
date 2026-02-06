@@ -219,7 +219,7 @@ export default function Dashboard() {
 
     const waterPerSfValues = nn(rawProperties.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
-      return (p.avgMonthlyWaterKgal * 1000) / p.buildingSqft;
+      return p.avgMonthlyWaterKgal / p.buildingSqft;
     }));
     const electricPerSfValues = nn(rawProperties.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyElectricKwh == null) return null;
@@ -323,7 +323,7 @@ export default function Dashboard() {
       const bldgRatio = getBldgToLandRatio(p);
       const bldgSf = p.buildingSqft;
       const waterPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyWaterKgal != null)
-        ? (p.avgMonthlyWaterKgal * 1000) / bldgSf : null;
+        ? p.avgMonthlyWaterKgal / bldgSf : null;
       const electricPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyElectricKwh != null)
         ? p.avgMonthlyElectricKwh / bldgSf : null;
       const gasPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyGasTherms != null)
@@ -566,6 +566,21 @@ export default function Dashboard() {
       improvementValue: rangeOf(nn(properties.map(p => p.improvementValue))),
       landPerSqft: rangeOf(nn(properties.map(p => getLandValuePerSqft(p)))),
       bldgRatio: rangeOf(nn(properties.map(p => getBldgToLandRatio(p)))),
+      waterUsage: rangeOf(nn(properties.map(p => p.avgMonthlyWaterKgal))),
+      electricUsage: rangeOf(nn(properties.map(p => p.avgMonthlyElectricKwh))),
+      gasUsage: rangeOf(nn(properties.map(p => p.avgMonthlyGasTherms))),
+      waterPerSf: rangeOf(nn(properties.map(p => {
+        if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
+        return p.avgMonthlyWaterKgal / p.buildingSqft;
+      }))),
+      electricPerSf: rangeOf(nn(properties.map(p => {
+        if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyElectricKwh == null) return null;
+        return p.avgMonthlyElectricKwh / p.buildingSqft;
+      }))),
+      gasPerSf: rangeOf(nn(properties.map(p => {
+        if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyGasTherms == null) return null;
+        return p.avgMonthlyGasTherms / p.buildingSqft;
+      }))),
     };
   }, [properties, unfilteredRanges, getPropertyTax, getLandValuePerSqft, getBldgToLandRatio]);
 
@@ -620,6 +635,54 @@ export default function Dashboard() {
     const clampedBldgMax = Math.min(bldgToLandRatioRange[1], filteredRanges.bldgRatio.max);
     if (clampedBldgMin !== bldgToLandRatioRange[0] || clampedBldgMax !== bldgToLandRatioRange[1]) {
       setBldgToLandRatioRange([clampedBldgMin, clampedBldgMax]);
+    }
+
+    // Clamp water usage range
+    const clampedWaterMin = Math.max(waterUsageRange[0], filteredRanges.waterUsage.min);
+    const clampedWaterMax = Math.min(waterUsageRange[1], filteredRanges.waterUsage.max);
+    if (clampedWaterMin !== waterUsageRange[0] || clampedWaterMax !== waterUsageRange[1]) {
+      setWaterUsageRange([clampedWaterMin, clampedWaterMax]);
+    }
+
+    // Clamp electric usage range
+    const clampedElectricMin = Math.max(electricUsageRange[0], filteredRanges.electricUsage.min);
+    const clampedElectricMax = Math.min(electricUsageRange[1], filteredRanges.electricUsage.max);
+    if (clampedElectricMin !== electricUsageRange[0] || clampedElectricMax !== electricUsageRange[1]) {
+      setElectricUsageRange([clampedElectricMin, clampedElectricMax]);
+    }
+
+    // Clamp gas usage range
+    const clampedGasMin = Math.max(gasUsageRange[0], filteredRanges.gasUsage.min);
+    const clampedGasMax = Math.min(gasUsageRange[1], filteredRanges.gasUsage.max);
+    if (clampedGasMin !== gasUsageRange[0] || clampedGasMax !== gasUsageRange[1]) {
+      setGasUsageRange([clampedGasMin, clampedGasMax]);
+    }
+
+    // Clamp water per SF range
+    if (filteredRanges.waterPerSf) {
+      const clampedWaterSfMin = Math.max(waterPerSfRange[0], filteredRanges.waterPerSf.min);
+      const clampedWaterSfMax = Math.min(waterPerSfRange[1], filteredRanges.waterPerSf.max);
+      if (clampedWaterSfMin !== waterPerSfRange[0] || clampedWaterSfMax !== waterPerSfRange[1]) {
+        setWaterPerSfRange([clampedWaterSfMin, clampedWaterSfMax]);
+      }
+    }
+
+    // Clamp electric per SF range
+    if (filteredRanges.electricPerSf) {
+      const clampedElectricSfMin = Math.max(electricPerSfRange[0], filteredRanges.electricPerSf.min);
+      const clampedElectricSfMax = Math.min(electricPerSfRange[1], filteredRanges.electricPerSf.max);
+      if (clampedElectricSfMin !== electricPerSfRange[0] || clampedElectricSfMax !== electricPerSfRange[1]) {
+        setElectricPerSfRange([clampedElectricSfMin, clampedElectricSfMax]);
+      }
+    }
+
+    // Clamp gas per SF range
+    if (filteredRanges.gasPerSf) {
+      const clampedGasSfMin = Math.max(gasPerSfRange[0], filteredRanges.gasPerSf.min);
+      const clampedGasSfMax = Math.min(gasPerSfRange[1], filteredRanges.gasPerSf.max);
+      if (clampedGasSfMin !== gasPerSfRange[0] || clampedGasSfMax !== gasPerSfRange[1]) {
+        setGasPerSfRange([clampedGasSfMin, clampedGasSfMax]);
+      }
     }
   }, [filteredRanges, properties]);
 
@@ -813,7 +876,7 @@ export default function Dashboard() {
     // Water per building SF histogram
     const waterPerSfValues = nnf(properties.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
-      return (p.avgMonthlyWaterKgal * 1000) / p.buildingSqft;
+      return p.avgMonthlyWaterKgal / p.buildingSqft;
     }));
     const actualWaterPerSfMin = waterPerSfValues.length > 0 ? Math.min(...waterPerSfValues) : 0;
     const actualWaterPerSfMax = waterPerSfValues.length > 0 ? Math.max(...waterPerSfValues) : 10;
@@ -1016,6 +1079,12 @@ export default function Dashboard() {
       maxElectricUsage: actualElectricMax,
       minGasUsage: actualGasMin,
       maxGasUsage: actualGasMax,
+      minWaterPerSf: actualWaterPerSfMin,
+      maxWaterPerSf: actualWaterPerSfMax,
+      minElectricPerSf: actualElectricPerSfMin,
+      maxElectricPerSf: actualElectricPerSfMax,
+      minGasPerSf: actualGasPerSfMin,
+      maxGasPerSf: actualGasPerSfMax,
       totalTaxes,
       avgTaxes,
       taxPctOfTotal,
@@ -1110,6 +1179,15 @@ export default function Dashboard() {
     }
     if (stats.minGasUsage !== undefined && stats.maxGasUsage !== undefined) {
       setGasUsageRange([stats.minGasUsage, stats.maxGasUsage]);
+    }
+    if (stats.minWaterPerSf !== undefined && stats.maxWaterPerSf !== undefined) {
+      setWaterPerSfRange([stats.minWaterPerSf, stats.maxWaterPerSf]);
+    }
+    if (stats.minElectricPerSf !== undefined && stats.maxElectricPerSf !== undefined) {
+      setElectricPerSfRange([stats.minElectricPerSf, stats.maxElectricPerSf]);
+    }
+    if (stats.minGasPerSf !== undefined && stats.maxGasPerSf !== undefined) {
+      setGasPerSfRange([stats.minGasPerSf, stats.maxGasPerSf]);
     }
   }, [stats]);
   
@@ -1603,7 +1681,7 @@ export default function Dashboard() {
 
               {/* Water Per SF Range Filter */}
               <RangeFilter
-                title="Water/Bldg SF (gal/mo)"
+                title="Water/Bldg SF (kgal/mo)"
                 colorHsl="hsl(187 100% 42%)"
                 rangeClassName="bg-cyan-500"
                 thumbClassName="border-cyan-500"
