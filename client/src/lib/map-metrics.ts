@@ -13,7 +13,7 @@ export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   waterUsage: "Avg Water (kgal/mo)",
   electricUsage: "Avg Electric (kWh/mo)",
   gasUsage: "Avg Gas (therms/mo)",
-  waterPerBldgSf: "Water/Bldg SF (kgal/mo)",
+  waterPerBldgSf: "Water/Bldg SF (gal/mo)",
   electricPerBldgSf: "Electric/Bldg SF (kWh/mo)",
   gasPerBldgSf: "Gas/Bldg SF (therms/mo)",
 };
@@ -72,7 +72,7 @@ export function getMetricValue(property: PropertyResponse, metric: ColorMetric):
       return property.avgMonthlyGasTherms ?? null;
     case "waterPerBldgSf":
       if (property.avgMonthlyWaterKgal == null || buildingSqft == null || buildingSqft <= 0) return null;
-      return property.avgMonthlyWaterKgal / buildingSqft;
+      return (property.avgMonthlyWaterKgal * 1000) / buildingSqft;
     case "electricPerBldgSf":
       if (property.avgMonthlyElectricKwh == null || buildingSqft == null || buildingSqft <= 0) return null;
       return property.avgMonthlyElectricKwh / buildingSqft;

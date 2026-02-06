@@ -219,7 +219,7 @@ export default function Dashboard() {
 
     const waterPerSfValues = nn(rawProperties.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
-      return p.avgMonthlyWaterKgal / p.buildingSqft;
+      return (p.avgMonthlyWaterKgal * 1000) / p.buildingSqft;
     }));
     const electricPerSfValues = nn(rawProperties.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyElectricKwh == null) return null;
@@ -323,7 +323,7 @@ export default function Dashboard() {
       const bldgRatio = getBldgToLandRatio(p);
       const bldgSf = p.buildingSqft;
       const waterPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyWaterKgal != null)
-        ? p.avgMonthlyWaterKgal / bldgSf : null;
+        ? (p.avgMonthlyWaterKgal * 1000) / bldgSf : null;
       const electricPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyElectricKwh != null)
         ? p.avgMonthlyElectricKwh / bldgSf : null;
       const gasPerSf = (bldgSf != null && bldgSf > 0 && p.avgMonthlyGasTherms != null)
@@ -818,7 +818,7 @@ export default function Dashboard() {
     // Water per building SF histogram
     const waterPerSfValues = nnf(properties.map(p => {
       if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
-      return p.avgMonthlyWaterKgal / p.buildingSqft;
+      return (p.avgMonthlyWaterKgal * 1000) / p.buildingSqft;
     }));
     const actualWaterPerSfMin = waterPerSfValues.length > 0 ? Math.min(...waterPerSfValues) : 0;
     const actualWaterPerSfMax = waterPerSfValues.length > 0 ? Math.max(...waterPerSfValues) : 10;
@@ -1623,7 +1623,7 @@ export default function Dashboard() {
 
               {/* Water Per SF Range Filter */}
               <RangeFilter
-                title="Water/Bldg SF (kgal/mo)"
+                title="Water/Bldg SF (gal/mo)"
                 colorHsl="hsl(187 100% 42%)"
                 rangeClassName="bg-cyan-500"
                 thumbClassName="border-cyan-500"
