@@ -566,21 +566,6 @@ export default function Dashboard() {
       improvementValue: rangeOf(nn(properties.map(p => p.improvementValue))),
       landPerSqft: rangeOf(nn(properties.map(p => getLandValuePerSqft(p)))),
       bldgRatio: rangeOf(nn(properties.map(p => getBldgToLandRatio(p)))),
-      waterUsage: rangeOf(nn(properties.map(p => p.avgMonthlyWaterKgal))),
-      electricUsage: rangeOf(nn(properties.map(p => p.avgMonthlyElectricKwh))),
-      gasUsage: rangeOf(nn(properties.map(p => p.avgMonthlyGasTherms))),
-      waterPerSf: rangeOf(nn(properties.map(p => {
-        if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyWaterKgal == null) return null;
-        return p.avgMonthlyWaterKgal / p.buildingSqft;
-      }))),
-      electricPerSf: rangeOf(nn(properties.map(p => {
-        if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyElectricKwh == null) return null;
-        return p.avgMonthlyElectricKwh / p.buildingSqft;
-      }))),
-      gasPerSf: rangeOf(nn(properties.map(p => {
-        if (p.buildingSqft == null || p.buildingSqft <= 0 || p.avgMonthlyGasTherms == null) return null;
-        return p.avgMonthlyGasTherms / p.buildingSqft;
-      }))),
     };
   }, [properties, unfilteredRanges, getPropertyTax, getLandValuePerSqft, getBldgToLandRatio]);
 
@@ -637,53 +622,10 @@ export default function Dashboard() {
       setBldgToLandRatioRange([clampedBldgMin, clampedBldgMax]);
     }
 
-    // Clamp water usage range
-    const clampedWaterMin = Math.max(waterUsageRange[0], filteredRanges.waterUsage.min);
-    const clampedWaterMax = Math.min(waterUsageRange[1], filteredRanges.waterUsage.max);
-    if (clampedWaterMin !== waterUsageRange[0] || clampedWaterMax !== waterUsageRange[1]) {
-      setWaterUsageRange([clampedWaterMin, clampedWaterMax]);
-    }
-
-    // Clamp electric usage range
-    const clampedElectricMin = Math.max(electricUsageRange[0], filteredRanges.electricUsage.min);
-    const clampedElectricMax = Math.min(electricUsageRange[1], filteredRanges.electricUsage.max);
-    if (clampedElectricMin !== electricUsageRange[0] || clampedElectricMax !== electricUsageRange[1]) {
-      setElectricUsageRange([clampedElectricMin, clampedElectricMax]);
-    }
-
-    // Clamp gas usage range
-    const clampedGasMin = Math.max(gasUsageRange[0], filteredRanges.gasUsage.min);
-    const clampedGasMax = Math.min(gasUsageRange[1], filteredRanges.gasUsage.max);
-    if (clampedGasMin !== gasUsageRange[0] || clampedGasMax !== gasUsageRange[1]) {
-      setGasUsageRange([clampedGasMin, clampedGasMax]);
-    }
-
-    // Clamp water per SF range
-    if (filteredRanges.waterPerSf) {
-      const clampedWaterSfMin = Math.max(waterPerSfRange[0], filteredRanges.waterPerSf.min);
-      const clampedWaterSfMax = Math.min(waterPerSfRange[1], filteredRanges.waterPerSf.max);
-      if (clampedWaterSfMin !== waterPerSfRange[0] || clampedWaterSfMax !== waterPerSfRange[1]) {
-        setWaterPerSfRange([clampedWaterSfMin, clampedWaterSfMax]);
-      }
-    }
-
-    // Clamp electric per SF range
-    if (filteredRanges.electricPerSf) {
-      const clampedElectricSfMin = Math.max(electricPerSfRange[0], filteredRanges.electricPerSf.min);
-      const clampedElectricSfMax = Math.min(electricPerSfRange[1], filteredRanges.electricPerSf.max);
-      if (clampedElectricSfMin !== electricPerSfRange[0] || clampedElectricSfMax !== electricPerSfRange[1]) {
-        setElectricPerSfRange([clampedElectricSfMin, clampedElectricSfMax]);
-      }
-    }
-
-    // Clamp gas per SF range
-    if (filteredRanges.gasPerSf) {
-      const clampedGasSfMin = Math.max(gasPerSfRange[0], filteredRanges.gasPerSf.min);
-      const clampedGasSfMax = Math.min(gasPerSfRange[1], filteredRanges.gasPerSf.max);
-      if (clampedGasSfMin !== gasPerSfRange[0] || clampedGasSfMax !== gasPerSfRange[1]) {
-        setGasPerSfRange([clampedGasSfMin, clampedGasSfMax]);
-      }
-    }
+    // Note: Utility ranges (water, electric, gas, and per-SF) are NOT clamped here
+    // because utility data is sparse (not all properties have it). Clamping sparse
+    // data ranges against filtered bounds causes invalid ranges when the filtered set
+    // has no utility data, creating a feedback loop that filters out all utility data.
   }, [filteredRanges, properties]);
 
   // Derived Stats
