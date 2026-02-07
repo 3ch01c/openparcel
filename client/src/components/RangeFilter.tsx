@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
   BarChart,
@@ -145,7 +145,7 @@ export function RangeFilter({
           className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
           data-testid={`button-toggle-${testIdPrefix}`}
         >
-          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+          {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           {title}
         </button>
         <div className="flex items-center gap-1 text-xs font-mono">

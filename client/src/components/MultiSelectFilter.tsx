@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MultiSelectOption {
@@ -77,7 +77,7 @@ export function MultiSelectFilter({
           className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
           data-testid={`button-toggle-${testIdPrefix}`}
         >
-          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+          {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           {title}
         </button>
         <div className="flex items-center gap-2">
