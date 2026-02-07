@@ -113,6 +113,7 @@ export default function Dashboard() {
   const [pendingOwnerFilter, setPendingOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
   const rangesInitialized = useRef(false);
+  const rangesJustInitialized = useRef(false);
   const pendingRangeUpdateRef = useRef(false); // Flag to trigger range update after user applies categorical filter
   const initialTotalParcelsRef = useRef<number | null>(null);
   const initialAccountTypesRef = useRef<string[] | null>(null);
@@ -304,6 +305,7 @@ export default function Dashboard() {
       setElectricPerSfRange([unfilteredRanges.electricPerSf?.min ?? 0, unfilteredRanges.electricPerSf?.max ?? 5]);
       setGasPerSfRange([unfilteredRanges.gasPerSf?.min ?? 0, unfilteredRanges.gasPerSf?.max ?? 1]);
       rangesInitialized.current = true;
+      rangesJustInitialized.current = true;
     }
   }, [rawProperties, unfilteredRanges]);
   
@@ -595,6 +597,13 @@ export default function Dashboard() {
   // Clamp slider thumb values when they fall outside filtered data bounds
   useEffect(() => {
     if (!rangesInitialized.current || !properties || properties.length === 0) return;
+    
+    // Skip clamping on the render cycle right after initialization,
+    // because filteredRanges may still be stale (computed from pre-init default ranges)
+    if (rangesJustInitialized.current) {
+      rangesJustInitialized.current = false;
+      return;
+    }
     
     // Clamp assessed value range
     const clampedValueMin = Math.max(valueRange[0], filteredRanges.assessedValue.min);
