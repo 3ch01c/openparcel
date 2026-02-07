@@ -26,7 +26,7 @@ export function MultiSelectFilter({
   testIdPrefix,
   emptyMessage = "All shown",
   selectedMessage = (count) => `${count} selected`,
-  defaultExpanded = true,
+  defaultExpanded = false,
 }: MultiSelectFilterProps) {
   // Pending selections (not yet applied)
   const [pendingSelections, setPendingSelections] = useState<string[]>(selectedValues);

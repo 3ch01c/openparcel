@@ -60,7 +60,7 @@ export function RangeFilter({
   decimals = 0,
   testIdPrefix,
   inputWidth = "w-20",
-  defaultExpanded = true,
+  defaultExpanded = false,
 }: RangeFilterProps) {
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
