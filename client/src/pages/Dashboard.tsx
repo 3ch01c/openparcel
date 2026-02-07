@@ -105,9 +105,9 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
-  const [chartAccountTypesOpen, setChartAccountTypesOpen] = useState(false);
-  const [chartExemptionsOpen, setChartExemptionsOpen] = useState(false);
-  const [chartLandHoldersOpen, setChartLandHoldersOpen] = useState(false);
+  const [chartAccountTypesOpen, setChartAccountTypesOpen] = useState(true);
+  const [chartExemptionsOpen, setChartExemptionsOpen] = useState(true);
+  const [chartLandHoldersOpen, setChartLandHoldersOpen] = useState(true);
   const [dataIOOpen, setDataIOOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
