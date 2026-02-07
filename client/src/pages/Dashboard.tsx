@@ -2076,11 +2076,10 @@ export default function Dashboard() {
               </CursorTooltip>
               <CursorTooltip content={
                 <div className="text-xs space-y-1">
-                  <div>Mean: {formatCurrencyShort(stats.taxStats.mean)}</div>
-                  <div>Median: {formatCurrencyShort(stats.taxStats.median)}</div>
-                  <div>Mode: {formatCurrencyShort(stats.taxStats.mode)}</div>
+                  <div>Mean: {formatCurrencyShort(stats.taxStats.mean)} ({stats.assessedStats.mean > 0 ? ((stats.taxStats.mean / stats.assessedStats.mean) * 100).toFixed(2) : '0.00'}%)</div>
+                  <div>Median: {formatCurrencyShort(stats.taxStats.median)} ({stats.assessedStats.median > 0 ? ((stats.taxStats.median / stats.assessedStats.median) * 100).toFixed(2) : '0.00'}%)</div>
+                  <div>Mode: {formatCurrencyShort(stats.taxStats.mode)} ({stats.assessedStats.mode > 0 ? ((stats.taxStats.mode / stats.assessedStats.mode) * 100).toFixed(2) : '0.00'}%)</div>
                   <div>Stdev: {formatCurrencyShort(stats.taxStats.stdev)}</div>
-                  <div>Eff. Rate: {stats.taxPctOfTotal.toFixed(2)}%</div>
                 </div>
               }>
                 <StatsCard
