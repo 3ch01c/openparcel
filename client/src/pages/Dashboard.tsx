@@ -2214,7 +2214,7 @@ export default function Dashboard() {
                       <YAxis 
                         type="category" 
                         dataKey="type" 
-                        width={130}
+                        width={160}
                         tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
                       />
                       <RechartsTooltip
@@ -2255,7 +2255,7 @@ export default function Dashboard() {
                       <YAxis 
                         type="category" 
                         dataKey="type" 
-                        width={130}
+                        width={160}
                         tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
                         tickFormatter={(value) => value.replace("EXEMPT ", "")}
                       />
@@ -2302,7 +2302,7 @@ export default function Dashboard() {
                       <YAxis 
                         type="category" 
                         dataKey="owner" 
-                        width={130}
+                        width={160}
                         tick={{ fontSize: 9, fill: "hsl(215 20% 65%)" }}
                       />
                       <RechartsTooltip
