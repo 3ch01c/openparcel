@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useTransition, useDeferredValue }
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
-import { type ColorMetric, COLOR_METRIC_LABELS, getMetricValue } from "@/lib/map-metrics";
+import { type ColorMetric, COLOR_METRIC_LABELS, getMetricValue, isCategoricalMetric } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
 import { RangeFilter } from "@/components/RangeFilter";
@@ -554,8 +554,23 @@ export default function Dashboard() {
     return filtered;
   }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, ownerFilter, useRegex]);
 
-  const deferredProperties = useDeferredValue(properties);
-  const isFiltering = deferredProperties !== properties;
+  const { includedProperties, excludedProperties } = useMemo(() => {
+    if (!properties) return { includedProperties: null, excludedProperties: [] as PropertyResponse[] };
+    const included: PropertyResponse[] = [];
+    const excluded: PropertyResponse[] = [];
+    for (const p of properties) {
+      if (getMetricValue(p, colorMetric) != null || isCategoricalMetric(colorMetric)) {
+        included.push(p);
+      } else {
+        excluded.push(p);
+      }
+    }
+    return { includedProperties: included, excludedProperties: excluded };
+  }, [properties, colorMetric]);
+
+  const deferredIncluded = useDeferredValue(includedProperties);
+  const deferredExcluded = useDeferredValue(excludedProperties);
+  const isFiltering = deferredIncluded !== includedProperties;
 
   // Calculate filtered data ranges for dynamic slider bounds (from filtered properties)
   const filteredRanges = useMemo(() => {
@@ -638,11 +653,10 @@ export default function Dashboard() {
 
   // Derived Stats
   const stats = useMemo(() => {
-    if (!properties || properties.length === 0) return null;
+    if (!includedProperties || (includedProperties.length === 0 && excludedProperties.length === 0)) return null;
 
-    const metricDefinedProps = properties.filter(p => getMetricValue(p, colorMetric) != null);
-    const metricExcludedCount = properties.length - metricDefinedProps.length;
-    const statsProps = metricDefinedProps;
+    const metricExcludedCount = excludedProperties.length;
+    const statsProps = includedProperties;
 
     const totalValue = statsProps.reduce(
       (acc, curr) => acc + curr.assessedValue,
@@ -1079,7 +1093,7 @@ export default function Dashboard() {
       avgGasUsage,
       gasParcelCount: propsWithGas.length,
     };
-  }, [properties, colorMetric]);
+  }, [includedProperties, excludedProperties, colorMetric]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {
@@ -1942,7 +1956,7 @@ export default function Dashboard() {
                   value={stats.count.toLocaleString()}
                   icon={Home}
                   description={stats.metricExcludedCount > 0
-                    ? `${stats.metricExcludedCount.toLocaleString()} unknown`
+                    ? `${stats.metricExcludedCount.toLocaleString()} missing data`
                     : `out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
                 />
                 <StatsCard
@@ -2195,8 +2209,8 @@ export default function Dashboard() {
               url={TILE_LAYERS[mapLayer].url}
             />
 
-            {deferredProperties && mapViewMode === "cluster" && <ClusterLayer points={deferredProperties} colorMetric={colorMetric} />}
-            {deferredProperties && mapViewMode === "polygon" && <PolygonLayer points={deferredProperties} colorMetric={colorMetric} />}
+            {deferredIncluded && mapViewMode === "cluster" && <ClusterLayer points={deferredIncluded} excludedPoints={deferredExcluded} colorMetric={colorMetric} />}
+            {deferredIncluded && mapViewMode === "polygon" && <PolygonLayer points={deferredIncluded} excludedPoints={deferredExcluded} colorMetric={colorMetric} />}
           </MapContainer>
         </div>
 
