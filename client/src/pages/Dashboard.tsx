@@ -605,6 +605,12 @@ export default function Dashboard() {
     return filtered;
   }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, ownerFilter, useRegex]);
 
+  const totalMetricMissingCount = useMemo(() => {
+    if (!rawProperties) return 0;
+    if (isCategoricalMetric(colorMetric)) return 0;
+    return rawProperties.filter(p => getMetricValue(p, colorMetric) == null).length;
+  }, [rawProperties, colorMetric]);
+
   const { includedProperties, excludedProperties } = useMemo(() => {
     if (!properties) return { includedProperties: null, excludedProperties: [] as PropertyResponse[] };
     const included: PropertyResponse[] = [];
@@ -1961,8 +1967,8 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <CursorTooltip content={
                   <div className="text-xs space-y-1">
-                    <div>{((initialTotalParcelsRef.current || 0) - (properties?.length || 0)).toLocaleString()} hidden by filters</div>
-                    <div>{stats.metricExcludedCount.toLocaleString()} hidden for missing metric</div>
+                    <div>{Math.max(0, (initialTotalParcelsRef.current || 0) - (includedProperties?.length || 0) - totalMetricMissingCount).toLocaleString()} hidden by filters</div>
+                    <div>{totalMetricMissingCount.toLocaleString()} hidden for missing metric</div>
                   </div>
                 }>
                   <StatsCard
