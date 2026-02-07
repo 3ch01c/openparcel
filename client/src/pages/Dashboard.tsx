@@ -104,6 +104,9 @@ export default function Dashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
+  const [chartAccountTypesOpen, setChartAccountTypesOpen] = useState(false);
+  const [chartExemptionsOpen, setChartExemptionsOpen] = useState(false);
+  const [chartLandHoldersOpen, setChartLandHoldersOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const [selectedSubdivisions, setSelectedSubdivisions] = useState<string[]>([]);
@@ -2199,142 +2202,157 @@ export default function Dashboard() {
 
               {/* Account Types Chart */}
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
-                <div style={{ height: `${stats.accountTypesChartData.length * 32 + 48}px` }} className="pt-4">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-3">
-                    Parcels by Account Type
-                  </label>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={stats.accountTypesChartData} 
-                      layout="vertical"
-                      margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                      barCategoryGap={4}
-                    >
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        type="category" 
-                        dataKey="type" 
-                        width={140}
-                        tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
-                      />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(222 47% 11%)",
-                          borderColor: "hsl(217 33% 17%)",
-                          borderRadius: "8px",
-                        }}
-                        itemStyle={{ color: "white" }}
-                        formatter={(value: number) => [value.toLocaleString(), "Parcels"]}
-                        labelFormatter={(label) => label}
-                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                      />
-                      <Bar
-                        dataKey="count"
-                        fill="hsl(271 81% 56%)"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <Collapsible open={chartAccountTypesOpen} onOpenChange={setChartAccountTypesOpen}>
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full pt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" data-testid="button-toggle-account-types-chart">
+                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${chartAccountTypesOpen ? 'rotate-180' : '-rotate-90'}`} />
+                    <span>Parcels by Account Type</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div style={{ height: `${stats.accountTypesChartData.length * 32 + 16}px` }} className="pt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={stats.accountTypesChartData} 
+                          layout="vertical"
+                          margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                          barCategoryGap={4}
+                        >
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            type="category" 
+                            dataKey="type" 
+                            width={140}
+                            tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
+                          />
+                          <RechartsTooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(222 47% 11%)",
+                              borderColor: "hsl(217 33% 17%)",
+                              borderRadius: "8px",
+                            }}
+                            itemStyle={{ color: "white" }}
+                            formatter={(value: number) => [value.toLocaleString(), "Parcels"]}
+                            labelFormatter={(label) => label}
+                            cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                          />
+                          <Bar
+                            dataKey="count"
+                            fill="hsl(271 81% 56%)"
+                            radius={[0, 4, 4, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
               {/* Tax Exemptions Chart */}
               {stats.exemptionsChartData && stats.exemptionsChartData.length > 0 && (
-                <div style={{ height: `${stats.exemptionsChartData.length * 32 + 48}px` }} className="pt-4">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-3">
-                    Tax Exemptions by Type
-                  </label>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={stats.exemptionsChartData} 
-                      layout="vertical"
-                      margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                      barCategoryGap={4}
-                    >
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        type="category" 
-                        dataKey="type" 
-                        width={140}
-                        tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
-                        tickFormatter={(value) => value.replace("EXEMPT ", "")}
-                      />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(222 47% 11%)",
-                          borderColor: "hsl(217 33% 17%)",
-                          borderRadius: "8px",
-                        }}
-                        itemStyle={{ color: "white" }}
-                        formatter={(value: number, name: string) => {
-                          if (name === "value") {
-                            return [formatCurrencyShort(value), "Total Value"];
-                          }
-                          return [value, name];
-                        }}
-                        labelFormatter={(label) => label}
-                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                      />
-                      <Bar
-                        dataKey="value"
-                        fill="hsl(142 71% 45%)"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <Collapsible open={chartExemptionsOpen} onOpenChange={setChartExemptionsOpen}>
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full pt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" data-testid="button-toggle-exemptions-chart">
+                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${chartExemptionsOpen ? 'rotate-180' : '-rotate-90'}`} />
+                    <span>Tax Exemptions by Type</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div style={{ height: `${stats.exemptionsChartData.length * 32 + 16}px` }} className="pt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={stats.exemptionsChartData} 
+                          layout="vertical"
+                          margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                          barCategoryGap={4}
+                        >
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            type="category" 
+                            dataKey="type" 
+                            width={140}
+                            tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
+                            tickFormatter={(value) => value.replace("EXEMPT ", "")}
+                          />
+                          <RechartsTooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(222 47% 11%)",
+                              borderColor: "hsl(217 33% 17%)",
+                              borderRadius: "8px",
+                            }}
+                            itemStyle={{ color: "white" }}
+                            formatter={(value: number, name: string) => {
+                              if (name === "value") {
+                                return [formatCurrencyShort(value), "Total Value"];
+                              }
+                              return [value, name];
+                            }}
+                            labelFormatter={(label) => label}
+                            cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                          />
+                          <Bar
+                            dataKey="value"
+                            fill="hsl(142 71% 45%)"
+                            radius={[0, 4, 4, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
               {/* Top Land Holders Chart */}
               {stats.topLandHoldersData && stats.topLandHoldersData.length > 0 && (
-                <div style={{ height: `${stats.topLandHoldersData.length * 32 + 48}px` }} className="pt-4">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-3">
-                    Top Land Holders (Acres)
-                  </label>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={stats.topLandHoldersData} 
-                      layout="vertical"
-                      margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                      barCategoryGap={4}
-                    >
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        type="category" 
-                        dataKey="owner" 
-                        width={140}
-                        tick={{ fontSize: 9, fill: "hsl(215 20% 65%)" }}
-                      />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(222 47% 11%)",
-                          borderColor: "hsl(217 33% 17%)",
-                          borderRadius: "8px",
-                        }}
-                        itemStyle={{ color: "white" }}
-                        formatter={(value: number, name: string, props: any) => {
-                          if (name === "totalAcres") {
-                            const count = props.payload.propertyCount;
-                            return [`${value.toFixed(2)} acres (${count} properties)`, "Total Land"];
-                          }
-                          return [value, name];
-                        }}
-                        labelFormatter={(label, payload) => {
-                          if (payload && payload[0]) {
-                            return payload[0].payload.fullOwner;
-                          }
-                          return label;
-                        }}
-                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                      />
-                      <Bar
-                        dataKey="totalAcres"
-                        fill="hsl(25 95% 53%)"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <Collapsible open={chartLandHoldersOpen} onOpenChange={setChartLandHoldersOpen}>
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full pt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" data-testid="button-toggle-land-holders-chart">
+                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${chartLandHoldersOpen ? 'rotate-180' : '-rotate-90'}`} />
+                    <span>Top Land Holders (Acres)</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div style={{ height: `${stats.topLandHoldersData.length * 32 + 16}px` }} className="pt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={stats.topLandHoldersData} 
+                          layout="vertical"
+                          margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                          barCategoryGap={4}
+                        >
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            type="category" 
+                            dataKey="owner" 
+                            width={140}
+                            tick={{ fontSize: 9, fill: "hsl(215 20% 65%)" }}
+                          />
+                          <RechartsTooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(222 47% 11%)",
+                              borderColor: "hsl(217 33% 17%)",
+                              borderRadius: "8px",
+                            }}
+                            itemStyle={{ color: "white" }}
+                            formatter={(value: number, name: string, props: any) => {
+                              if (name === "totalAcres") {
+                                const count = props.payload.propertyCount;
+                                return [`${value.toFixed(2)} acres (${count} properties)`, "Total Land"];
+                              }
+                              return [value, name];
+                            }}
+                            labelFormatter={(label, payload) => {
+                              if (payload && payload[0]) {
+                                return payload[0].payload.fullOwner;
+                              }
+                              return label;
+                            }}
+                            cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                          />
+                          <Bar
+                            dataKey="totalAcres"
+                            fill="hsl(25 95% 53%)"
+                            radius={[0, 4, 4, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
             </div>
           ) : (
