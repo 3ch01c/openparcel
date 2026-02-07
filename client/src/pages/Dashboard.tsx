@@ -2199,22 +2199,22 @@ export default function Dashboard() {
 
               {/* Account Types Chart */}
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
-                <div style={{ height: `${stats.accountTypesChartData.length * 28 + 56}px` }} className="pt-4">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
+                <div style={{ height: `${stats.accountTypesChartData.length * 32 + 48}px` }} className="pt-4">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-3">
                     Parcels by Account Type
                   </label>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
                       data={stats.accountTypesChartData} 
                       layout="vertical"
-                      margin={{ left: 0, right: 0 }}
-                      barSize={16}
+                      margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                      barCategoryGap={4}
                     >
                       <XAxis type="number" hide />
                       <YAxis 
                         type="category" 
                         dataKey="type" 
-                        width="50%" as any
+                        width={140}
                         tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
                       />
                       <RechartsTooltip
@@ -2240,22 +2240,22 @@ export default function Dashboard() {
 
               {/* Tax Exemptions Chart */}
               {stats.exemptionsChartData && stats.exemptionsChartData.length > 0 && (
-                <div style={{ height: `${stats.exemptionsChartData.length * 28 + 56}px` }} className="pt-4">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
+                <div style={{ height: `${stats.exemptionsChartData.length * 32 + 48}px` }} className="pt-4">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-3">
                     Tax Exemptions by Type
                   </label>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
                       data={stats.exemptionsChartData} 
                       layout="vertical"
-                      margin={{ left: 10, right: 10 }}
-                      barSize={16}
+                      margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                      barCategoryGap={4}
                     >
                       <XAxis type="number" hide />
                       <YAxis 
                         type="category" 
                         dataKey="type" 
-                        width={160}
+                        width={140}
                         tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
                         tickFormatter={(value) => value.replace("EXEMPT ", "")}
                       />
@@ -2287,22 +2287,22 @@ export default function Dashboard() {
 
               {/* Top Land Holders Chart */}
               {stats.topLandHoldersData && stats.topLandHoldersData.length > 0 && (
-                <div style={{ height: `${stats.topLandHoldersData.length * 28 + 56}px` }} className="pt-4">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
+                <div style={{ height: `${stats.topLandHoldersData.length * 32 + 48}px` }} className="pt-4">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-3">
                     Top Land Holders (Acres)
                   </label>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
                       data={stats.topLandHoldersData} 
                       layout="vertical"
-                      margin={{ left: 10, right: 10 }}
-                      barSize={16}
+                      margin={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                      barCategoryGap={4}
                     >
                       <XAxis type="number" hide />
                       <YAxis 
                         type="category" 
                         dataKey="owner" 
-                        width={160}
+                        width={140}
                         tick={{ fontSize: 9, fill: "hsl(215 20% 65%)" }}
                       />
                       <RechartsTooltip
