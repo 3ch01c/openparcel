@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useTransition, useDeferredValue } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useProperties } from "@/hooks/use-properties";
 import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
@@ -553,6 +553,9 @@ export default function Dashboard() {
     
     return filtered;
   }, [propertiesWithoutAccountTypeFilter, selectedAccountTypes, selectedSubdivisions, selectedZones, selectedOwnerCityStates, ownerFilter, useRegex]);
+
+  const deferredProperties = useDeferredValue(properties);
+  const isFiltering = deferredProperties !== properties;
 
   // Calculate filtered data ranges for dynamic slider bounds (from filtered properties)
   const filteredRanges = useMemo(() => {
@@ -2192,10 +2195,20 @@ export default function Dashboard() {
               url={TILE_LAYERS[mapLayer].url}
             />
 
-            {properties && mapViewMode === "cluster" && <ClusterLayer points={properties} colorMetric={colorMetric} />}
-            {properties && mapViewMode === "polygon" && <PolygonLayer points={properties} colorMetric={colorMetric} />}
+            {deferredProperties && mapViewMode === "cluster" && <ClusterLayer points={deferredProperties} colorMetric={colorMetric} />}
+            {deferredProperties && mapViewMode === "polygon" && <PolygonLayer points={deferredProperties} colorMetric={colorMetric} />}
           </MapContainer>
         </div>
+
+        {/* Filtering spinner overlay */}
+        {isFiltering && (
+          <div className="absolute inset-0 z-[450] flex items-center justify-center bg-black/20 backdrop-blur-[1px] pointer-events-none" data-testid="filtering-spinner">
+            <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg px-4 py-3">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-sm text-foreground">Filtering...</span>
+            </div>
+          </div>
+        )}
 
         {/* Map Controls */}
         <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
