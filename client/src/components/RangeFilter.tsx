@@ -33,6 +33,7 @@ interface RangeFilterProps {
   parseValue?: (str: string) => number;
   step?: number;
   unit?: string;
+  prefix?: string;
   decimals?: number;
   testIdPrefix: string;
   inputWidth?: string;
@@ -55,6 +56,7 @@ export function RangeFilter({
   parseValue,
   step,
   unit,
+  prefix = "",
   decimals = 0,
   testIdPrefix,
   inputWidth = "w-20",
@@ -77,7 +79,7 @@ export function RangeFilter({
   }, [value]);
 
   const smartFormat = (v: number): string => {
-    if (v === 0) return decimals > 0 ? v.toFixed(decimals) : "0";
+    if (v === 0) return prefix + (decimals > 0 ? v.toFixed(decimals) : "0");
 
     const absVal = Math.abs(v);
     const sign = v < 0 ? "-" : "";
@@ -85,22 +87,24 @@ export function RangeFilter({
     if (absVal < 1) {
       for (let d = 1; d <= 3; d++) {
         const formatted = v.toFixed(d);
-        if (formatted[formatted.length - 1] !== '0') return formatted;
+        if (formatted[formatted.length - 1] !== '0') return prefix + formatted;
       }
-      return v.toFixed(3);
+      return prefix + v.toFixed(3);
     }
 
     if (absVal < 10000) {
-      return decimals > 0 ? v.toFixed(decimals) : sign + Math.round(absVal).toLocaleString();
+      return decimals > 0
+        ? sign + prefix + absVal.toFixed(decimals)
+        : sign + prefix + Math.round(absVal).toLocaleString();
     }
 
     if (absVal < 1000000) {
       const k = absVal / 1000;
-      return sign + (k >= 100 ? k.toFixed(0) : k.toFixed(1).replace(/\.0$/, "")) + "K";
+      return sign + prefix + (k >= 100 ? k.toFixed(0) : k.toFixed(1).replace(/\.0$/, "")) + "K";
     }
 
     const m = absVal / 1000000;
-    return sign + (m >= 100 ? m.toFixed(0) : m.toFixed(1).replace(/\.0$/, "")) + "M";
+    return sign + prefix + (m >= 100 ? m.toFixed(0) : m.toFixed(1).replace(/\.0$/, "")) + "M";
   };
 
   const format = formatValue || smartFormat;

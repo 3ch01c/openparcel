@@ -1593,7 +1593,7 @@ export default function Dashboard() {
                 value={valueRange}
                 onChange={setValueRange}
                 histogramData={stats?.chartData}
-                formatValue={formatCurrencyShort}
+                prefix="$"
                 testIdPrefix="value-range"
               />
 
@@ -1609,7 +1609,7 @@ export default function Dashboard() {
                 value={landValueRange}
                 onChange={setLandValueRange}
                 histogramData={stats?.landChartData}
-                formatValue={formatCurrencyShort}
+                prefix="$"
                 testIdPrefix="land-value"
               />
 
@@ -1625,7 +1625,7 @@ export default function Dashboard() {
                 value={improvementValueRange}
                 onChange={setImprovementValueRange}
                 histogramData={stats?.improvementChartData}
-                formatValue={formatCurrencyShort}
+                prefix="$"
                 testIdPrefix="improvement-value"
               />
 
@@ -1641,7 +1641,7 @@ export default function Dashboard() {
                 value={taxRange}
                 onChange={setTaxRange}
                 histogramData={stats?.taxChartData}
-                formatValue={formatCurrencyShort}
+                prefix="$"
                 testIdPrefix="tax-range"
               />
 
@@ -1675,7 +1675,7 @@ export default function Dashboard() {
                 value={landValuePerSqftRange}
                 onChange={setLandValuePerSqftRange}
                 histogramData={stats?.landPerSqftChartData}
-                formatValue={(v) => `$${v.toFixed(2)}`}
+                prefix="$"
                 decimals={2}
                 unit="/sf"
                 testIdPrefix="land-per-sqft"
