@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { fetchArcGISData } from "./fetch_data";
+import { populatePLSSData } from "./plss_lookup";
 import multer from "multer";
 import { parse } from "csv-parse/sync";
 
@@ -196,6 +197,16 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/populate-plss", async (req, res) => {
+    try {
+      const result = await populatePLSSData();
+      res.json({ success: true, ...result, message: `PLSS data: ${result.updated} updated, ${result.skipped} skipped, ${result.errors} errors` });
+    } catch (error) {
+      console.error("PLSS population failed:", error);
+      res.status(500).json({ success: false, message: "Failed to populate PLSS data" });
+    }
+  });
+
   // Clear utility data endpoint
   app.post("/api/clear-utility-data", async (req, res) => {
     try {
@@ -223,6 +234,9 @@ async function seedDatabase() {
   
   if (!needsRefetch) {
     console.log(`Database already contains ${existing.length} properties with account types.`);
+    populatePLSSData().catch((err) => {
+      console.error("Background PLSS population failed:", err);
+    });
     return;
   }
 
@@ -241,6 +255,10 @@ async function seedDatabase() {
     console.log("Falling back to mock data generation...");
     await generateMockData();
   }
+
+  populatePLSSData().catch((err) => {
+    console.error("Background PLSS population failed:", err);
+  });
 }
 
 async function generateMockData() {

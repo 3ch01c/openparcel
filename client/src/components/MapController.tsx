@@ -13,6 +13,10 @@ const perSqft = (value: number | null | undefined, sqft: number | null | undefin
   if (value == null || sqft == null || sqft <= 0) return null;
   return `$${(value / sqft).toFixed(2)}/sqft`;
 };
+const fmtPLSS = (p: PropertyResponse): string | null => {
+  if (!p.township || !p.range || !p.section) return null;
+  return `T${p.township}${p.townshipDir || "N"} R${p.range}${p.rangeDir || "E"} S${p.section}`;
+};
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -231,6 +235,10 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="font-weight: 500;">${property.zone || "N/A"}</div>
               <div style="color: #666;">Mill Levy:</div>
               <div style="font-weight: 500;">${fmtNum(property.millLevy ?? 28.714, 3)}</div>
+              ${fmtPLSS(property) ? `
+                <div style="color: #666;">PLSS:</div>
+                <div style="font-weight: 500;">${fmtPLSS(property)}</div>
+              ` : ""}
               ${property.avgMonthlyWaterKgal != null ? `
                 <div style="color: #666;">Avg Water:</div>
                 <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
@@ -451,6 +459,10 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="font-weight: 500;">${property.zone || "N/A"}</div>
                 <div style="color: #666;">Mill Levy:</div>
                 <div style="font-weight: 500;">${fmtNum(property.millLevy ?? 28.714, 3)}</div>
+                ${fmtPLSS(property) ? `
+                  <div style="color: #666;">PLSS:</div>
+                  <div style="font-weight: 500;">${fmtPLSS(property)}</div>
+                ` : ""}
                 ${property.avgMonthlyWaterKgal != null ? `
                   <div style="color: #666;">Avg Water:</div>
                   <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>

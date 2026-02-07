@@ -87,6 +87,15 @@ Preferred communication style: Simple, everyday language.
   - Data includes ~8,674 parcels covering Los Alamos and White Rock areas
   - **Parcel attributes stored**: PIN, ADDRESS, ACCT, LEGAL, ACCT_TYPE, OWNER (type), ZONE, SUBDIV, OWNERNAME, OWNERADDRESS_ADDRESS1, OWNERADDRESS_CITY, OWNERADDRESS_STATE, OWNERADDRESS_ZIP, BUILDING_ACTUAL, LAND_ACTUAL, TOTAL_ACTUAL, BUILDING_TAXABLE, LAND_TAXABLE, TOTAL_TAXABLE, HHEXEMPTION, VETEXEMPTION, BLDGSQFT, LANDSQFT, TAXYEAR, TAXAREALEVY
   - **Polygon geometry**: Parcel boundary coordinates stored as JSON text field containing coordinate rings in [lng, lat] format
+  - **PLSS fields**: township, townshipDir, range, rangeDir, section - populated from BLM ArcGIS REST API via point-in-polygon matching (68% coverage, 5,939/8,674 parcels)
+
+### PLSS Data Population
+- **Module**: `server/plss_lookup.ts` - BLM ArcGIS REST API integration
+- **Endpoint**: POST /api/populate-plss (also runs automatically on startup)
+- **Data Source**: BLM National PLSS dataset via ArcGIS REST query
+- **Method**: Fetches all PLSS sections in bounding box, then assigns parcels via local point-in-polygon matching
+- **Coverage**: ~68% - parcels in White Rock/Pajarito area (~2,735) lack PLSS data (likely on federal/tribal land outside standard PLSS grid)
+- **Display**: PLSS description shown in parcel popups as "T19N R6E S10" format, included in CSV/JSON exports
 
 ### Map Services
 - **OpenStreetMap**: Tile layer provider for base map imagery

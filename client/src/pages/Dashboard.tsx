@@ -1314,6 +1314,12 @@ export default function Dashboard() {
           avgMonthlyWaterKgal: p.avgMonthlyWaterKgal,
           avgMonthlyElectricKwh: p.avgMonthlyElectricKwh,
           avgMonthlyGasTherms: p.avgMonthlyGasTherms,
+          plss: p.township && p.range && p.section ? `T${p.township}${p.townshipDir || "N"} R${p.range}${p.rangeDir || "E"} S${p.section}` : null,
+          township: p.township,
+          townshipDir: p.townshipDir,
+          range: p.range,
+          rangeDir: p.rangeDir,
+          section: p.section,
           geometry: geometry,
         };
       });
@@ -1353,6 +1359,12 @@ export default function Dashboard() {
         "Avg Water Usage (kgal/mo)",
         "Avg Electric Usage (kWh/mo)",
         "Avg Gas Usage (therms/mo)",
+        "PLSS",
+        "Township",
+        "Township Dir",
+        "Range",
+        "Range Dir",
+        "Section",
       ];
       const rows = properties.map((p) => [
         p.parcelId,
@@ -1386,6 +1398,12 @@ export default function Dashboard() {
         p.avgMonthlyWaterKgal?.toFixed(2) || "",
         p.avgMonthlyElectricKwh?.toFixed(0) || "",
         p.avgMonthlyGasTherms?.toFixed(1) || "",
+        p.township && p.range && p.section ? `T${p.township}${p.townshipDir || "N"} R${p.range}${p.rangeDir || "E"} S${p.section}` : "",
+        p.township || "",
+        p.townshipDir || "",
+        p.range || "",
+        p.rangeDir || "",
+        p.section || "",
       ]);
       content = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
       mimeType = "text/csv;charset=utf-8;";
