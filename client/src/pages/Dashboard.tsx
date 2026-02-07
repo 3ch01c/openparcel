@@ -32,6 +32,7 @@ import {
   Upload,
   Coffee,
   ChevronDown,
+  ChevronRight,
   BarChart3,
   X,
   PanelLeftClose,
@@ -1513,7 +1514,7 @@ export default function Dashboard() {
                 <CollapsibleTrigger className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors" data-testid="button-toggle-filters">
                   <Filter className="w-4 h-4" />
                   <span>Filters</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} />
+                  {filtersOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </CollapsibleTrigger>
                 <button
                   onClick={() => {
@@ -2016,7 +2017,7 @@ export default function Dashboard() {
                   <BarChart3 className="w-4 h-4" />
                   <span>Statistics</span>
                 </div>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsOpen ? 'rotate-180' : ''}`} />
+                {statsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </CollapsibleTrigger>
 
               <CollapsibleContent className="pt-4 pb-6">
@@ -2204,7 +2205,7 @@ export default function Dashboard() {
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
                 <Collapsible open={chartAccountTypesOpen} onOpenChange={setChartAccountTypesOpen}>
                   <CollapsibleTrigger className="flex items-center gap-2 w-full pt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" data-testid="button-toggle-account-types-chart">
-                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${chartAccountTypesOpen ? 'rotate-180' : '-rotate-90'}`} />
+                    {chartAccountTypesOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     <span>Parcels by Account Type</span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -2250,7 +2251,7 @@ export default function Dashboard() {
               {stats.exemptionsChartData && stats.exemptionsChartData.length > 0 && (
                 <Collapsible open={chartExemptionsOpen} onOpenChange={setChartExemptionsOpen}>
                   <CollapsibleTrigger className="flex items-center gap-2 w-full pt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" data-testid="button-toggle-exemptions-chart">
-                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${chartExemptionsOpen ? 'rotate-180' : '-rotate-90'}`} />
+                    {chartExemptionsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     <span>Tax Exemptions by Type</span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -2302,7 +2303,7 @@ export default function Dashboard() {
               {stats.topLandHoldersData && stats.topLandHoldersData.length > 0 && (
                 <Collapsible open={chartLandHoldersOpen} onOpenChange={setChartLandHoldersOpen}>
                   <CollapsibleTrigger className="flex items-center gap-2 w-full pt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" data-testid="button-toggle-land-holders-chart">
-                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${chartLandHoldersOpen ? 'rotate-180' : '-rotate-90'}`} />
+                    {chartLandHoldersOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     <span>Top Land Holders (Acres)</span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
