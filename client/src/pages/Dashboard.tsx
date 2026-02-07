@@ -2092,7 +2092,6 @@ export default function Dashboard() {
               </CursorTooltip>
               <CursorTooltip content={
                 <div className="text-xs space-y-1">
-                  <div className="text-muted-foreground mb-0.5">Per exempt parcel:</div>
                   <div>Mean: {formatCurrencyShort(stats.exemptionStats.mean)}</div>
                   <div>Median: {formatCurrencyShort(stats.exemptionStats.median)}</div>
                   <div>Mode: {formatCurrencyShort(stats.exemptionStats.mode)}</div>
