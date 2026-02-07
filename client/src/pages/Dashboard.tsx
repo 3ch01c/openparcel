@@ -662,10 +662,10 @@ export default function Dashboard() {
 
   // Derived Stats
   const stats = useMemo(() => {
-    if (!includedProperties || (includedProperties.length === 0 && excludedProperties.length === 0)) return null;
+    if (!properties || properties.length === 0) return null;
 
     const metricExcludedCount = excludedProperties.length;
-    const statsProps = includedProperties;
+    const statsProps = properties;
 
     const totalValue = statsProps.reduce(
       (acc, curr) => acc + curr.assessedValue,
@@ -1182,7 +1182,7 @@ export default function Dashboard() {
       gasStats,
       exemptionStats,
     };
-  }, [includedProperties, excludedProperties, colorMetric]);
+  }, [properties, excludedProperties, colorMetric]);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {
