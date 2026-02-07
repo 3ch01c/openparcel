@@ -1967,9 +1967,7 @@ export default function Dashboard() {
                 <CursorTooltip content={
                   <div className="text-xs space-y-1">
                     <div>{((initialTotalParcelsRef.current || 0) - (properties?.length || 0)).toLocaleString()} hidden by filters</div>
-                    {stats.metricExcludedCount > 0 && (
-                      <div>{stats.metricExcludedCount.toLocaleString()} hidden for missing metric data</div>
-                    )}
+                    <div>{stats.metricExcludedCount.toLocaleString()} hidden for missing metric</div>
                   </div>
                 }>
                   <StatsCard
