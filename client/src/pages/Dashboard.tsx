@@ -1960,34 +1960,26 @@ export default function Dashboard() {
           ) : stats ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-2 gap-4">
-                {stats.metricExcludedCount > 0 ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <StatsCard
-                          title="Parcels"
-                          value={stats.count.toLocaleString()}
-                          icon={Home}
-                          description={`out of ${(properties?.length || 0).toLocaleString()} filtered`}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <div className="text-xs space-y-1">
-                        <div>{(properties?.length || 0).toLocaleString()} total filtered</div>
-                        <div>{stats.metricExcludedCount.toLocaleString()} missing metric data (hidden)</div>
-                        <div>{stats.count.toLocaleString()} shown on map</div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <StatsCard
-                    title="Parcels"
-                    value={stats.count.toLocaleString()}
-                    icon={Home}
-                    description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
-                  />
-                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <StatsCard
+                        title="Parcels"
+                        value={stats.count.toLocaleString()}
+                        icon={Home}
+                        description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <div className="text-xs space-y-1">
+                      <div>{((initialTotalParcelsRef.current || 0) - (properties?.length || 0)).toLocaleString()} hidden by filters</div>
+                      {stats.metricExcludedCount > 0 && (
+                        <div>{stats.metricExcludedCount.toLocaleString()} hidden for missing metric data</div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
                 <StatsCard
                   title="Acreage"
                   value={stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})}
