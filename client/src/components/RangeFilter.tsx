@@ -37,7 +37,6 @@ interface RangeFilterProps {
   testIdPrefix: string;
   inputWidth?: string;
   defaultExpanded?: boolean;
-  isActive?: boolean;
 }
 
 export function RangeFilter({
@@ -60,7 +59,6 @@ export function RangeFilter({
   testIdPrefix,
   inputWidth = "w-20",
   defaultExpanded = true,
-  isActive = false,
 }: RangeFilterProps) {
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
@@ -149,7 +147,6 @@ export function RangeFilter({
         >
           <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
           {title}
-          {isActive && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colorHsl }} />}
         </button>
         <div className="flex items-center gap-1 text-xs font-mono">
           {editingMin ? (

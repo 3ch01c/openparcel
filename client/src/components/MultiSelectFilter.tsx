@@ -16,7 +16,6 @@ interface MultiSelectFilterProps {
   emptyMessage?: string;
   selectedMessage?: (count: number) => string;
   defaultExpanded?: boolean;
-  colorHsl?: string;
 }
 
 export function MultiSelectFilter({
@@ -28,7 +27,6 @@ export function MultiSelectFilter({
   emptyMessage = "All shown",
   selectedMessage = (count) => `${count} selected`,
   defaultExpanded = true,
-  colorHsl,
 }: MultiSelectFilterProps) {
   // Pending selections (not yet applied)
   const [pendingSelections, setPendingSelections] = useState<string[]>(selectedValues);
@@ -81,7 +79,6 @@ export function MultiSelectFilter({
         >
           <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
           {title}
-          {selectedValues.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-primary" style={colorHsl ? { backgroundColor: colorHsl } : undefined} />}
         </button>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">

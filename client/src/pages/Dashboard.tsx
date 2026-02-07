@@ -1503,7 +1503,6 @@ export default function Dashboard() {
                 histogramData={stats?.chartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="value-range"
-                isActive={isRangeActive(valueRange, sliderBounds.assessedValue)}
               />
 
               <RangeFilter
@@ -1520,7 +1519,6 @@ export default function Dashboard() {
                 histogramData={stats?.landChartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="land-value"
-                isActive={isRangeActive(landValueRange, sliderBounds.landValue)}
               />
 
               <RangeFilter
@@ -1537,7 +1535,6 @@ export default function Dashboard() {
                 histogramData={stats?.improvementChartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="improvement-value"
-                isActive={isRangeActive(improvementValueRange, sliderBounds.improvementValue)}
               />
 
               <RangeFilter
@@ -1554,7 +1551,6 @@ export default function Dashboard() {
                 histogramData={stats?.taxChartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="tax-range"
-                isActive={isRangeActive(taxRange, sliderBounds.tax)}
               />
 
               <RangeFilter
@@ -1573,7 +1569,6 @@ export default function Dashboard() {
                 unit="ac"
                 testIdPrefix="parcel-area"
                 inputWidth="w-16"
-                isActive={isRangeActive(parcelAreaRange, sliderBounds.parcelArea)}
               />
 
               <RangeFilter
@@ -1593,7 +1588,6 @@ export default function Dashboard() {
                 unit="/sf"
                 testIdPrefix="land-per-sqft"
                 inputWidth="w-16"
-                isActive={isRangeActive(landValuePerSqftRange, sliderBounds.landPerSqft)}
               />
 
               <RangeFilter
@@ -1611,7 +1605,6 @@ export default function Dashboard() {
                 decimals={3}
                 testIdPrefix="bldg-ratio"
                 inputWidth="w-16"
-                isActive={isRangeActive(bldgToLandRatioRange, sliderBounds.bldgRatio)}
               />
 
               <RangeFilter
@@ -1629,7 +1622,6 @@ export default function Dashboard() {
                 decimals={1}
                 testIdPrefix="water-usage"
                 inputWidth="w-16"
-                isActive={isRangeActive(waterUsageRange, sliderBounds.waterUsage)}
               />
 
               <RangeFilter
@@ -1646,7 +1638,6 @@ export default function Dashboard() {
                 histogramData={stats?.electricUsageChartData}
                 decimals={0}
                 testIdPrefix="electric-usage"
-                isActive={isRangeActive(electricUsageRange, sliderBounds.electricUsage)}
               />
 
               <RangeFilter
@@ -1664,7 +1655,6 @@ export default function Dashboard() {
                 decimals={1}
                 testIdPrefix="gas-usage"
                 inputWidth="w-16"
-                isActive={isRangeActive(gasUsageRange, sliderBounds.gasUsage)}
               />
 
               {/* Water Per SF Range Filter */}
@@ -1683,7 +1673,6 @@ export default function Dashboard() {
                 decimals={2}
                 testIdPrefix="water-per-sf"
                 inputWidth="w-16"
-                isActive={isRangeActive(waterPerSfRange, sliderBounds.waterPerSf || { min: 0, max: 10 })}
               />
 
               {/* Electric Per SF Range Filter */}
@@ -1702,7 +1691,6 @@ export default function Dashboard() {
                 decimals={3}
                 testIdPrefix="electric-per-sf"
                 inputWidth="w-16"
-                isActive={isRangeActive(electricPerSfRange, sliderBounds.electricPerSf || { min: 0, max: 5 })}
               />
 
               {/* Gas Per SF Range Filter */}
@@ -1721,7 +1709,6 @@ export default function Dashboard() {
                 decimals={4}
                 testIdPrefix="gas-per-sf"
                 inputWidth="w-16"
-                isActive={isRangeActive(gasPerSfRange, sliderBounds.gasPerSf || { min: 0, max: 1 })}
               />
 
               {/* Account Type Multi-Select */}
@@ -1785,7 +1772,6 @@ export default function Dashboard() {
                 <div className="flex justify-between items-center">
                   <label className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Owner
-                    {ownerFilter && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                   </label>
                   <div className="flex items-center gap-2">
                     <button
