@@ -15,9 +15,9 @@ export interface IStorage {
   getProperty(id: number): Promise<Property | undefined>;
   createProperty(property: InsertProperty): Promise<Property>;
   clearAllProperties(): Promise<void>;
-  updatePropertyWaterUsage(parcelId: string, avgMonthlyWaterKgal: number): Promise<void>;
-  updatePropertyElectricUsage(parcelId: string, avgMonthlyElectricKwh: number): Promise<void>;
-  updatePropertyGasUsage(parcelId: string, avgMonthlyGasTherms: number): Promise<void>;
+  updatePropertyWaterUsage(upc: string, avgMonthlyWaterKgal: number): Promise<void>;
+  updatePropertyElectricUsage(upc: string, avgMonthlyElectricKwh: number): Promise<void>;
+  updatePropertyGasUsage(upc: string, avgMonthlyGasTherms: number): Promise<void>;
   clearUtilityData(): Promise<void>;
   insertUtilityReadings(readings: InsertUtilityReading[]): Promise<void>;
   clearUtilityReadings(): Promise<void>;
@@ -61,22 +61,22 @@ export class DatabaseStorage implements IStorage {
     await db.delete(properties);
   }
 
-  async updatePropertyWaterUsage(parcelId: string, avgMonthlyWaterKgal: number): Promise<void> {
+  async updatePropertyWaterUsage(upc: string, avgMonthlyWaterKgal: number): Promise<void> {
     await db.update(properties)
       .set({ avgMonthlyWaterKgal })
-      .where(eq(properties.parcelId, parcelId));
+      .where(eq(properties.upc, upc));
   }
 
-  async updatePropertyElectricUsage(parcelId: string, avgMonthlyElectricKwh: number): Promise<void> {
+  async updatePropertyElectricUsage(upc: string, avgMonthlyElectricKwh: number): Promise<void> {
     await db.update(properties)
       .set({ avgMonthlyElectricKwh })
-      .where(eq(properties.parcelId, parcelId));
+      .where(eq(properties.upc, upc));
   }
 
-  async updatePropertyGasUsage(parcelId: string, avgMonthlyGasTherms: number): Promise<void> {
+  async updatePropertyGasUsage(upc: string, avgMonthlyGasTherms: number): Promise<void> {
     await db.update(properties)
       .set({ avgMonthlyGasTherms })
-      .where(eq(properties.parcelId, parcelId));
+      .where(eq(properties.upc, upc));
   }
 
   async clearUtilityData(): Promise<void> {
@@ -89,7 +89,6 @@ export class DatabaseStorage implements IStorage {
 
   async insertUtilityReadings(readings: InsertUtilityReading[]): Promise<void> {
     if (readings.length === 0) return;
-    // Insert in batches of 1000 to avoid query size limits
     const batchSize = 1000;
     for (let i = 0; i < readings.length; i += batchSize) {
       const batch = readings.slice(i, i + batchSize);

@@ -75,7 +75,7 @@ export async function registerRoutes(
       const gasUsageByParcelMonth: Record<string, Record<string, number>> = {};
 
       // Collect raw readings for storage in utility_readings table
-      const rawReadings: Array<{ parcelId: string; billDate: string; serviceCode: number; actualUsage: number }> = [];
+      const rawReadings: Array<{ upc: string; billDate: string; serviceCode: number; actualUsage: number }> = [];
       let skippedRecords = 0;
 
       for (const record of records) {
@@ -106,7 +106,7 @@ export async function registerRoutes(
         // Store raw reading for utility_readings table
         const formattedDate = billDate.toISOString().split('T')[0];
         rawReadings.push({
-          parcelId,
+          upc: parcelId,
           billDate: formattedDate,
           serviceCode: serviceCodeNum,
           actualUsage: usage
@@ -299,14 +299,14 @@ async function generateMockData() {
       const owner = owners[Math.floor(Math.random() * owners.length)];
       
       await storage.createProperty({
-        parcelId: `LA-${neighborhood.name.substring(0, 2).toUpperCase()}-${String(totalCreated + 1).padStart(5, '0')}`,
+        upc: `LA-${neighborhood.name.substring(0, 2).toUpperCase()}-${String(totalCreated + 1).padStart(5, '0')}`,
         address: `${streetNum} ${street}`,
         owner,
         assessedValue,
         lat,
         lng,
         assessmentYear: 2025,
-        parcelArea: 0.1 + Math.random() * 2,
+        area: 0.1 + Math.random() * 2,
         landValue,
         improvementValue
       });

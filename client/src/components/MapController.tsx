@@ -15,7 +15,7 @@ const perSqft = (value: number | null | undefined, sqft: number | null | undefin
 };
 const fmtPLSS = (p: PropertyResponse): string | null => {
   if (!p.township || !p.range || !p.section) return null;
-  return `T${p.township}${p.townshipDir || "N"} R${p.range}${p.rangeDir || "E"} S${p.section}`;
+  return `T${p.township}${p.townshipdir || "N"} R${p.range}${p.rangedir || "E"} S${p.section}`;
 };
 
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -190,7 +190,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
         const grossTax = property.totalTaxable != null ? (property.totalTaxable * ml) / 1000 : null;
         const taxAssessed = isExempt ? 0 : grossTax != null ? Math.max(0, grossTax - (hhExemptAmount || 0) - (vetExemptAmount || 0)) : null;
         
-        const parcelArea = property.parcelArea;
+        const parcelArea = property.area;
         const landSqft = parcelArea != null ? parcelArea * 43560 : null;
         const assessedPerSqftStr = perSqft(property.assessedValue, landSqft);
         const landPerSqftStr = perSqft(property.landValue, landSqft);
@@ -210,7 +210,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
         const popupContent = `
           <div style="min-width: 250px; font-family: system-ui, sans-serif;">
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
-            <div style="font-size: 11px; color: #888; margin-bottom: 8px;">Parcel ID: ${property.parcelId || "N/A"}</div>
+            <div style="font-size: 11px; color: #888; margin-bottom: 8px;">UPC: ${property.upc || "N/A"}</div>
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
             <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px; column-gap: 6px; font-size: 12px;">
               <div style="color: #666;">Owner:</div>
@@ -230,7 +230,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="color: #666;">Account Type:</div>
               <div style="font-weight: 500;">${property.accountType || "N/A"}</div>
               <div style="color: #666;">Subdivision:</div>
-              <div style="font-weight: 500;">${property.subdiv || "N/A"}</div>
+              <div style="font-weight: 500;">${property.subdivision || "N/A"}</div>
               <div style="color: #666;">Zone:</div>
               <div style="font-weight: 500;">${property.zone || "N/A"}</div>
               <div style="color: #666;">Mill Levy:</div>
@@ -414,7 +414,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
           const grossTax = property.totalTaxable != null ? (property.totalTaxable * ml) / 1000 : null;
           const taxAssessed = isExempt ? 0 : grossTax != null ? Math.max(0, grossTax - (hhExemptAmount || 0) - (vetExemptAmount || 0)) : null;
           
-          const parcelArea = property.parcelArea;
+          const parcelArea = property.area;
           const landSqft = parcelArea != null ? parcelArea * 43560 : null;
           const assessedPerSqftStr = perSqft(property.assessedValue, landSqft);
           const landPerSqftStr = perSqft(property.landValue, landSqft);
@@ -434,7 +434,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
           const popupContent = `
             <div style="min-width: 250px; font-family: system-ui, sans-serif;">
               <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
-              <div style="font-size: 11px; color: #888; margin-bottom: 8px;">Parcel ID: ${property.parcelId || "N/A"}</div>
+              <div style="font-size: 11px; color: #888; margin-bottom: 8px;">UPC: ${property.upc || "N/A"}</div>
               <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
               <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px; column-gap: 6px; font-size: 12px;">
                 <div style="color: #666;">Owner:</div>
@@ -454,7 +454,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="color: #666;">Account Type:</div>
                 <div style="font-weight: 500;">${property.accountType || "N/A"}</div>
                 <div style="color: #666;">Subdivision:</div>
-                <div style="font-weight: 500;">${property.subdiv || "N/A"}</div>
+                <div style="font-weight: 500;">${property.subdivision || "N/A"}</div>
                 <div style="color: #666;">Zone:</div>
                 <div style="font-weight: 500;">${property.zone || "N/A"}</div>
                 <div style="color: #666;">Mill Levy:</div>

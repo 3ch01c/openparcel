@@ -85,9 +85,10 @@ Preferred communication style: Simple, everyday language.
   - Field prefixes: `LAC_GIS.LACGIS.Parcels.*` and `LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.*`
   - Pagination: 1000 records per batch with resultOffset parameter
   - Data includes ~8,674 parcels covering Los Alamos and White Rock areas
-  - **Parcel attributes stored**: PIN, ADDRESS, ACCT, LEGAL, ACCT_TYPE, OWNER (type), ZONE, SUBDIV, OWNERNAME, OWNERADDRESS_ADDRESS1, OWNERADDRESS_CITY, OWNERADDRESS_STATE, OWNERADDRESS_ZIP, BUILDING_ACTUAL, LAND_ACTUAL, TOTAL_ACTUAL, BUILDING_TAXABLE, LAND_TAXABLE, TOTAL_TAXABLE, HHEXEMPTION, VETEXEMPTION, BLDGSQFT, LANDSQFT, TAXYEAR, TAXAREALEVY
+  - **Parcel attributes stored** (NM Standard field names): upc (PIN), mapid (ACCT), legaldesc (LEGAL), accountType, ownerType, zone, subdivision (SUBDIV), owner, ownerAddress1, ownerCity, ownerState, ownerZip, assessedValue, landValue, improvementValue, landTaxable, buildingTaxable, totalTaxable, hhExemption, vetExemption, buildingSqft, landSqft, assessmentYear, millLevy, area (acres), perimeter, lastupdate
+  - **NM Standard Compliance**: Field names aligned with New Mexico Parcel Mapping Technical Manual Version 2024.01 (PTD Data Exchange schema)
   - **Polygon geometry**: Parcel boundary coordinates stored as JSON text field containing coordinate rings in [lng, lat] format
-  - **PLSS fields**: township, townshipDir, range, rangeDir, section - populated from BLM ArcGIS REST API via point-in-polygon matching (68% coverage, 5,939/8,674 parcels)
+  - **PLSS fields**: township, townshipdir, range, rangedir, section - populated from BLM ArcGIS REST API via point-in-polygon matching (68% coverage, 5,939/8,674 parcels)
 
 ### PLSS Data Population
 - **Module**: `server/plss_lookup.ts` - BLM ArcGIS REST API integration

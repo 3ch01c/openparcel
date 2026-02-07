@@ -130,7 +130,7 @@ export default function Dashboard() {
   const committedRanges = useRef({
     assessedValue: [0, 250000000] as [number, number],
     tax: [0, 500000] as [number, number],
-    parcelArea: [0, 1200] as [number, number],
+    area: [0, 1200] as [number, number],
     landValue: [0, 250000000] as [number, number],
     improvementValue: [0, 50000000] as [number, number],
     landPerSqft: [0, 150] as [number, number],
@@ -154,7 +154,7 @@ export default function Dashboard() {
   const initialBoundsRef = useRef<{
     assessedValue: { min: number; max: number };
     tax: { min: number; max: number };
-    parcelArea: { min: number; max: number };
+    area: { min: number; max: number };
     landValue: { min: number; max: number };
     improvementValue: { min: number; max: number };
     landPerSqft: { min: number; max: number };
@@ -168,14 +168,14 @@ export default function Dashboard() {
   } | null>(null);
   const getLandValuePerSqft = (p: PropertyResponse): number | null => {
     if (p.landValue == null) return null;
-    const landSqft = p.landSqft || (p.parcelArea != null ? p.parcelArea * 43560 : null);
+    const landSqft = p.landSqft || (p.area != null ? p.area * 43560 : null);
     if (landSqft == null || landSqft <= 0) return null;
     return p.landValue / landSqft;
   };
 
   const getBldgToLandRatio = (p: PropertyResponse): number | null => {
     if (p.buildingSqft == null) return null;
-    const landSqft = p.landSqft || (p.parcelArea != null ? p.parcelArea * 43560 : null);
+    const landSqft = p.landSqft || (p.area != null ? p.area * 43560 : null);
     if (landSqft == null || landSqft <= 0) return null;
     return p.buildingSqft / landSqft;
   };
@@ -230,7 +230,7 @@ export default function Dashboard() {
       return {
         assessedValue: { min: 0, max: 250000000 },
         tax: { min: 0, max: 500000 },
-        parcelArea: { min: 0, max: 1200 },
+        area: { min: 0, max: 1200 },
         landValue: { min: 0, max: 250000000 },
         improvementValue: { min: 0, max: 50000000 },
         landPerSqft: { min: 0, max: 150 },
@@ -264,7 +264,7 @@ export default function Dashboard() {
     return {
       assessedValue: rangeOf(nn(rawProperties.map(p => p.assessedValue))),
       tax: rangeOf(taxValues),
-      parcelArea: rangeOf(nn(rawProperties.map(p => p.parcelArea))),
+      area: rangeOf(nn(rawProperties.map(p => p.area))),
       landValue: rangeOf(nn(rawProperties.map(p => p.landValue))),
       improvementValue: rangeOf(nn(rawProperties.map(p => p.improvementValue))),
       landPerSqft: rangeOf(landPerSqftValues),
@@ -287,7 +287,7 @@ export default function Dashboard() {
       initialBoundsRef.current = {
         assessedValue: { min: unfilteredRanges.assessedValue.min, max: unfilteredRanges.assessedValue.max },
         tax: { min: unfilteredRanges.tax.min, max: unfilteredRanges.tax.max },
-        parcelArea: { min: unfilteredRanges.parcelArea.min, max: unfilteredRanges.parcelArea.max },
+        area: { min: unfilteredRanges.area.min, max: unfilteredRanges.area.max },
         landValue: { min: unfilteredRanges.landValue.min, max: unfilteredRanges.landValue.max },
         improvementValue: { min: unfilteredRanges.improvementValue.min, max: unfilteredRanges.improvementValue.max },
         landPerSqft: { min: unfilteredRanges.landPerSqft.min, max: unfilteredRanges.landPerSqft.max },
@@ -306,7 +306,7 @@ export default function Dashboard() {
       const ownerCityStates = new Set<string>();
       rawProperties.forEach((p) => {
         if (p.accountType) accountTypes.add(p.accountType);
-        if (p.subdiv) subdivisions.add(p.subdiv);
+        if (p.subdivision) subdivisions.add(p.subdivision);
         if (p.zone) zones.add(p.zone);
         const city = p.ownerCity?.trim() || "";
         const state = p.ownerState?.trim() || "";
@@ -323,7 +323,7 @@ export default function Dashboard() {
       const initRanges = {
         assessedValue: [unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max] as [number, number],
         tax: [unfilteredRanges.tax.min, unfilteredRanges.tax.max] as [number, number],
-        parcelArea: [unfilteredRanges.parcelArea.min, unfilteredRanges.parcelArea.max] as [number, number],
+        area: [unfilteredRanges.area.min, unfilteredRanges.area.max] as [number, number],
         landValue: [unfilteredRanges.landValue.min, unfilteredRanges.landValue.max] as [number, number],
         improvementValue: [unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max] as [number, number],
         landPerSqft: [unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max] as [number, number],
@@ -338,7 +338,7 @@ export default function Dashboard() {
       committedRanges.current = { ...initRanges };
       setValueRange(initRanges.assessedValue);
       setTaxRange(initRanges.tax);
-      setParcelAreaRange(initRanges.parcelArea);
+      setParcelAreaRange(initRanges.area);
       setLandValueRange(initRanges.landValue);
       setImprovementValueRange(initRanges.improvementValue);
       setLandValuePerSqftRange(initRanges.landPerSqft);
@@ -386,7 +386,7 @@ export default function Dashboard() {
       return (
         inRange(p.assessedValue, cr.assessedValue, sliderBounds.assessedValue) &&
         inRange(tax, cr.tax, sliderBounds.tax) &&
-        inRange(p.parcelArea, cr.parcelArea, sliderBounds.parcelArea) &&
+        inRange(p.area, cr.area, sliderBounds.area) &&
         inRange(p.landValue, cr.landValue, sliderBounds.landValue) &&
         inRange(p.improvementValue, cr.improvementValue, sliderBounds.improvementValue) &&
         inRange(landPerSqft, cr.landPerSqft, sliderBounds.landPerSqft) &&
@@ -408,7 +408,7 @@ export default function Dashboard() {
     
     if (selectedSubdivisions.length > 0) {
       filtered = filtered.filter((p) =>
-        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+        p.subdivision && selectedSubdivisions.includes(p.subdivision)
       );
     }
     
@@ -470,7 +470,7 @@ export default function Dashboard() {
     
     if (selectedSubdivisions.length > 0) {
       filtered = filtered.filter((p) =>
-        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+        p.subdivision && selectedSubdivisions.includes(p.subdivision)
       );
     }
     
@@ -498,7 +498,7 @@ export default function Dashboard() {
     
     if (selectedSubdivisions.length > 0) {
       filtered = filtered.filter((p) =>
-        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+        p.subdivision && selectedSubdivisions.includes(p.subdivision)
       );
     }
     
@@ -522,7 +522,7 @@ export default function Dashboard() {
   const subdivisionOptions = useMemo(() => {
     return uniqueSubdivisions.map((subdiv) => ({
       value: subdiv,
-      count: propertiesForSubdivisionCounts.filter((p) => p.subdiv === subdiv).length,
+      count: propertiesForSubdivisionCounts.filter((p) => p.subdivision === subdiv).length,
     }));
   }, [uniqueSubdivisions, propertiesForSubdivisionCounts]);
 
@@ -559,7 +559,7 @@ export default function Dashboard() {
     // Subdivision filter
     if (selectedSubdivisions.length > 0) {
       filtered = filtered.filter((p) =>
-        p.subdiv && selectedSubdivisions.includes(p.subdiv)
+        p.subdivision && selectedSubdivisions.includes(p.subdivision)
       );
     }
     
@@ -639,7 +639,7 @@ export default function Dashboard() {
     return {
       assessedValue: rangeOf(nn(properties.map(p => p.assessedValue))),
       tax: rangeOf(nn(properties.map(p => getPropertyTax(p)))),
-      parcelArea: rangeOf(nn(properties.map(p => p.parcelArea))),
+      area: rangeOf(nn(properties.map(p => p.area))),
       landValue: rangeOf(nn(properties.map(p => p.landValue))),
       improvementValue: rangeOf(nn(properties.map(p => p.improvementValue))),
       landPerSqft: rangeOf(nn(properties.map(p => getLandValuePerSqft(p)))),
@@ -735,7 +735,7 @@ export default function Dashboard() {
     }));
 
     // Parcel area histogram uses actual min/max from filtered data
-    const parcelAreas = nnf(statsProps.map(p => p.parcelArea));
+    const parcelAreas = nnf(statsProps.map(p => p.area));
     const actualParcelMin = parcelAreas.length > 0 ? Math.min(...parcelAreas) : 0;
     const actualParcelMax = parcelAreas.length > 0 ? Math.max(...parcelAreas) : 1;
     const parcelDistribution = [0, 0, 0, 0, 0];
@@ -1005,7 +1005,7 @@ export default function Dashboard() {
       .slice(0, 10); // Top 10 account types
 
     const assessedValues = nnf(statsProps.map(p => p.assessedValue));
-    const acreageValues = nnf(statsProps.map(p => p.parcelArea));
+    const acreageValues = nnf(statsProps.map(p => p.area));
     const landValueArr = nnf(statsProps.map(p => p.landValue));
     const perParcelTaxValues = nnf(statsProps.map(p => getPropertyTax(p)));
     const perParcelExemptionValues = nnf(statsProps.map(p => {
@@ -1046,7 +1046,7 @@ export default function Dashboard() {
     // Count statsProps with no improvement value (land only)
     const landOnlyProps = statsProps.filter(p => (p.improvementValue || 0) === 0);
     const noImprovementCount = landOnlyProps.length;
-    const totalLandOnlyAcres = landOnlyProps.reduce((sum, p) => sum + (p.parcelArea || 0), 0);
+    const totalLandOnlyAcres = landOnlyProps.reduce((sum, p) => sum + (p.area || 0), 0);
 
     // Top land holders - aggregate parcel area (acres) by owner
     const landByOwner: Record<string, { totalAcres: number; propertyCount: number }> = {};
@@ -1055,7 +1055,7 @@ export default function Dashboard() {
       if (!landByOwner[owner]) {
         landByOwner[owner] = { totalAcres: 0, propertyCount: 0 };
       }
-      landByOwner[owner].totalAcres += p.parcelArea || 0;
+      landByOwner[owner].totalAcres += p.area || 0;
       landByOwner[owner].propertyCount += 1;
     });
     
@@ -1070,7 +1070,7 @@ export default function Dashboard() {
       .slice(0, 10);
 
     // Total parcel area (acres)
-    const totalParcelAcres = statsProps.reduce((sum, p) => sum + (p.parcelArea || 0), 0);
+    const totalParcelAcres = statsProps.reduce((sum, p) => sum + (p.area || 0), 0);
     const avgParcelAcres = statsProps.length > 0 ? totalParcelAcres / statsProps.length : 0;
     
     // Total land value and avg per acre
@@ -1283,14 +1283,14 @@ export default function Dashboard() {
           }
         }
         return {
-          parcelId: p.parcelId,
+          upc: p.upc,
           address: p.address,
-          acct: p.acct,
-          legal: p.legal,
+          mapid: p.mapid,
+          legaldesc: p.legaldesc,
           accountType: p.accountType,
           ownerType: p.ownerType,
           zone: p.zone,
-          subdiv: p.subdiv,
+          subdivision: p.subdivision,
           owner: p.owner,
           ownerAddress1: p.ownerAddress1,
           ownerCity: p.ownerCity,
@@ -1304,7 +1304,7 @@ export default function Dashboard() {
           totalTaxable: p.totalTaxable,
           hhExemption: p.hhExemption,
           vetExemption: p.vetExemption,
-          parcelAreaAcres: p.parcelArea,
+          area: p.area,
           landSqft: p.landSqft,
           buildingSqft: p.buildingSqft,
           millLevy: p.millLevy,
@@ -1314,11 +1314,11 @@ export default function Dashboard() {
           avgMonthlyWaterKgal: p.avgMonthlyWaterKgal,
           avgMonthlyElectricKwh: p.avgMonthlyElectricKwh,
           avgMonthlyGasTherms: p.avgMonthlyGasTherms,
-          plss: p.township && p.range && p.section ? `T${p.township}${p.townshipDir || "N"} R${p.range}${p.rangeDir || "E"} S${p.section}` : null,
+          plss: p.township && p.range && p.section ? `T${p.township}${p.townshipdir || "N"} R${p.range}${p.rangedir || "E"} S${p.section}` : null,
           township: p.township,
-          townshipDir: p.townshipDir,
+          townshipdir: p.townshipdir,
           range: p.range,
-          rangeDir: p.rangeDir,
+          rangedir: p.rangedir,
           section: p.section,
           geometry: geometry,
         };
@@ -1328,10 +1328,10 @@ export default function Dashboard() {
       extension = "json";
     } else {
       const headers = [
-        "Parcel ID",
+        "UPC",
         "Address",
-        "Account",
-        "Legal",
+        "Map ID",
+        "Legal Desc",
         "Account Type",
         "Owner Type",
         "Zone",
@@ -1349,7 +1349,7 @@ export default function Dashboard() {
         "Total Taxable",
         "HH Exemption",
         "Vet Exemption",
-        "Parcel Area (acres)",
+        "Area (acres)",
         "Land Sqft",
         "Building Sqft",
         "Mill Levy",
@@ -1361,20 +1361,20 @@ export default function Dashboard() {
         "Avg Gas Usage (therms/mo)",
         "PLSS",
         "Township",
-        "Township Dir",
+        "Townshipdir",
         "Range",
-        "Range Dir",
+        "Rangedir",
         "Section",
       ];
       const rows = properties.map((p) => [
-        p.parcelId,
+        p.upc,
         `"${(p.address || "").replace(/"/g, '""')}"`,
-        p.acct || "",
-        `"${(p.legal || "").replace(/"/g, '""')}"`,
+        p.mapid || "",
+        `"${(p.legaldesc || "").replace(/"/g, '""')}"`,
         `"${(p.accountType || "").replace(/"/g, '""')}"`,
         p.ownerType || "",
         `"${(p.zone || "").replace(/"/g, '""')}"`,
-        `"${(p.subdiv || "").replace(/"/g, '""')}"`,
+        `"${(p.subdivision || "").replace(/"/g, '""')}"`,
         `"${(p.owner || "").replace(/"/g, '""')}"`,
         `"${(p.ownerAddress1 || "").replace(/"/g, '""')}"`,
         `"${(p.ownerCity || "").replace(/"/g, '""')}"`,
@@ -1388,7 +1388,7 @@ export default function Dashboard() {
         p.totalTaxable || 0,
         p.hhExemption || 0,
         p.vetExemption || 0,
-        p.parcelArea?.toFixed(4) || "",
+        p.area?.toFixed(4) || "",
         p.landSqft || 0,
         p.buildingSqft || 0,
         p.millLevy || "",
@@ -1398,11 +1398,11 @@ export default function Dashboard() {
         p.avgMonthlyWaterKgal?.toFixed(2) || "",
         p.avgMonthlyElectricKwh?.toFixed(0) || "",
         p.avgMonthlyGasTherms?.toFixed(1) || "",
-        p.township && p.range && p.section ? `T${p.township}${p.townshipDir || "N"} R${p.range}${p.rangeDir || "E"} S${p.section}` : "",
+        p.township && p.range && p.section ? `T${p.township}${p.townshipdir || "N"} R${p.range}${p.rangedir || "E"} S${p.section}` : "",
         p.township || "",
-        p.townshipDir || "",
+        p.townshipdir || "",
         p.range || "",
-        p.rangeDir || "",
+        p.rangedir || "",
         p.section || "",
       ]);
       content = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
@@ -1531,7 +1531,7 @@ export default function Dashboard() {
                       const resetRanges = {
                         assessedValue: [sliderBounds.assessedValue.min, sliderBounds.assessedValue.max] as [number, number],
                         tax: [sliderBounds.tax.min, sliderBounds.tax.max] as [number, number],
-                        parcelArea: [sliderBounds.parcelArea.min, sliderBounds.parcelArea.max] as [number, number],
+                        area: [sliderBounds.area.min, sliderBounds.area.max] as [number, number],
                         landValue: [sliderBounds.landValue.min, sliderBounds.landValue.max] as [number, number],
                         improvementValue: [sliderBounds.improvementValue.min, sliderBounds.improvementValue.max] as [number, number],
                         landPerSqft: [sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max] as [number, number],
@@ -1547,7 +1547,7 @@ export default function Dashboard() {
                       setRangeFilterVersion(v => v + 1);
                       setValueRange(resetRanges.assessedValue);
                       setTaxRange(resetRanges.tax);
-                      setParcelAreaRange(resetRanges.parcelArea);
+                      setParcelAreaRange(resetRanges.area);
                       setLandValueRange(resetRanges.landValue);
                       setImprovementValueRange(resetRanges.improvementValue);
                       setLandValuePerSqftRange(resetRanges.landPerSqft);
@@ -1673,12 +1673,12 @@ export default function Dashboard() {
                 colorHsl="hsl(271 81% 56%)"
                 rangeClassName="bg-purple-500"
                 thumbClassName="border-purple-500"
-                sliderMin={sliderBounds.parcelArea.min}
-                sliderMax={sliderBounds.parcelArea.max}
+                sliderMin={sliderBounds.area.min}
+                sliderMax={sliderBounds.area.max}
                 filteredMin={stats?.parcelChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.parcelChartData?.[stats.parcelChartData?.length - 1]?.binMax ?? 1200}
                 value={parcelAreaRange}
-                onChange={(v) => { setParcelAreaRange(v); commitRange('parcelArea', v); }}
+                onChange={(v) => { setParcelAreaRange(v); commitRange('area', v); }}
                 histogramData={stats?.parcelChartData}
                 decimals={2}
                 testIdPrefix="parcel-area"

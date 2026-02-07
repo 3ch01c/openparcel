@@ -116,13 +116,13 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   
   if (!centroid) return null;
   
-  const parcelId = attrs["LAC_GIS.LACGIS.Parcels.PIN"] || attrs["LAC_GIS.LACGIS.Parcels.OBJECTID"]?.toString();
+  const upc = attrs["LAC_GIS.LACGIS.Parcels.PIN"] || attrs["LAC_GIS.LACGIS.Parcels.OBJECTID"]?.toString();
   const address = attrs["LAC_GIS.LACGIS.Parcels.ADDRESS"] || "Unknown";
-  const acct = attrs["LAC_GIS.LACGIS.Parcels.ACCT"] || null;
-  const legal = attrs["LAC_GIS.LACGIS.Parcels.LEGAL"] || null;
+  const mapid = attrs["LAC_GIS.LACGIS.Parcels.ACCT"] || null;
+  const legaldesc = attrs["LAC_GIS.LACGIS.Parcels.LEGAL"] || null;
   const ownerType = attrs["LAC_GIS.LACGIS.Parcels.OWNER"] || null;
   const zone = attrs["LAC_GIS.LACGIS.Parcels.ZONE"] || null;
-  const subdiv = attrs["LAC_GIS.LACGIS.Parcels.SUBDIV"] || null;
+  const subdivision = attrs["LAC_GIS.LACGIS.Parcels.SUBDIV"] || null;
   const accountType = attrs["LAC_GIS.LACGIS.Parcels.ACCT_TYPE"] || null;
   
   const owner = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.OWNERNAME"] || "Unknown";
@@ -144,17 +144,17 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
   const buildingSqFt = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.BLDGSQFT"] || 0;
   const millLevy = attrs["LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.TAXAREALEVY"] || null;
   
-  const parcelArea = landSqFt / 43560;
+  const area = landSqFt / 43560;
   
   return {
-    parcelId: parcelId?.toString() || "UNKNOWN",
+    upc: upc?.toString() || "UNKNOWN",
     address,
     owner,
     assessedValue: totalValue,
     lat: centroid.lat,
     lng: centroid.lng,
     assessmentYear: taxYear,
-    parcelArea,
+    area,
     landValue,
     improvementValue: buildingValue,
     landTaxable,
@@ -166,11 +166,11 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
     buildingSqft: buildingSqFt,
     millLevy,
     accountType,
-    acct,
-    legal,
+    mapid,
+    legaldesc,
     ownerType,
     zone,
-    subdiv,
+    subdivision,
     ownerAddress1,
     ownerCity,
     ownerState,

@@ -7,9 +7,9 @@ const BLM_BASE = "https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PL
 
 interface PLSSSection {
   township: string;
-  townshipDir: string;
+  townshipdir: string;
   range: string;
-  rangeDir: string;
+  rangedir: string;
   section: string;
   rings: number[][][];
 }
@@ -63,14 +63,14 @@ async function fetchAllSections(minLng: number, minLat: number, maxLng: number, 
     timeout: 60000,
   });
 
-  const townshipMap = new Map<string, { township: string; townshipDir: string; range: string; rangeDir: string }>();
+  const townshipMap = new Map<string, { township: string; townshipdir: string; range: string; rangedir: string }>();
   for (const f of townshipResp.data.features || []) {
     const a = f.attributes;
     townshipMap.set(a.PLSSID, {
       township: a.TWNSHPNO?.replace(/^0+/, "") || "",
-      townshipDir: a.TWNSHPDIR || "",
+      townshipdir: a.TWNSHPDIR || "",
       range: a.RANGENO?.replace(/^0+/, "") || "",
-      rangeDir: a.RANGEDIR || "",
+      rangedir: a.RANGEDIR || "",
     });
   }
 
@@ -143,9 +143,9 @@ export async function populatePLSSData(): Promise<{ updated: number; skipped: nu
             .update(properties)
             .set({
               township: match.township,
-              townshipDir: match.townshipDir,
+              townshipdir: match.townshipdir,
               range: match.range,
-              rangeDir: match.rangeDir,
+              rangedir: match.rangedir,
               section: match.section,
             })
             .where(eq(properties.id, parcel.id));

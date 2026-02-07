@@ -18,7 +18,6 @@ export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   gasPerBldgSf: "Gas/Bldg SF (therms/mo)",
 };
 
-// Categorical color palette for zone coloring (25 distinct colors)
 const CATEGORICAL_COLORS = [
   "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
   "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
@@ -28,7 +27,7 @@ const CATEGORICAL_COLORS = [
 ];
 
 export function getZoneColor(zone: string | null | undefined, zoneList: string[]): string {
-  if (!zone) return "#808080"; // Gray for unknown
+  if (!zone) return "#808080";
   const index = zoneList.indexOf(zone);
   if (index === -1) return "#808080";
   return CATEGORICAL_COLORS[index % CATEGORICAL_COLORS.length];
@@ -39,7 +38,7 @@ export function isCategoricalMetric(metric: ColorMetric): boolean {
 }
 
 export function getMetricValue(property: PropertyResponse, metric: ColorMetric): number | null {
-  const landSqft = property.parcelArea != null ? property.parcelArea * 43560 : (property.landSqft ?? null);
+  const landSqft = property.area != null ? property.area * 43560 : (property.landSqft ?? null);
   const buildingSqft = property.buildingSqft ?? null;
   const millLevy = property.millLevy || 28.714;
   const isExempt = property.accountType?.toUpperCase().includes("EXEMPT") || false;
