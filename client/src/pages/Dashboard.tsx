@@ -2046,7 +2046,7 @@ export default function Dashboard() {
                     <div>Mean: {stats.acreageStats.mean.toFixed(2)} ac</div>
                     <div>Median: {stats.acreageStats.median.toFixed(2)} ac</div>
                     <div>Mode: {stats.acreageStats.mode.toFixed(2)} ac</div>
-                    <div>Stdev: {stats.acreageStats.stdev.toFixed(2)} ac</div>
+
                     <div>IQR: {stats.acreageStats.q1.toFixed(2)}–{stats.acreageStats.q3.toFixed(2)} ac ({stats.acreageStats.iqr.toFixed(2)})</div>
                   </div>
                 }>
@@ -2063,7 +2063,7 @@ export default function Dashboard() {
                   <div>Mean: {formatCurrencyShort(stats.assessedStats.mean)}</div>
                   <div>Median: {formatCurrencyShort(stats.assessedStats.median)}</div>
                   <div>Mode: {formatCurrencyShort(stats.assessedStats.mode)}</div>
-                  <div>Stdev: {formatCurrencyShort(stats.assessedStats.stdev)}</div>
+
                   <div>IQR: {formatCurrencyShort(stats.assessedStats.q1)}–{formatCurrencyShort(stats.assessedStats.q3)} ({formatCurrencyShort(stats.assessedStats.iqr)})</div>
                 </div>
               }>
@@ -2079,7 +2079,7 @@ export default function Dashboard() {
                   <div>Mean: {formatCurrencyShort(stats.landValueStats.mean)}</div>
                   <div>Median: {formatCurrencyShort(stats.landValueStats.median)}</div>
                   <div>Mode: {formatCurrencyShort(stats.landValueStats.mode)}</div>
-                  <div>Stdev: {formatCurrencyShort(stats.landValueStats.stdev)}</div>
+
                   <div>IQR: {formatCurrencyShort(stats.landValueStats.q1)}–{formatCurrencyShort(stats.landValueStats.q3)} ({formatCurrencyShort(stats.landValueStats.iqr)})</div>
                 </div>
               }>
@@ -2095,7 +2095,7 @@ export default function Dashboard() {
                   <div>Mean: {formatCurrencyShort(stats.taxStats.mean)} ({stats.assessedStats.mean > 0 ? ((stats.taxStats.mean / stats.assessedStats.mean) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
                   <div>Median: {formatCurrencyShort(stats.taxStats.median)} ({stats.assessedStats.median > 0 ? ((stats.taxStats.median / stats.assessedStats.median) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
                   <div>Mode: {formatCurrencyShort(stats.taxStats.mode)} ({stats.assessedStats.mode > 0 ? ((stats.taxStats.mode / stats.assessedStats.mode) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
-                  <div>Stdev: {formatCurrencyShort(stats.taxStats.stdev)}</div>
+
                   <div>IQR: {formatCurrencyShort(stats.taxStats.q1)}–{formatCurrencyShort(stats.taxStats.q3)} ({formatCurrencyShort(stats.taxStats.iqr)})</div>
                 </div>
               }>
@@ -2111,7 +2111,7 @@ export default function Dashboard() {
                   <div>Mean: {formatCurrencyShort(stats.exemptionStats.mean)}</div>
                   <div>Median: {formatCurrencyShort(stats.exemptionStats.median)}</div>
                   <div>Mode: {formatCurrencyShort(stats.exemptionStats.mode)}</div>
-                  <div>Stdev: {formatCurrencyShort(stats.exemptionStats.stdev)}</div>
+
                   <div>IQR: {formatCurrencyShort(stats.exemptionStats.q1)}–{formatCurrencyShort(stats.exemptionStats.q3)} ({formatCurrencyShort(stats.exemptionStats.iqr)})</div>
                 </div>
               }>
@@ -2136,7 +2136,7 @@ export default function Dashboard() {
                           <div>Mean: {stats.waterStats.mean.toFixed(1)} kgal</div>
                           <div>Median: {stats.waterStats.median.toFixed(1)} kgal</div>
                           <div>Mode: {stats.waterStats.mode.toFixed(1)} kgal</div>
-                          <div>Stdev: {stats.waterStats.stdev.toFixed(1)} kgal</div>
+
                           <div>IQR: {stats.waterStats.q1.toFixed(1)}–{stats.waterStats.q3.toFixed(1)} kgal ({stats.waterStats.iqr.toFixed(1)})</div>
                         </div>
                       }>
@@ -2157,7 +2157,7 @@ export default function Dashboard() {
                           <div>Mean: {stats.electricStats.mean.toFixed(0)} kWh</div>
                           <div>Median: {stats.electricStats.median.toFixed(0)} kWh</div>
                           <div>Mode: {stats.electricStats.mode.toFixed(0)} kWh</div>
-                          <div>Stdev: {stats.electricStats.stdev.toFixed(0)} kWh</div>
+
                           <div>IQR: {stats.electricStats.q1.toFixed(0)}–{stats.electricStats.q3.toFixed(0)} kWh ({stats.electricStats.iqr.toFixed(0)})</div>
                         </div>
                       }>
@@ -2178,7 +2178,7 @@ export default function Dashboard() {
                           <div>Mean: {stats.gasStats.mean.toFixed(1)} therms</div>
                           <div>Median: {stats.gasStats.median.toFixed(1)} therms</div>
                           <div>Mode: {stats.gasStats.mode.toFixed(1)} therms</div>
-                          <div>Stdev: {stats.gasStats.stdev.toFixed(1)} therms</div>
+
                           <div>IQR: {stats.gasStats.q1.toFixed(1)}–{stats.gasStats.q3.toFixed(1)} therms ({stats.gasStats.iqr.toFixed(1)})</div>
                         </div>
                       }>
