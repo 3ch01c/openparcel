@@ -188,6 +188,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
         
         const parcelArea = property.parcelArea;
         const landSqft = parcelArea != null ? parcelArea * 43560 : null;
+        const assessedPerSqftStr = perSqft(property.assessedValue, landSqft);
         const landPerSqftStr = perSqft(property.landValue, landSqft);
         const improvPerSqftStr = perSqft(property.improvementValue, property.buildingSqft);
         const taxPerSqftStr = taxAssessed != null && landSqft != null && landSqft > 0 ? `$${(taxAssessed / landSqft).toFixed(4)}/sqft` : null;
@@ -207,13 +208,13 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
             <div style="font-size: 11px; color: #888; margin-bottom: 8px;">Parcel ID: ${property.parcelId || "N/A"}</div>
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; column-gap: 5px; font-size: 12px;">
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px; column-gap: 6px; font-size: 12px;">
               <div style="color: #666;">Owner:</div>
               <div style="font-weight: 500;">${property.owner || "N/A"}</div>
               <div style="color: #666;">Owner Address:</div>
               <div style="font-weight: 500;">${ownerAddress}</div>
               <div style="color: #666;">Assessed Value:</div>
-              <div style="font-weight: 500;">${fmtCur(property.assessedValue)}</div>
+              <div style="font-weight: 500;">${fmtCur(property.assessedValue)}${assessedPerSqftStr ? ` <span style="color: #888;">(${assessedPerSqftStr})</span>` : ""}</div>
               <div style="color: #666;">Land Value:</div>
               <div style="font-weight: 500;">${fmtCur(property.landValue)}${landPerSqftStr ? ` <span style="color: #888;">(${landPerSqftStr})</span>` : ""}</div>
               <div style="color: #666;">Improvement:</div>
@@ -231,26 +232,30 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="color: #666;">Mill Levy:</div>
               <div style="font-weight: 500;">${fmtNum(property.millLevy ?? 28.714, 3)}</div>
               ${property.avgMonthlyWaterKgal != null ? `
-                <div style="color: #666;">Avg Water Usage:</div>
+                <div style="color: #666;">Avg Water:</div>
                 <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
               ` : ""}
               ${property.avgMonthlyElectricKwh != null ? `
-                <div style="color: #666;">Avg Electric Usage:</div>
+                <div style="color: #666;">Avg Electric:</div>
                 <div style="font-weight: 500; color: #eab308;">${property.avgMonthlyElectricKwh.toFixed(0)} kWh/mo</div>
               ` : ""}
               ${property.avgMonthlyGasTherms != null ? `
-                <div style="color: #666;">Avg Gas Usage:</div>
+                <div style="color: #666;">Avg Gas:</div>
                 <div style="font-weight: 500; color: #f97316;">${property.avgMonthlyGasTherms.toFixed(1)} therms/mo</div>
               ` : ""}
+              ${hhExemptAmount != null && hhExemptAmount > 0 ? `
+                <div style="color: #666;">HH Exemption:</div>
+                <div style="font-weight: 500;">${fmtCur(hhExemptAmount)}</div>
+              ` : ""}
+              ${vetExemptAmount != null && vetExemptAmount > 0 ? `
+                <div style="color: #666;">Vet Exemption:</div>
+                <div style="font-weight: 500;">${fmtCur(vetExemptAmount)}</div>
+              ` : ""}
+              ${taxExemptAmount != null && taxExemptAmount > 0 ? `
+                <div style="color: #666;">Tax Exempt:</div>
+                <div style="font-weight: 500;">${fmtCur(taxExemptAmount)}</div>
+              ` : ""}
             </div>
-            ${(property.hhExemption || property.vetExemption || isExempt) ? `
-              <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-              <div style="font-size: 11px; color: #888;">
-                ${hhExemptAmount != null ? `<div>HH Exemption: ${fmtCur(hhExemptAmount)}</div>` : ""}
-                ${vetExemptAmount != null ? `<div>Vet Exemption: ${fmtCur(vetExemptAmount)}</div>` : ""}
-                ${taxExemptAmount != null ? `<div>Tax Exempt: ${fmtCur(taxExemptAmount)}</div>` : ""}
-              </div>
-            ` : ""}
             <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-Los-Alamos-NM_rb/" 
@@ -403,6 +408,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
           
           const parcelArea = property.parcelArea;
           const landSqft = parcelArea != null ? parcelArea * 43560 : null;
+          const assessedPerSqftStr = perSqft(property.assessedValue, landSqft);
           const landPerSqftStr = perSqft(property.landValue, landSqft);
           const improvPerSqftStr = perSqft(property.improvementValue, property.buildingSqft);
           const taxPerSqftStr = taxAssessed != null && landSqft != null && landSqft > 0 ? `$${(taxAssessed / landSqft).toFixed(4)}/sqft` : null;
@@ -422,13 +428,13 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
               <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
               <div style="font-size: 11px; color: #888; margin-bottom: 8px;">Parcel ID: ${property.parcelId || "N/A"}</div>
               <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; column-gap: 5px; font-size: 12px;">
+              <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px; column-gap: 6px; font-size: 12px;">
                 <div style="color: #666;">Owner:</div>
                 <div style="font-weight: 500;">${property.owner || "N/A"}</div>
                 <div style="color: #666;">Owner Address:</div>
                 <div style="font-weight: 500;">${ownerAddress}</div>
                 <div style="color: #666;">Assessed Value:</div>
-                <div style="font-weight: 500;">${fmtCur(property.assessedValue)}</div>
+                <div style="font-weight: 500;">${fmtCur(property.assessedValue)}${assessedPerSqftStr ? ` <span style="color: #888;">(${assessedPerSqftStr})</span>` : ""}</div>
                 <div style="color: #666;">Land Value:</div>
                 <div style="font-weight: 500;">${fmtCur(property.landValue)}${landPerSqftStr ? ` <span style="color: #888;">(${landPerSqftStr})</span>` : ""}</div>
                 <div style="color: #666;">Improvement:</div>
@@ -446,26 +452,30 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="color: #666;">Mill Levy:</div>
                 <div style="font-weight: 500;">${fmtNum(property.millLevy ?? 28.714, 3)}</div>
                 ${property.avgMonthlyWaterKgal != null ? `
-                  <div style="color: #666;">Avg Water Usage:</div>
+                  <div style="color: #666;">Avg Water:</div>
                   <div style="font-weight: 500; color: #22d3ee;">${property.avgMonthlyWaterKgal.toFixed(2)} kgal/mo</div>
                 ` : ""}
                 ${property.avgMonthlyElectricKwh != null ? `
-                  <div style="color: #666;">Avg Electric Usage:</div>
+                  <div style="color: #666;">Avg Electric:</div>
                   <div style="font-weight: 500; color: #eab308;">${property.avgMonthlyElectricKwh.toFixed(0)} kWh/mo</div>
                 ` : ""}
                 ${property.avgMonthlyGasTherms != null ? `
-                  <div style="color: #666;">Avg Gas Usage:</div>
+                  <div style="color: #666;">Avg Gas:</div>
                   <div style="font-weight: 500; color: #f97316;">${property.avgMonthlyGasTherms.toFixed(1)} therms/mo</div>
                 ` : ""}
+                ${hhExemptAmount != null && hhExemptAmount > 0 ? `
+                  <div style="color: #666;">HH Exemption:</div>
+                  <div style="font-weight: 500;">${fmtCur(hhExemptAmount)}</div>
+                ` : ""}
+                ${vetExemptAmount != null && vetExemptAmount > 0 ? `
+                  <div style="color: #666;">Vet Exemption:</div>
+                  <div style="font-weight: 500;">${fmtCur(vetExemptAmount)}</div>
+                ` : ""}
+                ${taxExemptAmount != null && taxExemptAmount > 0 ? `
+                  <div style="color: #666;">Tax Exempt:</div>
+                  <div style="font-weight: 500;">${fmtCur(taxExemptAmount)}</div>
+                ` : ""}
               </div>
-              ${(property.hhExemption || property.vetExemption || isExempt) ? `
-                <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-                <div style="font-size: 11px; color: #888;">
-                  ${hhExemptAmount != null ? `<div>HH Exemption: ${fmtCur(hhExemptAmount)}</div>` : ""}
-                  ${vetExemptAmount != null ? `<div>Vet Exemption: ${fmtCur(vetExemptAmount)}</div>` : ""}
-                  ${taxExemptAmount != null ? `<div>Tax Exempt: ${fmtCur(taxExemptAmount)}</div>` : ""}
-                </div>
-              ` : ""}
               <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-Los-Alamos-NM_rb/" 
