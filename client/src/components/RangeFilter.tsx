@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -38,6 +38,28 @@ interface RangeFilterProps {
   testIdPrefix: string;
   inputWidth?: string;
   defaultExpanded?: boolean;
+  logarithmic?: boolean;
+}
+
+const LOG_STEPS = 1000;
+
+function valueToLogPos(val: number, min: number, max: number): number {
+  if (max <= min) return 0;
+  const shifted = val - min;
+  const range = max - min;
+  return Math.log1p(shifted) / Math.log1p(range) * LOG_STEPS;
+}
+
+function logPosToValue(pos: number, min: number, max: number): number {
+  if (max <= min) return min;
+  const range = max - min;
+  return Math.expm1(pos / LOG_STEPS * Math.log1p(range)) + min;
+}
+
+function snapValue(val: number, step: number | undefined, decimals: number): number {
+  if (step && step >= 1) return Math.round(val / step) * step;
+  if (decimals > 0) return parseFloat(val.toFixed(decimals));
+  return Math.round(val);
 }
 
 export function RangeFilter({
@@ -61,6 +83,7 @@ export function RangeFilter({
   testIdPrefix,
   inputWidth = "w-20",
   defaultExpanded = false,
+  logarithmic = false,
 }: RangeFilterProps) {
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
@@ -71,6 +94,19 @@ export function RangeFilter({
   const isDragging = useRef(false);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
+
+  const isLog = logarithmic && sliderMax > sliderMin;
+
+  const toSlider = useCallback((val: number): number => {
+    if (!isLog) return val;
+    return valueToLogPos(val, sliderMin, sliderMax);
+  }, [isLog, sliderMin, sliderMax]);
+
+  const fromSlider = useCallback((pos: number): number => {
+    if (!isLog) return pos;
+    const raw = logPosToValue(pos, sliderMin, sliderMax);
+    return snapValue(raw, step, decimals);
+  }, [isLog, sliderMin, sliderMax, step, decimals]);
 
   useEffect(() => {
     if (!isDragging.current) {
@@ -118,7 +154,7 @@ export function RangeFilter({
     return parseFloat(cleaned);
   });
 
-  const calculatedStep = step || Math.max(
+  const linearStep = step || Math.max(
     decimals > 0 ? Math.pow(10, -decimals) : 1,
     (sliderMax - sliderMin) / 100
   );
@@ -157,6 +193,38 @@ export function RangeFilter({
     if (data && data.binMin !== undefined && data.binMax !== undefined) {
       onChange([data.binMin, data.binMax]);
     }
+  };
+
+  const sliderProps = isLog ? {
+    min: 0,
+    max: LOG_STEPS,
+    step: 1,
+    value: [toSlider(localValue[0]), toSlider(localValue[1])] as [number, number],
+    onValueChange: (val: number[]) => {
+      isDragging.current = true;
+      const lo = fromSlider(val[0]);
+      const hi = fromSlider(val[1]);
+      setLocalValue([Math.min(lo, hi), Math.max(lo, hi)]);
+    },
+    onValueCommit: (val: number[]) => {
+      isDragging.current = false;
+      const lo = fromSlider(val[0]);
+      const hi = fromSlider(val[1]);
+      onChange([Math.min(lo, hi), Math.max(lo, hi)]);
+    },
+  } : {
+    min: sliderMin,
+    max: sliderMax,
+    step: linearStep,
+    value: localValue,
+    onValueChange: (val: number[]) => {
+      isDragging.current = true;
+      setLocalValue(val as [number, number]);
+    },
+    onValueCommit: (val: number[]) => {
+      isDragging.current = false;
+      onChange(val as [number, number]);
+    },
   };
 
   return (
@@ -220,18 +288,7 @@ export function RangeFilter({
         </div>
       </div>
       <Slider
-        min={sliderMin}
-        max={sliderMax}
-        step={calculatedStep}
-        value={localValue}
-        onValueChange={(val) => {
-          isDragging.current = true;
-          setLocalValue(val as [number, number]);
-        }}
-        onValueCommit={(val) => {
-          isDragging.current = false;
-          onChange(val as [number, number]);
-        }}
+        {...sliderProps}
         className="py-2"
         rangeClassName={rangeClassName}
         thumbClassName={thumbClassName}

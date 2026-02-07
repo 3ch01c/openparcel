@@ -1596,6 +1596,7 @@ export default function Dashboard() {
                 histogramData={stats?.chartData}
                 prefix="$"
                 testIdPrefix="value-range"
+                logarithmic
               />
 
               <RangeFilter
@@ -1612,6 +1613,7 @@ export default function Dashboard() {
                 histogramData={stats?.landChartData}
                 prefix="$"
                 testIdPrefix="land-value"
+                logarithmic
               />
 
               <RangeFilter
@@ -1628,6 +1630,7 @@ export default function Dashboard() {
                 histogramData={stats?.improvementChartData}
                 prefix="$"
                 testIdPrefix="improvement-value"
+                logarithmic
               />
 
               <RangeFilter
@@ -1644,6 +1647,7 @@ export default function Dashboard() {
                 histogramData={stats?.taxChartData}
                 prefix="$"
                 testIdPrefix="tax-range"
+                logarithmic
               />
 
               <RangeFilter
@@ -1661,6 +1665,7 @@ export default function Dashboard() {
                 decimals={2}
                 testIdPrefix="parcel-area"
                 inputWidth="w-16"
+                logarithmic
               />
 
               <RangeFilter
@@ -1679,6 +1684,7 @@ export default function Dashboard() {
                 decimals={2}
                 testIdPrefix="land-per-sqft"
                 inputWidth="w-16"
+                logarithmic
               />
 
               <RangeFilter
@@ -1696,6 +1702,7 @@ export default function Dashboard() {
                 decimals={3}
                 testIdPrefix="bldg-ratio"
                 inputWidth="w-16"
+                logarithmic
               />
 
               <RangeFilter
@@ -1713,6 +1720,7 @@ export default function Dashboard() {
                 decimals={1}
                 testIdPrefix="water-usage"
                 inputWidth="w-16"
+                logarithmic
               />
 
               <RangeFilter
@@ -1729,6 +1737,7 @@ export default function Dashboard() {
                 histogramData={stats?.electricUsageChartData}
                 decimals={0}
                 testIdPrefix="electric-usage"
+                logarithmic
               />
 
               <RangeFilter
@@ -1746,6 +1755,7 @@ export default function Dashboard() {
                 decimals={1}
                 testIdPrefix="gas-usage"
                 inputWidth="w-16"
+                logarithmic
               />
 
               {/* Water Per SF Range Filter */}
@@ -1764,6 +1774,7 @@ export default function Dashboard() {
                 decimals={2}
                 testIdPrefix="water-per-sf"
                 inputWidth="w-16"
+                logarithmic
               />
 
               {/* Electric Per SF Range Filter */}
@@ -1782,6 +1793,7 @@ export default function Dashboard() {
                 decimals={3}
                 testIdPrefix="electric-per-sf"
                 inputWidth="w-16"
+                logarithmic
               />
 
               {/* Gas Per SF Range Filter */}
@@ -1800,6 +1812,7 @@ export default function Dashboard() {
                 decimals={4}
                 testIdPrefix="gas-per-sf"
                 inputWidth="w-16"
+                logarithmic
               />
 
               {/* Account Type Multi-Select */}
