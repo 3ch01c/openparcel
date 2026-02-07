@@ -2199,7 +2199,7 @@ export default function Dashboard() {
 
               {/* Account Types Chart */}
               {stats.accountTypesChartData && stats.accountTypesChartData.length > 0 && (
-                <div className="h-64 pt-4">
+                <div style={{ height: `${stats.accountTypesChartData.length * 28 + 56}px` }} className="pt-4">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
                     Parcels by Account Type
                   </label>
@@ -2208,12 +2208,13 @@ export default function Dashboard() {
                       data={stats.accountTypesChartData} 
                       layout="vertical"
                       margin={{ left: 10, right: 10 }}
+                      barSize={16}
                     >
                       <XAxis type="number" hide />
                       <YAxis 
                         type="category" 
                         dataKey="type" 
-                        width={100}
+                        width={130}
                         tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
                       />
                       <RechartsTooltip
@@ -2239,7 +2240,7 @@ export default function Dashboard() {
 
               {/* Tax Exemptions Chart */}
               {stats.exemptionsChartData && stats.exemptionsChartData.length > 0 && (
-                <div className="h-64 pt-4">
+                <div style={{ height: `${stats.exemptionsChartData.length * 28 + 56}px` }} className="pt-4">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
                     Tax Exemptions by Type
                   </label>
@@ -2248,12 +2249,13 @@ export default function Dashboard() {
                       data={stats.exemptionsChartData} 
                       layout="vertical"
                       margin={{ left: 10, right: 10 }}
+                      barSize={16}
                     >
                       <XAxis type="number" hide />
                       <YAxis 
                         type="category" 
                         dataKey="type" 
-                        width={100}
+                        width={130}
                         tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
                         tickFormatter={(value) => value.replace("EXEMPT ", "")}
                       />
@@ -2285,7 +2287,7 @@ export default function Dashboard() {
 
               {/* Top Land Holders Chart */}
               {stats.topLandHoldersData && stats.topLandHoldersData.length > 0 && (
-                <div className="h-72 pt-4">
+                <div style={{ height: `${stats.topLandHoldersData.length * 28 + 56}px` }} className="pt-4">
                   <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground block mb-4">
                     Top Land Holders (Acres)
                   </label>
@@ -2294,12 +2296,13 @@ export default function Dashboard() {
                       data={stats.topLandHoldersData} 
                       layout="vertical"
                       margin={{ left: 10, right: 10 }}
+                      barSize={16}
                     >
                       <XAxis type="number" hide />
                       <YAxis 
                         type="category" 
                         dataKey="owner" 
-                        width={140}
+                        width={130}
                         tick={{ fontSize: 9, fill: "hsl(215 20% 65%)" }}
                       />
                       <RechartsTooltip
@@ -2326,7 +2329,7 @@ export default function Dashboard() {
                       />
                       <Bar
                         dataKey="totalAcres"
-                        fill="hsl(280 65% 60%)"
+                        fill="hsl(25 95% 53%)"
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
