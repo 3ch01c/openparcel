@@ -1024,12 +1024,25 @@ export default function Dashboard() {
       return total > 0 ? total : null;
     }));
 
-    const computeStats = (arr: number[]) => ({
-      mean: arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0,
-      median: median(arr),
-      mode: mode(arr),
-      stdev: stdev(arr),
-    });
+    const iqr = (arr: number[]): [number, number, number] => {
+      if (arr.length === 0) return [0, 0, 0];
+      const sorted = [...arr].sort((a, b) => a - b);
+      const q1Idx = Math.floor(sorted.length * 0.25);
+      const q3Idx = Math.floor(sorted.length * 0.75);
+      const q1 = sorted[q1Idx];
+      const q3 = sorted[q3Idx];
+      return [q1, q3, q3 - q1];
+    };
+    const computeStats = (arr: number[]) => {
+      const [q1, q3, iqrVal] = iqr(arr);
+      return {
+        mean: arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0,
+        median: median(arr),
+        mode: mode(arr),
+        stdev: stdev(arr),
+        q1, q3, iqr: iqrVal,
+      };
+    };
     const assessedStats = computeStats(assessedValues);
     const acreageStats = computeStats(acreageValues);
     const landValueStats = computeStats(landValueArr);
@@ -2034,6 +2047,7 @@ export default function Dashboard() {
                     <div>Median: {stats.acreageStats.median.toFixed(2)} ac</div>
                     <div>Mode: {stats.acreageStats.mode.toFixed(2)} ac</div>
                     <div>Stdev: {stats.acreageStats.stdev.toFixed(2)} ac</div>
+                    <div>IQR: {stats.acreageStats.q1.toFixed(2)}–{stats.acreageStats.q3.toFixed(2)} ac ({stats.acreageStats.iqr.toFixed(2)})</div>
                   </div>
                 }>
                   <StatsCard
@@ -2050,6 +2064,7 @@ export default function Dashboard() {
                   <div>Median: {formatCurrencyShort(stats.assessedStats.median)}</div>
                   <div>Mode: {formatCurrencyShort(stats.assessedStats.mode)}</div>
                   <div>Stdev: {formatCurrencyShort(stats.assessedStats.stdev)}</div>
+                  <div>IQR: {formatCurrencyShort(stats.assessedStats.q1)}–{formatCurrencyShort(stats.assessedStats.q3)} ({formatCurrencyShort(stats.assessedStats.iqr)})</div>
                 </div>
               }>
                 <StatsCard
@@ -2065,6 +2080,7 @@ export default function Dashboard() {
                   <div>Median: {formatCurrencyShort(stats.landValueStats.median)}</div>
                   <div>Mode: {formatCurrencyShort(stats.landValueStats.mode)}</div>
                   <div>Stdev: {formatCurrencyShort(stats.landValueStats.stdev)}</div>
+                  <div>IQR: {formatCurrencyShort(stats.landValueStats.q1)}–{formatCurrencyShort(stats.landValueStats.q3)} ({formatCurrencyShort(stats.landValueStats.iqr)})</div>
                 </div>
               }>
                 <StatsCard
@@ -2080,6 +2096,7 @@ export default function Dashboard() {
                   <div>Median: {formatCurrencyShort(stats.taxStats.median)} ({stats.assessedStats.median > 0 ? ((stats.taxStats.median / stats.assessedStats.median) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
                   <div>Mode: {formatCurrencyShort(stats.taxStats.mode)} ({stats.assessedStats.mode > 0 ? ((stats.taxStats.mode / stats.assessedStats.mode) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
                   <div>Stdev: {formatCurrencyShort(stats.taxStats.stdev)}</div>
+                  <div>IQR: {formatCurrencyShort(stats.taxStats.q1)}–{formatCurrencyShort(stats.taxStats.q3)} ({formatCurrencyShort(stats.taxStats.iqr)})</div>
                 </div>
               }>
                 <StatsCard
@@ -2095,6 +2112,7 @@ export default function Dashboard() {
                   <div>Median: {formatCurrencyShort(stats.exemptionStats.median)}</div>
                   <div>Mode: {formatCurrencyShort(stats.exemptionStats.mode)}</div>
                   <div>Stdev: {formatCurrencyShort(stats.exemptionStats.stdev)}</div>
+                  <div>IQR: {formatCurrencyShort(stats.exemptionStats.q1)}–{formatCurrencyShort(stats.exemptionStats.q3)} ({formatCurrencyShort(stats.exemptionStats.iqr)})</div>
                 </div>
               }>
                 <StatsCard
@@ -2119,6 +2137,7 @@ export default function Dashboard() {
                           <div>Median: {stats.waterStats.median.toFixed(1)} kgal</div>
                           <div>Mode: {stats.waterStats.mode.toFixed(1)} kgal</div>
                           <div>Stdev: {stats.waterStats.stdev.toFixed(1)} kgal</div>
+                          <div>IQR: {stats.waterStats.q1.toFixed(1)}–{stats.waterStats.q3.toFixed(1)} kgal ({stats.waterStats.iqr.toFixed(1)})</div>
                         </div>
                       }>
                         <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-2 text-center">
@@ -2139,6 +2158,7 @@ export default function Dashboard() {
                           <div>Median: {stats.electricStats.median.toFixed(0)} kWh</div>
                           <div>Mode: {stats.electricStats.mode.toFixed(0)} kWh</div>
                           <div>Stdev: {stats.electricStats.stdev.toFixed(0)} kWh</div>
+                          <div>IQR: {stats.electricStats.q1.toFixed(0)}–{stats.electricStats.q3.toFixed(0)} kWh ({stats.electricStats.iqr.toFixed(0)})</div>
                         </div>
                       }>
                         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 text-center">
@@ -2159,6 +2179,7 @@ export default function Dashboard() {
                           <div>Median: {stats.gasStats.median.toFixed(1)} therms</div>
                           <div>Mode: {stats.gasStats.mode.toFixed(1)} therms</div>
                           <div>Stdev: {stats.gasStats.stdev.toFixed(1)} therms</div>
+                          <div>IQR: {stats.gasStats.q1.toFixed(1)}–{stats.gasStats.q3.toFixed(1)} therms ({stats.gasStats.iqr.toFixed(1)})</div>
                         </div>
                       }>
                         <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2 text-center">
