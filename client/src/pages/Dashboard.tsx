@@ -1525,19 +1525,19 @@ export default function Dashboard() {
                 <button
                   onClick={() => {
                     setYear(2025);
-                    setValueRange([unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max]);
-                    setTaxRange([unfilteredRanges.tax.min, unfilteredRanges.tax.max]);
-                    setParcelAreaRange([unfilteredRanges.parcelArea.min, unfilteredRanges.parcelArea.max]);
-                    setLandValueRange([unfilteredRanges.landValue.min, unfilteredRanges.landValue.max]);
-                    setImprovementValueRange([unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max]);
-                    setLandValuePerSqftRange([unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max]);
-                    setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
-                    setWaterUsageRange([unfilteredRanges.waterUsage.min, unfilteredRanges.waterUsage.max]);
-                    setElectricUsageRange([unfilteredRanges.electricUsage.min, unfilteredRanges.electricUsage.max]);
-                    setGasUsageRange([unfilteredRanges.gasUsage.min, unfilteredRanges.gasUsage.max]);
-                    setWaterPerSfRange([unfilteredRanges.waterPerSf?.min ?? 0, unfilteredRanges.waterPerSf?.max ?? 10]);
-                    setElectricPerSfRange([unfilteredRanges.electricPerSf?.min ?? 0, unfilteredRanges.electricPerSf?.max ?? 5]);
-                    setGasPerSfRange([unfilteredRanges.gasPerSf?.min ?? 0, unfilteredRanges.gasPerSf?.max ?? 1]);
+                    setValueRange([sliderBounds.assessedValue.min, sliderBounds.assessedValue.max]);
+                    setTaxRange([sliderBounds.tax.min, sliderBounds.tax.max]);
+                    setParcelAreaRange([sliderBounds.parcelArea.min, sliderBounds.parcelArea.max]);
+                    setLandValueRange([sliderBounds.landValue.min, sliderBounds.landValue.max]);
+                    setImprovementValueRange([sliderBounds.improvementValue.min, sliderBounds.improvementValue.max]);
+                    setLandValuePerSqftRange([sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max]);
+                    setBldgToLandRatioRange([sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max]);
+                    setWaterUsageRange([sliderBounds.waterUsage.min, sliderBounds.waterUsage.max]);
+                    setElectricUsageRange([sliderBounds.electricUsage.min, sliderBounds.electricUsage.max]);
+                    setGasUsageRange([sliderBounds.gasUsage.min, sliderBounds.gasUsage.max]);
+                    setWaterPerSfRange([sliderBounds.waterPerSf?.min ?? 0, sliderBounds.waterPerSf?.max ?? 10]);
+                    setElectricPerSfRange([sliderBounds.electricPerSf?.min ?? 0, sliderBounds.electricPerSf?.max ?? 5]);
+                    setGasPerSfRange([sliderBounds.gasPerSf?.min ?? 0, sliderBounds.gasPerSf?.max ?? 1]);
                     setSelectedAccountTypes([]);
                     setSelectedSubdivisions([]);
                     setSelectedOwnerCityStates([]);
