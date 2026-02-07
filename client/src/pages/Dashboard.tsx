@@ -1658,7 +1658,6 @@ export default function Dashboard() {
                 onChange={setParcelAreaRange}
                 histogramData={stats?.parcelChartData}
                 decimals={2}
-                unit="ac"
                 testIdPrefix="parcel-area"
                 inputWidth="w-16"
               />
@@ -1677,7 +1676,6 @@ export default function Dashboard() {
                 histogramData={stats?.landPerSqftChartData}
                 prefix="$"
                 decimals={2}
-                unit="/sf"
                 testIdPrefix="land-per-sqft"
                 inputWidth="w-16"
               />
