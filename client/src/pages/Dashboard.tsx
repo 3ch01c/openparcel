@@ -604,71 +604,12 @@ export default function Dashboard() {
     };
   }, [properties, unfilteredRanges, getPropertyTax, getLandValuePerSqft, getBldgToLandRatio]);
 
-  // Clamp slider thumb values when they fall outside filtered data bounds
+  // Track rangesJustInitialized to skip stale cycles
   useEffect(() => {
-    if (!rangesInitialized.current || !properties || properties.length === 0) return;
-    
-    // Skip clamping on the render cycle right after initialization,
-    // because filteredRanges may still be stale (computed from pre-init default ranges)
     if (rangesJustInitialized.current) {
       rangesJustInitialized.current = false;
-      return;
     }
-    
-    // Clamp assessed value range
-    const clampedValueMin = Math.max(valueRange[0], filteredRanges.assessedValue.min);
-    const clampedValueMax = Math.min(valueRange[1], filteredRanges.assessedValue.max);
-    if (clampedValueMin !== valueRange[0] || clampedValueMax !== valueRange[1]) {
-      setValueRange([clampedValueMin, clampedValueMax]);
-    }
-    
-    // Clamp tax range
-    const clampedTaxMin = Math.max(taxRange[0], filteredRanges.tax.min);
-    const clampedTaxMax = Math.min(taxRange[1], filteredRanges.tax.max);
-    if (clampedTaxMin !== taxRange[0] || clampedTaxMax !== taxRange[1]) {
-      setTaxRange([clampedTaxMin, clampedTaxMax]);
-    }
-    
-    // Clamp parcel area range
-    const clampedParcelMin = Math.max(parcelAreaRange[0], filteredRanges.parcelArea.min);
-    const clampedParcelMax = Math.min(parcelAreaRange[1], filteredRanges.parcelArea.max);
-    if (clampedParcelMin !== parcelAreaRange[0] || clampedParcelMax !== parcelAreaRange[1]) {
-      setParcelAreaRange([clampedParcelMin, clampedParcelMax]);
-    }
-    
-    // Clamp land value range
-    const clampedLandMin = Math.max(landValueRange[0], filteredRanges.landValue.min);
-    const clampedLandMax = Math.min(landValueRange[1], filteredRanges.landValue.max);
-    if (clampedLandMin !== landValueRange[0] || clampedLandMax !== landValueRange[1]) {
-      setLandValueRange([clampedLandMin, clampedLandMax]);
-    }
-    
-    // Clamp improvement value range
-    const clampedImpMin = Math.max(improvementValueRange[0], filteredRanges.improvementValue.min);
-    const clampedImpMax = Math.min(improvementValueRange[1], filteredRanges.improvementValue.max);
-    if (clampedImpMin !== improvementValueRange[0] || clampedImpMax !== improvementValueRange[1]) {
-      setImprovementValueRange([clampedImpMin, clampedImpMax]);
-    }
-    
-    // Clamp land value per sqft range
-    const clampedLandSqftMin = Math.max(landValuePerSqftRange[0], filteredRanges.landPerSqft.min);
-    const clampedLandSqftMax = Math.min(landValuePerSqftRange[1], filteredRanges.landPerSqft.max);
-    if (clampedLandSqftMin !== landValuePerSqftRange[0] || clampedLandSqftMax !== landValuePerSqftRange[1]) {
-      setLandValuePerSqftRange([clampedLandSqftMin, clampedLandSqftMax]);
-    }
-    
-    // Clamp bldg to land ratio range
-    const clampedBldgMin = Math.max(bldgToLandRatioRange[0], filteredRanges.bldgRatio.min);
-    const clampedBldgMax = Math.min(bldgToLandRatioRange[1], filteredRanges.bldgRatio.max);
-    if (clampedBldgMin !== bldgToLandRatioRange[0] || clampedBldgMax !== bldgToLandRatioRange[1]) {
-      setBldgToLandRatioRange([clampedBldgMin, clampedBldgMax]);
-    }
-
-    // Note: Utility ranges (water, electric, gas, and per-SF) are NOT clamped here
-    // because utility data is sparse (not all properties have it). Clamping sparse
-    // data ranges against filtered bounds causes invalid ranges when the filtered set
-    // has no utility data, creating a feedback loop that filters out all utility data.
-  }, [filteredRanges, properties]);
+  }, [properties]);
 
   // Derived Stats
   const stats = useMemo(() => {
