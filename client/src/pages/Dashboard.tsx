@@ -2205,7 +2205,7 @@ export default function Dashboard() {
           <div className="absolute inset-0 z-[450] flex items-center justify-center bg-black/20 backdrop-blur-[1px] pointer-events-none" data-testid="filtering-spinner">
             <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg px-4 py-3">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span className="text-sm text-foreground">Filtering...</span>
+              <span className="text-sm text-foreground">Loading...</span>
             </div>
           </div>
         )}
