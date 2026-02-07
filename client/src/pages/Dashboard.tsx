@@ -41,7 +41,7 @@ import {
   Flame,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { CursorTooltip } from "@/components/CursorTooltip";
 import {
   BarChart,
   Bar,
@@ -696,6 +696,32 @@ export default function Dashboard() {
 
     const nnf = (arr: (number | null | undefined)[]): number[] => arr.filter((v): v is number => v != null);
 
+    const median = (arr: number[]): number => {
+      if (arr.length === 0) return 0;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    };
+    const mode = (arr: number[]): number => {
+      if (arr.length === 0) return 0;
+      const freq = new Map<number, number>();
+      let maxFreq = 0;
+      let modeVal = arr[0];
+      arr.forEach(v => {
+        const rounded = Math.round(v * 100) / 100;
+        const count = (freq.get(rounded) || 0) + 1;
+        freq.set(rounded, count);
+        if (count > maxFreq) { maxFreq = count; modeVal = rounded; }
+      });
+      return modeVal;
+    };
+    const stdev = (arr: number[]): number => {
+      if (arr.length < 2) return 0;
+      const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+      const variance = arr.reduce((sum, v) => sum + (v - mean) ** 2, 0) / arr.length;
+      return Math.sqrt(variance);
+    };
+
     // Tax histogram data (5 bins from 0 to max tax)
     const taxValues = nnf(statsProps.map(p => getPropertyTax(p)));
     // Tax histogram uses actual min/max from filtered data
@@ -984,6 +1010,32 @@ export default function Dashboard() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10); // Top 10 account types
 
+    const assessedValues = nnf(statsProps.map(p => p.assessedValue));
+    const acreageValues = nnf(statsProps.map(p => p.parcelArea));
+    const landValueArr = nnf(statsProps.map(p => p.landValue));
+    const perParcelTaxValues = nnf(statsProps.map(p => getPropertyTax(p)));
+    const perParcelExemptionValues = nnf(statsProps.map(p => {
+      const parcelMillLevy = p.millLevy || 28.714;
+      const hhVal = ((p.hhExemption || 0) * parcelMillLevy) / 1000;
+      const vetVal = ((p.vetExemption || 0) * parcelMillLevy) / 1000;
+      const isExempt = p.accountType?.toUpperCase().includes("EXEMPT") || false;
+      const exemptVal = isExempt ? ((p.totalTaxable || 0) * parcelMillLevy) / 1000 : 0;
+      const total = hhVal + vetVal + exemptVal;
+      return total > 0 ? total : null;
+    }));
+
+    const computeStats = (arr: number[]) => ({
+      mean: arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0,
+      median: median(arr),
+      mode: mode(arr),
+      stdev: stdev(arr),
+    });
+    const assessedStats = computeStats(assessedValues);
+    const acreageStats = computeStats(acreageValues);
+    const landValueStats = computeStats(landValueArr);
+    const taxStats = computeStats(perParcelTaxValues);
+    const exemptionStats = computeStats(perParcelExemptionValues);
+
     // Count statsProps with no improvement value (land only)
     const landOnlyProps = statsProps.filter(p => (p.improvementValue || 0) === 0);
     const noImprovementCount = landOnlyProps.length;
@@ -1101,6 +1153,11 @@ export default function Dashboard() {
       totalGasUsage,
       avgGasUsage,
       gasParcelCount: propsWithGas.length,
+      assessedStats,
+      acreageStats,
+      landValueStats,
+      taxStats,
+      exemptionStats,
     };
   }, [includedProperties, excludedProperties, colorMetric]);
 
@@ -1946,57 +2003,99 @@ export default function Dashboard() {
           ) : stats ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-2 gap-4">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <StatsCard
-                        title="Parcels"
-                        value={stats.count.toLocaleString()}
-                        icon={Home}
-                        description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <div className="text-xs space-y-1">
-                      <div>{((initialTotalParcelsRef.current || 0) - (properties?.length || 0)).toLocaleString()} hidden by filters</div>
-                      {stats.metricExcludedCount > 0 && (
-                        <div>{stats.metricExcludedCount.toLocaleString()} hidden for missing metric data</div>
-                      )}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-                <StatsCard
-                  title="Acreage"
-                  value={stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})}
-                  icon={TrendingUp}
-                  description={`Avg: ${stats.avgParcelAcres.toFixed(2)} ac`}
-                />
+                <CursorTooltip content={
+                  <div className="text-xs space-y-1">
+                    <div>{((initialTotalParcelsRef.current || 0) - (properties?.length || 0)).toLocaleString()} hidden by filters</div>
+                    {stats.metricExcludedCount > 0 && (
+                      <div>{stats.metricExcludedCount.toLocaleString()} hidden for missing metric data</div>
+                    )}
+                  </div>
+                }>
+                  <StatsCard
+                    title="Parcels"
+                    value={stats.count.toLocaleString()}
+                    icon={Home}
+                    description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
+                  />
+                </CursorTooltip>
+                <CursorTooltip content={
+                  <div className="text-xs space-y-1">
+                    <div>Mean: {stats.acreageStats.mean.toFixed(2)} ac</div>
+                    <div>Median: {stats.acreageStats.median.toFixed(2)} ac</div>
+                    <div>Mode: {stats.acreageStats.mode.toFixed(2)} ac</div>
+                    <div>Stdev: {stats.acreageStats.stdev.toFixed(2)} ac</div>
+                  </div>
+                }>
+                  <StatsCard
+                    title="Acreage"
+                    value={stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})}
+                    icon={TrendingUp}
+                    description={`Median: ${stats.acreageStats.median.toFixed(2)} ac`}
+                  />
+                </CursorTooltip>
               </div>
-              <StatsCard
-                title="Total Assessed Value"
-                value={formatCurrencyShort(stats.totalValue)}
-                icon={DollarSign}
-                description={`Avg: ${formatCurrencyShort(stats.avgValue)}`}
-              />
-              <StatsCard
-                title="Total Land Value"
-                value={formatCurrencyShort(stats.totalLandValue)}
-                icon={DollarSign}
-                description={`Avg: $${stats.avgLandValuePerAcre.toLocaleString(undefined, {maximumFractionDigits: 0})}/acre`}
-              />
-              <StatsCard
-                title="Total Tax Assessed"
-                value={formatCurrencyShort(stats.totalTaxes)}
-                icon={DollarSign}
-                description={`Avg: ${formatCurrencyShort(stats.avgTaxes)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`}
-              />
-              <StatsCard
-                title="Total Tax Exemptions"
-                value={formatCurrencyShort(stats.totalTaxExemptions)}
-                icon={DollarSign}
-                description="All exemption types combined"
-              />
+              <CursorTooltip content={
+                <div className="text-xs space-y-1">
+                  <div>Mean: {formatCurrencyShort(stats.assessedStats.mean)}</div>
+                  <div>Median: {formatCurrencyShort(stats.assessedStats.median)}</div>
+                  <div>Mode: {formatCurrencyShort(stats.assessedStats.mode)}</div>
+                  <div>Stdev: {formatCurrencyShort(stats.assessedStats.stdev)}</div>
+                </div>
+              }>
+                <StatsCard
+                  title="Total Assessed Value"
+                  value={formatCurrencyShort(stats.totalValue)}
+                  icon={DollarSign}
+                  description={`Median: ${formatCurrencyShort(stats.assessedStats.median)}`}
+                />
+              </CursorTooltip>
+              <CursorTooltip content={
+                <div className="text-xs space-y-1">
+                  <div>Mean: {formatCurrencyShort(stats.landValueStats.mean)}</div>
+                  <div>Median: {formatCurrencyShort(stats.landValueStats.median)}</div>
+                  <div>Mode: {formatCurrencyShort(stats.landValueStats.mode)}</div>
+                  <div>Stdev: {formatCurrencyShort(stats.landValueStats.stdev)}</div>
+                </div>
+              }>
+                <StatsCard
+                  title="Total Land Value"
+                  value={formatCurrencyShort(stats.totalLandValue)}
+                  icon={DollarSign}
+                  description={`Median: ${formatCurrencyShort(stats.landValueStats.median)}`}
+                />
+              </CursorTooltip>
+              <CursorTooltip content={
+                <div className="text-xs space-y-1">
+                  <div>Mean: {formatCurrencyShort(stats.taxStats.mean)}</div>
+                  <div>Median: {formatCurrencyShort(stats.taxStats.median)}</div>
+                  <div>Mode: {formatCurrencyShort(stats.taxStats.mode)}</div>
+                  <div>Stdev: {formatCurrencyShort(stats.taxStats.stdev)}</div>
+                  <div>Eff. Rate: {stats.taxPctOfTotal.toFixed(2)}%</div>
+                </div>
+              }>
+                <StatsCard
+                  title="Total Tax Assessed"
+                  value={formatCurrencyShort(stats.totalTaxes)}
+                  icon={DollarSign}
+                  description={`Median: ${formatCurrencyShort(stats.taxStats.median)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`}
+                />
+              </CursorTooltip>
+              <CursorTooltip content={
+                <div className="text-xs space-y-1">
+                  <div className="text-muted-foreground mb-0.5">Per exempt parcel:</div>
+                  <div>Mean: {formatCurrencyShort(stats.exemptionStats.mean)}</div>
+                  <div>Median: {formatCurrencyShort(stats.exemptionStats.median)}</div>
+                  <div>Mode: {formatCurrencyShort(stats.exemptionStats.mode)}</div>
+                  <div>Stdev: {formatCurrencyShort(stats.exemptionStats.stdev)}</div>
+                </div>
+              }>
+                <StatsCard
+                  title="Total Tax Exemptions"
+                  value={formatCurrencyShort(stats.totalTaxExemptions)}
+                  icon={DollarSign}
+                  description={`Median: ${formatCurrencyShort(stats.exemptionStats.median)}`}
+                />
+              </CursorTooltip>
 
               {/* Utility Usage Stats */}
               {(stats.waterParcelCount > 0 || stats.electricParcelCount > 0 || stats.gasParcelCount > 0) && (
