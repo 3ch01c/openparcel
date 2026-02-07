@@ -125,7 +125,27 @@ export default function Dashboard() {
   const [isFilterPending, startFilterTransition] = useTransition();
   const rangesInitialized = useRef(false);
   const rangesJustInitialized = useRef(false);
-  const pendingRangeUpdateRef = useRef(false); // Flag to trigger range update after user applies categorical filter
+  const pendingRangeUpdateRef = useRef(false);
+  const [rangeFilterVersion, setRangeFilterVersion] = useState(0);
+  const committedRanges = useRef({
+    assessedValue: [0, 250000000] as [number, number],
+    tax: [0, 500000] as [number, number],
+    parcelArea: [0, 1200] as [number, number],
+    landValue: [0, 250000000] as [number, number],
+    improvementValue: [0, 50000000] as [number, number],
+    landPerSqft: [0, 150] as [number, number],
+    bldgRatio: [0, 2] as [number, number],
+    waterUsage: [0, 100] as [number, number],
+    electricUsage: [0, 5000] as [number, number],
+    gasUsage: [0, 500] as [number, number],
+    waterPerSf: [0, 10] as [number, number],
+    electricPerSf: [0, 5] as [number, number],
+    gasPerSf: [0, 1] as [number, number],
+  });
+  const commitRange = (key: keyof typeof committedRanges.current, value: [number, number]) => {
+    committedRanges.current[key] = value;
+    setRangeFilterVersion(v => v + 1);
+  };
   const initialTotalParcelsRef = useRef<number | null>(null);
   const initialAccountTypesRef = useRef<string[] | null>(null);
   const initialSubdivisionsRef = useRef<string[] | null>(null);
@@ -190,8 +210,6 @@ export default function Dashboard() {
     refetch,
   } = useProperties({
     year,
-    minValue: valueRange[0],
-    maxValue: valueRange[1],
   });
 
   // Get unique account types from initial data load (never changes after first load)
@@ -302,19 +320,35 @@ export default function Dashboard() {
       initialZonesRef.current = Array.from(zones).sort();
       initialOwnerCityStatesRef.current = Array.from(ownerCityStates).sort();
       
-      setValueRange([unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max]);
-      setTaxRange([unfilteredRanges.tax.min, unfilteredRanges.tax.max]);
-      setParcelAreaRange([unfilteredRanges.parcelArea.min, unfilteredRanges.parcelArea.max]);
-      setLandValueRange([unfilteredRanges.landValue.min, unfilteredRanges.landValue.max]);
-      setImprovementValueRange([unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max]);
-      setLandValuePerSqftRange([unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max]);
-      setBldgToLandRatioRange([unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max]);
-      setWaterUsageRange([unfilteredRanges.waterUsage.min, unfilteredRanges.waterUsage.max]);
-      setElectricUsageRange([unfilteredRanges.electricUsage.min, unfilteredRanges.electricUsage.max]);
-      setGasUsageRange([unfilteredRanges.gasUsage.min, unfilteredRanges.gasUsage.max]);
-      setWaterPerSfRange([unfilteredRanges.waterPerSf?.min ?? 0, unfilteredRanges.waterPerSf?.max ?? 10]);
-      setElectricPerSfRange([unfilteredRanges.electricPerSf?.min ?? 0, unfilteredRanges.electricPerSf?.max ?? 5]);
-      setGasPerSfRange([unfilteredRanges.gasPerSf?.min ?? 0, unfilteredRanges.gasPerSf?.max ?? 1]);
+      const initRanges = {
+        assessedValue: [unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max] as [number, number],
+        tax: [unfilteredRanges.tax.min, unfilteredRanges.tax.max] as [number, number],
+        parcelArea: [unfilteredRanges.parcelArea.min, unfilteredRanges.parcelArea.max] as [number, number],
+        landValue: [unfilteredRanges.landValue.min, unfilteredRanges.landValue.max] as [number, number],
+        improvementValue: [unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max] as [number, number],
+        landPerSqft: [unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max] as [number, number],
+        bldgRatio: [unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max] as [number, number],
+        waterUsage: [unfilteredRanges.waterUsage.min, unfilteredRanges.waterUsage.max] as [number, number],
+        electricUsage: [unfilteredRanges.electricUsage.min, unfilteredRanges.electricUsage.max] as [number, number],
+        gasUsage: [unfilteredRanges.gasUsage.min, unfilteredRanges.gasUsage.max] as [number, number],
+        waterPerSf: [unfilteredRanges.waterPerSf?.min ?? 0, unfilteredRanges.waterPerSf?.max ?? 10] as [number, number],
+        electricPerSf: [unfilteredRanges.electricPerSf?.min ?? 0, unfilteredRanges.electricPerSf?.max ?? 5] as [number, number],
+        gasPerSf: [unfilteredRanges.gasPerSf?.min ?? 0, unfilteredRanges.gasPerSf?.max ?? 1] as [number, number],
+      };
+      committedRanges.current = { ...initRanges };
+      setValueRange(initRanges.assessedValue);
+      setTaxRange(initRanges.tax);
+      setParcelAreaRange(initRanges.parcelArea);
+      setLandValueRange(initRanges.landValue);
+      setImprovementValueRange(initRanges.improvementValue);
+      setLandValuePerSqftRange(initRanges.landPerSqft);
+      setBldgToLandRatioRange(initRanges.bldgRatio);
+      setWaterUsageRange(initRanges.waterUsage);
+      setElectricUsageRange(initRanges.electricUsage);
+      setGasUsageRange(initRanges.gasUsage);
+      setWaterPerSfRange(initRanges.waterPerSf);
+      setElectricPerSfRange(initRanges.electricPerSf);
+      setGasPerSfRange(initRanges.gasPerSf);
       rangesInitialized.current = true;
       rangesJustInitialized.current = true;
     }
@@ -331,6 +365,7 @@ export default function Dashboard() {
   const propertiesWithoutAccountTypeFilter = useMemo(() => {
     if (!rawProperties) return [];
     
+    const cr = committedRanges.current;
     const inRange = (val: number | null | undefined, range: [number, number], bounds: { min: number; max: number }) => {
       if (val == null) return !isRangeActive(range, bounds);
       return val >= range[0] && val <= range[1];
@@ -349,21 +384,23 @@ export default function Dashboard() {
         ? p.avgMonthlyGasTherms / bldgSf : null;
       
       return (
-        inRange(tax, taxRange, sliderBounds.tax) &&
-        inRange(p.parcelArea, parcelAreaRange, sliderBounds.parcelArea) &&
-        inRange(p.landValue, landValueRange, sliderBounds.landValue) &&
-        inRange(p.improvementValue, improvementValueRange, sliderBounds.improvementValue) &&
-        inRange(landPerSqft, landValuePerSqftRange, sliderBounds.landPerSqft) &&
-        inRange(bldgRatio, bldgToLandRatioRange, sliderBounds.bldgRatio) &&
-        inRange(p.avgMonthlyWaterKgal, waterUsageRange, sliderBounds.waterUsage) &&
-        inRange(p.avgMonthlyElectricKwh, electricUsageRange, sliderBounds.electricUsage) &&
-        inRange(p.avgMonthlyGasTherms, gasUsageRange, sliderBounds.gasUsage) &&
-        inRange(waterPerSf, waterPerSfRange, sliderBounds.waterPerSf || { min: 0, max: 10 }) &&
-        inRange(electricPerSf, electricPerSfRange, sliderBounds.electricPerSf || { min: 0, max: 5 }) &&
-        inRange(gasPerSf, gasPerSfRange, sliderBounds.gasPerSf || { min: 0, max: 1 })
+        inRange(p.assessedValue, cr.assessedValue, sliderBounds.assessedValue) &&
+        inRange(tax, cr.tax, sliderBounds.tax) &&
+        inRange(p.parcelArea, cr.parcelArea, sliderBounds.parcelArea) &&
+        inRange(p.landValue, cr.landValue, sliderBounds.landValue) &&
+        inRange(p.improvementValue, cr.improvementValue, sliderBounds.improvementValue) &&
+        inRange(landPerSqft, cr.landPerSqft, sliderBounds.landPerSqft) &&
+        inRange(bldgRatio, cr.bldgRatio, sliderBounds.bldgRatio) &&
+        inRange(p.avgMonthlyWaterKgal, cr.waterUsage, sliderBounds.waterUsage) &&
+        inRange(p.avgMonthlyElectricKwh, cr.electricUsage, sliderBounds.electricUsage) &&
+        inRange(p.avgMonthlyGasTherms, cr.gasUsage, sliderBounds.gasUsage) &&
+        inRange(waterPerSf, cr.waterPerSf, sliderBounds.waterPerSf || { min: 0, max: 10 }) &&
+        inRange(electricPerSf, cr.electricPerSf, sliderBounds.electricPerSf || { min: 0, max: 5 }) &&
+        inRange(gasPerSf, cr.gasPerSf, sliderBounds.gasPerSf || { min: 0, max: 1 })
       );
     });
-  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange, electricUsageRange, gasUsageRange, waterPerSfRange, electricPerSfRange, gasPerSfRange, sliderBounds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawProperties, rangeFilterVersion, sliderBounds]);
 
   // For account type counts: apply subdivision, zone, and owner city/state filters (but not account type)
   const propertiesForAccountTypeCounts = useMemo(() => {
@@ -1467,19 +1504,36 @@ export default function Dashboard() {
                   onClick={() => {
                     startFilterTransition(() => {
                       setYear(2025);
-                      setValueRange([sliderBounds.assessedValue.min, sliderBounds.assessedValue.max]);
-                      setTaxRange([sliderBounds.tax.min, sliderBounds.tax.max]);
-                      setParcelAreaRange([sliderBounds.parcelArea.min, sliderBounds.parcelArea.max]);
-                      setLandValueRange([sliderBounds.landValue.min, sliderBounds.landValue.max]);
-                      setImprovementValueRange([sliderBounds.improvementValue.min, sliderBounds.improvementValue.max]);
-                      setLandValuePerSqftRange([sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max]);
-                      setBldgToLandRatioRange([sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max]);
-                      setWaterUsageRange([sliderBounds.waterUsage.min, sliderBounds.waterUsage.max]);
-                      setElectricUsageRange([sliderBounds.electricUsage.min, sliderBounds.electricUsage.max]);
-                      setGasUsageRange([sliderBounds.gasUsage.min, sliderBounds.gasUsage.max]);
-                      setWaterPerSfRange([sliderBounds.waterPerSf?.min ?? 0, sliderBounds.waterPerSf?.max ?? 10]);
-                      setElectricPerSfRange([sliderBounds.electricPerSf?.min ?? 0, sliderBounds.electricPerSf?.max ?? 5]);
-                      setGasPerSfRange([sliderBounds.gasPerSf?.min ?? 0, sliderBounds.gasPerSf?.max ?? 1]);
+                      const resetRanges = {
+                        assessedValue: [sliderBounds.assessedValue.min, sliderBounds.assessedValue.max] as [number, number],
+                        tax: [sliderBounds.tax.min, sliderBounds.tax.max] as [number, number],
+                        parcelArea: [sliderBounds.parcelArea.min, sliderBounds.parcelArea.max] as [number, number],
+                        landValue: [sliderBounds.landValue.min, sliderBounds.landValue.max] as [number, number],
+                        improvementValue: [sliderBounds.improvementValue.min, sliderBounds.improvementValue.max] as [number, number],
+                        landPerSqft: [sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max] as [number, number],
+                        bldgRatio: [sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max] as [number, number],
+                        waterUsage: [sliderBounds.waterUsage.min, sliderBounds.waterUsage.max] as [number, number],
+                        electricUsage: [sliderBounds.electricUsage.min, sliderBounds.electricUsage.max] as [number, number],
+                        gasUsage: [sliderBounds.gasUsage.min, sliderBounds.gasUsage.max] as [number, number],
+                        waterPerSf: [sliderBounds.waterPerSf?.min ?? 0, sliderBounds.waterPerSf?.max ?? 10] as [number, number],
+                        electricPerSf: [sliderBounds.electricPerSf?.min ?? 0, sliderBounds.electricPerSf?.max ?? 5] as [number, number],
+                        gasPerSf: [sliderBounds.gasPerSf?.min ?? 0, sliderBounds.gasPerSf?.max ?? 1] as [number, number],
+                      };
+                      committedRanges.current = { ...resetRanges };
+                      setRangeFilterVersion(v => v + 1);
+                      setValueRange(resetRanges.assessedValue);
+                      setTaxRange(resetRanges.tax);
+                      setParcelAreaRange(resetRanges.parcelArea);
+                      setLandValueRange(resetRanges.landValue);
+                      setImprovementValueRange(resetRanges.improvementValue);
+                      setLandValuePerSqftRange(resetRanges.landPerSqft);
+                      setBldgToLandRatioRange(resetRanges.bldgRatio);
+                      setWaterUsageRange(resetRanges.waterUsage);
+                      setElectricUsageRange(resetRanges.electricUsage);
+                      setGasUsageRange(resetRanges.gasUsage);
+                      setWaterPerSfRange(resetRanges.waterPerSf);
+                      setElectricPerSfRange(resetRanges.electricPerSf);
+                      setGasPerSfRange(resetRanges.gasPerSf);
                       setSelectedAccountTypes([]);
                       setSelectedSubdivisions([]);
                       setSelectedZones([]);
@@ -1532,7 +1586,7 @@ export default function Dashboard() {
                 filteredMin={stats?.chartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.chartData?.[stats.chartData.length - 1]?.binMax ?? 5000000}
                 value={valueRange}
-                onChange={setValueRange}
+                onChange={(v) => { setValueRange(v); commitRange('assessedValue', v); }}
                 histogramData={stats?.chartData}
                 prefix="$"
                 testIdPrefix="value-range"
@@ -1548,7 +1602,7 @@ export default function Dashboard() {
                 filteredMin={stats?.landChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.landChartData?.[stats.landChartData?.length - 1]?.binMax ?? 2000000}
                 value={landValueRange}
-                onChange={setLandValueRange}
+                onChange={(v) => { setLandValueRange(v); commitRange('landValue', v); }}
                 histogramData={stats?.landChartData}
                 prefix="$"
                 testIdPrefix="land-value"
@@ -1564,7 +1618,7 @@ export default function Dashboard() {
                 filteredMin={stats?.improvementChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.improvementChartData?.[stats.improvementChartData?.length - 1]?.binMax ?? 5000000}
                 value={improvementValueRange}
-                onChange={setImprovementValueRange}
+                onChange={(v) => { setImprovementValueRange(v); commitRange('improvementValue', v); }}
                 histogramData={stats?.improvementChartData}
                 prefix="$"
                 testIdPrefix="improvement-value"
@@ -1580,7 +1634,7 @@ export default function Dashboard() {
                 filteredMin={stats?.taxChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.taxChartData?.[stats.taxChartData?.length - 1]?.binMax ?? 50000}
                 value={taxRange}
-                onChange={setTaxRange}
+                onChange={(v) => { setTaxRange(v); commitRange('tax', v); }}
                 histogramData={stats?.taxChartData}
                 prefix="$"
                 testIdPrefix="tax-range"
@@ -1596,7 +1650,7 @@ export default function Dashboard() {
                 filteredMin={stats?.parcelChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.parcelChartData?.[stats.parcelChartData?.length - 1]?.binMax ?? 1200}
                 value={parcelAreaRange}
-                onChange={setParcelAreaRange}
+                onChange={(v) => { setParcelAreaRange(v); commitRange('parcelArea', v); }}
                 histogramData={stats?.parcelChartData}
                 decimals={2}
                 testIdPrefix="parcel-area"
@@ -1613,7 +1667,7 @@ export default function Dashboard() {
                 filteredMin={stats?.landPerSqftChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.landPerSqftChartData?.[stats.landPerSqftChartData?.length - 1]?.binMax ?? 150}
                 value={landValuePerSqftRange}
-                onChange={setLandValuePerSqftRange}
+                onChange={(v) => { setLandValuePerSqftRange(v); commitRange('landPerSqft', v); }}
                 histogramData={stats?.landPerSqftChartData}
                 prefix="$"
                 decimals={2}
@@ -1631,7 +1685,7 @@ export default function Dashboard() {
                 filteredMin={stats?.bldgRatioChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.bldgRatioChartData?.[stats.bldgRatioChartData?.length - 1]?.binMax ?? 2}
                 value={bldgToLandRatioRange}
-                onChange={setBldgToLandRatioRange}
+                onChange={(v) => { setBldgToLandRatioRange(v); commitRange('bldgRatio', v); }}
                 histogramData={stats?.bldgRatioChartData}
                 decimals={3}
                 testIdPrefix="bldg-ratio"
@@ -1648,7 +1702,7 @@ export default function Dashboard() {
                 filteredMin={stats?.waterUsageChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.waterUsageChartData?.[stats.waterUsageChartData?.length - 1]?.binMax ?? 100}
                 value={waterUsageRange}
-                onChange={setWaterUsageRange}
+                onChange={(v) => { setWaterUsageRange(v); commitRange('waterUsage', v); }}
                 histogramData={stats?.waterUsageChartData}
                 decimals={1}
                 testIdPrefix="water-usage"
@@ -1665,7 +1719,7 @@ export default function Dashboard() {
                 filteredMin={stats?.electricUsageChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.electricUsageChartData?.[stats.electricUsageChartData?.length - 1]?.binMax ?? 5000}
                 value={electricUsageRange}
-                onChange={setElectricUsageRange}
+                onChange={(v) => { setElectricUsageRange(v); commitRange('electricUsage', v); }}
                 histogramData={stats?.electricUsageChartData}
                 decimals={0}
                 testIdPrefix="electric-usage"
@@ -1681,7 +1735,7 @@ export default function Dashboard() {
                 filteredMin={stats?.gasUsageChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.gasUsageChartData?.[stats.gasUsageChartData?.length - 1]?.binMax ?? 500}
                 value={gasUsageRange}
-                onChange={setGasUsageRange}
+                onChange={(v) => { setGasUsageRange(v); commitRange('gasUsage', v); }}
                 histogramData={stats?.gasUsageChartData}
                 decimals={1}
                 testIdPrefix="gas-usage"
@@ -1699,7 +1753,7 @@ export default function Dashboard() {
                 filteredMin={stats?.waterPerSfChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.waterPerSfChartData?.[4]?.binMax ?? 10}
                 value={waterPerSfRange}
-                onChange={setWaterPerSfRange}
+                onChange={(v) => { setWaterPerSfRange(v); commitRange('waterPerSf', v); }}
                 histogramData={stats?.waterPerSfChartData}
                 decimals={2}
                 testIdPrefix="water-per-sf"
@@ -1717,7 +1771,7 @@ export default function Dashboard() {
                 filteredMin={stats?.electricPerSfChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.electricPerSfChartData?.[4]?.binMax ?? 5}
                 value={electricPerSfRange}
-                onChange={setElectricPerSfRange}
+                onChange={(v) => { setElectricPerSfRange(v); commitRange('electricPerSf', v); }}
                 histogramData={stats?.electricPerSfChartData}
                 decimals={3}
                 testIdPrefix="electric-per-sf"
@@ -1735,7 +1789,7 @@ export default function Dashboard() {
                 filteredMin={stats?.gasPerSfChartData?.[0]?.binMin ?? 0}
                 filteredMax={stats?.gasPerSfChartData?.[4]?.binMax ?? 1}
                 value={gasPerSfRange}
-                onChange={setGasPerSfRange}
+                onChange={(v) => { setGasPerSfRange(v); commitRange('gasPerSf', v); }}
                 histogramData={stats?.gasPerSfChartData}
                 decimals={4}
                 testIdPrefix="gas-per-sf"
