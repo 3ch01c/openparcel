@@ -75,8 +75,8 @@ const TILE_LAYERS = {
     name: "Dark"
   },
   terrain: {
-    url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg",
-    attribution: '&copy; <a href="https://stamen.com">Stamen Design</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     name: "Terrain"
   },
   satellite: {
