@@ -74,10 +74,10 @@ const TILE_LAYERS = {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     name: "Dark"
   },
-  light: {
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    name: "Light"
+  terrain: {
+    url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg",
+    attribution: '&copy; <a href="https://stamen.com">Stamen Design</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    name: "Terrain"
   },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -88,7 +88,7 @@ const TILE_LAYERS = {
 
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
-  const [mapLayer, setMapLayer] = useState<"dark" | "light" | "satellite">("dark");
+  const [mapLayer, setMapLayer] = useState<"dark" | "terrain" | "satellite">("dark");
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
   const [colorMetric, setColorMetric] = useState<ColorMetric>("bldgLandRatio");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 250000000]);
