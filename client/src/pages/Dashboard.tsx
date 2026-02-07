@@ -69,10 +69,15 @@ function MapResizeHandler({ collapsed }: { collapsed: boolean }) {
 }
 
 const TILE_LAYERS = {
-  street: {
+  dark: {
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    name: "Street"
+    name: "Dark"
+  },
+  light: {
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    name: "Light"
   },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -83,7 +88,7 @@ const TILE_LAYERS = {
 
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
-  const [mapLayer, setMapLayer] = useState<"street" | "satellite">("street");
+  const [mapLayer, setMapLayer] = useState<"dark" | "light" | "satellite">("dark");
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
   const [colorMetric, setColorMetric] = useState<ColorMetric>("bldgLandRatio");
   const [valueRange, setValueRange] = useState<[number, number]>([0, 250000000]);
@@ -2416,28 +2421,20 @@ export default function Dashboard() {
         <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
           {/* Map Layer Switcher */}
           <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
-            <button
-              onClick={() => setMapLayer("street")}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                mapLayer === "street"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-              data-testid="button-map-street"
-            >
-              Street
-            </button>
-            <button
-              onClick={() => setMapLayer("satellite")}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                mapLayer === "satellite"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-              data-testid="button-map-satellite"
-            >
-              Satellite
-            </button>
+            {(Object.keys(TILE_LAYERS) as Array<keyof typeof TILE_LAYERS>).map((key) => (
+              <button
+                key={key}
+                onClick={() => setMapLayer(key)}
+                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                  mapLayer === key
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+                data-testid={`button-map-${key}`}
+              >
+                {TILE_LAYERS[key].name}
+              </button>
+            ))}
           </div>
           
           {/* View Mode Switcher */}
