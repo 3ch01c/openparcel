@@ -108,6 +108,7 @@ export default function Dashboard() {
   const [chartAccountTypesOpen, setChartAccountTypesOpen] = useState(false);
   const [chartExemptionsOpen, setChartExemptionsOpen] = useState(false);
   const [chartLandHoldersOpen, setChartLandHoldersOpen] = useState(false);
+  const [dataIOOpen, setDataIOOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const [selectedSubdivisions, setSelectedSubdivisions] = useState<string[]>([]);
@@ -1925,89 +1926,92 @@ export default function Dashboard() {
             </div>
           </Collapsible>
 
-          {/* Export Data Section */}
-          <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
-              <Download className="w-4 h-4" />
-              <span>Export Data</span>
-            </div>
-            <div className="space-y-2">
-              <Select
-                value={exportFormat}
-                onValueChange={(v) => setExportFormat(v as "csv" | "json")}
-              >
-                <SelectTrigger
-                  className="w-full bg-background/50 border-border"
-                  data-testid="select-export-format"
-                >
-                  <SelectValue placeholder="Select format" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="csv">CSV (Spreadsheet)</SelectItem>
-                  <SelectItem value="json">JSON (Data)</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={downloadData}
-                disabled={
-                  !properties || properties.length === 0 || isLoading
-                }
-                className="w-full"
-                size="sm"
-                data-testid="button-download"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download {properties?.length || 0} Parcels
-              </Button>
-            </div>
-          </div>
-
-          {/* Utility Data Upload Section */}
-          <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-3">
-              <Droplets className="w-4 h-4" />
-              <span>Utility Data</span>
-            </div>
-            <div className="space-y-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleUtilityUpload}
-                className="hidden"
-                data-testid="input-utility-csv"
-              />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="w-full"
-                size="sm"
-                data-testid="button-upload-utility"
-              >
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4 mr-2" />
-                )}
-                {isUploading ? "Uploading..." : "Upload Utility CSV"}
-              </Button>
-              {uploadStatus && (
-                <div
-                  className={`text-xs p-2 rounded ${
-                    uploadStatus.success
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-red-500/20 text-red-400"
-                  }`}
-                  data-testid="text-upload-status"
-                >
-                  {uploadStatus.message}
+          {/* Import/Export Data Section - Collapsible */}
+          <Collapsible open={dataIOOpen} onOpenChange={setDataIOOpen}>
+            <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
+              <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-semibold text-primary hover:text-primary/80 transition-colors" data-testid="button-toggle-data-io">
+                <div className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  <span>Import / Export Data</span>
                 </div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Upload CSV with Parcel, Service, Bill Date, Actual Usage columns. Water (30000) data will be averaged in kgal.
-              </p>
+                {dataIOOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </CollapsibleTrigger>
+
+              <CollapsibleContent className="pt-4 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Export</label>
+                  <Select
+                    value={exportFormat}
+                    onValueChange={(v) => setExportFormat(v as "csv" | "json")}
+                  >
+                    <SelectTrigger
+                      className="w-full bg-background/50 border-border"
+                      data-testid="select-export-format"
+                    >
+                      <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="csv">CSV (Spreadsheet)</SelectItem>
+                      <SelectItem value="json">JSON (Data)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={downloadData}
+                    disabled={
+                      !properties || properties.length === 0 || isLoading
+                    }
+                    className="w-full"
+                    size="sm"
+                    data-testid="button-download"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download {properties?.length || 0} Parcels
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Import Utility Data</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleUtilityUpload}
+                    className="hidden"
+                    data-testid="input-utility-csv"
+                  />
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="w-full"
+                    size="sm"
+                    data-testid="button-upload-utility"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    {isUploading ? "Uploading..." : "Upload Utility CSV"}
+                  </Button>
+                  {uploadStatus && (
+                    <div
+                      className={`text-xs p-2 rounded ${
+                        uploadStatus.success
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                      data-testid="text-upload-status"
+                    >
+                      {uploadStatus.message}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Upload CSV with Parcel, Service, Bill Date, Actual Usage columns. Water (30000) data will be averaged in kgal.
+                  </p>
+                </div>
+              </CollapsibleContent>
             </div>
-          </div>
+          </Collapsible>
 
           {/* Stats Section - Collapsible */}
           <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
