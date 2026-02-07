@@ -93,9 +93,13 @@ export function RangeFilter({
     }
 
     if (absVal < 10000) {
-      return decimals > 0
-        ? sign + prefix + absVal.toFixed(decimals)
-        : sign + prefix + Math.round(absVal).toLocaleString();
+      if (decimals > 0) {
+        const intDigits = Math.max(1, Math.floor(Math.log10(absVal)) + 1);
+        const maxDecimals = Math.max(0, 4 - intDigits);
+        const d = Math.min(decimals, maxDecimals);
+        return sign + prefix + absVal.toFixed(d);
+      }
+      return sign + prefix + Math.round(absVal).toLocaleString();
     }
 
     if (absVal < 1000000) {
