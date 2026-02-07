@@ -2207,14 +2207,14 @@ export default function Dashboard() {
                     <BarChart 
                       data={stats.accountTypesChartData} 
                       layout="vertical"
-                      margin={{ left: 10, right: 10 }}
+                      margin={{ left: 0, right: 0 }}
                       barSize={16}
                     >
                       <XAxis type="number" hide />
                       <YAxis 
                         type="category" 
                         dataKey="type" 
-                        width={160}
+                        width="50%" as any
                         tick={{ fontSize: 10, fill: "hsl(215 20% 65%)" }}
                       />
                       <RechartsTooltip
