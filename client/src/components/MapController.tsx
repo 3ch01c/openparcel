@@ -30,14 +30,12 @@ export type MapViewMode = "cluster" | "polygon";
 
 interface ClusterLayerProps {
   points: PropertyResponse[];
-  excludedPoints?: PropertyResponse[];
   onPropertyClick?: (property: PropertyResponse) => void;
   colorMetric?: ColorMetric;
 }
 
 interface PolygonLayerProps {
   points: PropertyResponse[];
-  excludedPoints?: PropertyResponse[];
   onPropertyClick?: (property: PropertyResponse) => void;
   colorMetric?: ColorMetric;
 }
@@ -55,10 +53,9 @@ function getMarkerColor(value: number, minValue: number, maxValue: number): stri
   return "#fde725";
 }
 
-export function ClusterLayer({ points, excludedPoints, onPropertyClick, colorMetric = "landValuePerSqft" }: ClusterLayerProps) {
+export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft" }: ClusterLayerProps) {
   const map = useMap();
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
-  const excludedLayerRef = useRef<L.LayerGroup | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
 
   const checkMapReady = useCallback(() => {
@@ -290,39 +287,6 @@ export function ClusterLayer({ points, excludedPoints, onPropertyClick, colorMet
       console.warn("Cluster initialization error:", error);
     }
 
-    if (excludedPoints && excludedPoints.length > 0) {
-      const excludedGroup = L.layerGroup();
-      const validExcluded = excludedPoints.filter(p =>
-        p.lat && p.lng && !isNaN(p.lat) && !isNaN(p.lng) &&
-        p.lat >= -90 && p.lat <= 90 && p.lng >= -180 && p.lng <= 180
-      );
-      validExcluded.forEach((property) => {
-        const markerIcon = L.divIcon({
-          className: "custom-marker",
-          html: `<div style="
-            background-color: transparent;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            border: 1.5px solid #000;
-          "></div>`,
-          iconSize: [10, 10],
-          iconAnchor: [5, 5],
-        });
-        const marker = L.marker([property.lat, property.lng], { icon: markerIcon });
-        const popupContent = `
-          <div style="min-width: 180px; font-family: system-ui, sans-serif;">
-            <div style="font-weight: bold; font-size: 13px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
-            <div style="font-size: 11px; color: #999;">No data for selected metric</div>
-          </div>
-        `;
-        marker.bindPopup(popupContent, { maxWidth: 250 });
-        excludedGroup.addLayer(marker);
-      });
-      excludedGroup.addTo(map);
-      excludedLayerRef.current = excludedGroup;
-    }
-
     return () => {
       if (clusterGroupRef.current) {
         try {
@@ -331,23 +295,15 @@ export function ClusterLayer({ points, excludedPoints, onPropertyClick, colorMet
         }
         clusterGroupRef.current = null;
       }
-      if (excludedLayerRef.current) {
-        try {
-          map.removeLayer(excludedLayerRef.current);
-        } catch (e) {
-        }
-        excludedLayerRef.current = null;
-      }
     };
-  }, [map, isMapReady, points, excludedPoints, onPropertyClick, colorMetric]);
+  }, [map, isMapReady, points, onPropertyClick, colorMetric]);
 
   return null;
 }
 
-export function PolygonLayer({ points, excludedPoints, onPropertyClick, colorMetric = "landValuePerSqft" }: PolygonLayerProps) {
+export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft" }: PolygonLayerProps) {
   const map = useMap();
   const polygonLayerRef = useRef<L.LayerGroup | null>(null);
-  const excludedLayerRef = useRef<L.LayerGroup | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
 
   const checkMapReady = useCallback(() => {
@@ -548,41 +504,6 @@ export function PolygonLayer({ points, excludedPoints, onPropertyClick, colorMet
       console.warn("Polygon initialization error:", error);
     }
 
-    if (excludedPoints && excludedPoints.length > 0) {
-      const excludedGroup = L.layerGroup();
-      const validExcluded = excludedPoints.filter(p =>
-        p.lat && p.lng && !isNaN(p.lat) && !isNaN(p.lng) &&
-        p.lat >= -90 && p.lat <= 90 && p.lng >= -180 && p.lng <= 180 && p.geometry
-      );
-      validExcluded.forEach((property) => {
-        try {
-          const rings: number[][][] = JSON.parse(property.geometry!);
-          if (!rings || rings.length === 0) return;
-          const latLngs = rings.map(ring =>
-            ring.map(([lng, lat]) => [lat, lng] as [number, number])
-          );
-          const polygon = L.polygon(latLngs, {
-            color: "#000000",
-            weight: 1,
-            opacity: 0.6,
-            fillColor: "transparent",
-            fillOpacity: 0,
-          });
-          const popupContent = `
-            <div style="min-width: 180px; font-family: system-ui, sans-serif;">
-              <div style="font-weight: bold; font-size: 13px; margin-bottom: 4px; color: #333;">${property.address || "Unknown Address"}</div>
-              <div style="font-size: 11px; color: #999;">No data for selected metric</div>
-            </div>
-          `;
-          polygon.bindPopup(popupContent, { maxWidth: 250 });
-          excludedGroup.addLayer(polygon);
-        } catch (e) {
-        }
-      });
-      excludedGroup.addTo(map);
-      excludedLayerRef.current = excludedGroup;
-    }
-
     return () => {
       if (polygonLayerRef.current) {
         try {
@@ -591,15 +512,8 @@ export function PolygonLayer({ points, excludedPoints, onPropertyClick, colorMet
         }
         polygonLayerRef.current = null;
       }
-      if (excludedLayerRef.current) {
-        try {
-          map.removeLayer(excludedLayerRef.current);
-        } catch (e) {
-        }
-        excludedLayerRef.current = null;
-      }
     };
-  }, [map, isMapReady, points, excludedPoints, onPropertyClick, colorMetric]);
+  }, [map, isMapReady, points, onPropertyClick, colorMetric]);
 
   return null;
 }

@@ -41,6 +41,7 @@ import {
   Flame,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   BarChart,
   Bar,
@@ -569,7 +570,6 @@ export default function Dashboard() {
   }, [properties, colorMetric]);
 
   const deferredIncluded = useDeferredValue(includedProperties);
-  const deferredExcluded = useDeferredValue(excludedProperties);
   const isFiltering = deferredIncluded !== includedProperties;
 
   // Calculate filtered data ranges for dynamic slider bounds (from filtered properties)
@@ -1951,14 +1951,34 @@ export default function Dashboard() {
           ) : stats ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-2 gap-4">
-                <StatsCard
-                  title="Parcels"
-                  value={stats.count.toLocaleString()}
-                  icon={Home}
-                  description={stats.metricExcludedCount > 0
-                    ? `${stats.metricExcludedCount.toLocaleString()} missing data`
-                    : `out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
-                />
+                {stats.metricExcludedCount > 0 ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <StatsCard
+                          title="Parcels"
+                          value={stats.count.toLocaleString()}
+                          icon={Home}
+                          description={`out of ${(properties?.length || 0).toLocaleString()} filtered`}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <div className="text-xs space-y-1">
+                        <div>{(properties?.length || 0).toLocaleString()} total filtered</div>
+                        <div>{stats.metricExcludedCount.toLocaleString()} missing metric data (hidden)</div>
+                        <div>{stats.count.toLocaleString()} shown on map</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <StatsCard
+                    title="Parcels"
+                    value={stats.count.toLocaleString()}
+                    icon={Home}
+                    description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
+                  />
+                )}
                 <StatsCard
                   title="Acreage"
                   value={stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})}
@@ -2209,8 +2229,8 @@ export default function Dashboard() {
               url={TILE_LAYERS[mapLayer].url}
             />
 
-            {deferredIncluded && mapViewMode === "cluster" && <ClusterLayer points={deferredIncluded} excludedPoints={deferredExcluded} colorMetric={colorMetric} />}
-            {deferredIncluded && mapViewMode === "polygon" && <PolygonLayer points={deferredIncluded} excludedPoints={deferredExcluded} colorMetric={colorMetric} />}
+            {deferredIncluded && mapViewMode === "cluster" && <ClusterLayer points={deferredIncluded} colorMetric={colorMetric} />}
+            {deferredIncluded && mapViewMode === "polygon" && <PolygonLayer points={deferredIncluded} colorMetric={colorMetric} />}
           </MapContainer>
         </div>
 
