@@ -76,25 +76,31 @@ export function RangeFilter({
     }
   }, [value]);
 
-  // Smart formatting: show enough precision to display at least one non-zero digit (max 3 decimals)
   const smartFormat = (v: number): string => {
     if (v === 0) return decimals > 0 ? v.toFixed(decimals) : "0";
-    
+
     const absVal = Math.abs(v);
-    // For values >= 1, use the specified decimals
-    if (absVal >= 1) {
-      return decimals > 0 ? v.toFixed(decimals) : v.toLocaleString();
-    }
-    
-    // For values < 1, find precision needed to show at least one non-zero digit (max 3)
-    for (let d = 1; d <= 3; d++) {
-      const formatted = v.toFixed(d);
-      const lastDigit = formatted[formatted.length - 1];
-      if (lastDigit !== '0') {
-        return formatted;
+    const sign = v < 0 ? "-" : "";
+
+    if (absVal < 1) {
+      for (let d = 1; d <= 3; d++) {
+        const formatted = v.toFixed(d);
+        if (formatted[formatted.length - 1] !== '0') return formatted;
       }
+      return v.toFixed(3);
     }
-    return v.toFixed(3); // Max precision of one thousandth
+
+    if (absVal < 10000) {
+      return decimals > 0 ? v.toFixed(decimals) : sign + Math.round(absVal).toLocaleString();
+    }
+
+    if (absVal < 1000000) {
+      const k = absVal / 1000;
+      return sign + (k >= 100 ? k.toFixed(0) : k.toFixed(1).replace(/\.0$/, "")) + "K";
+    }
+
+    const m = absVal / 1000000;
+    return sign + (m >= 100 ? m.toFixed(0) : m.toFixed(1).replace(/\.0$/, "")) + "M";
   };
 
   const format = formatValue || smartFormat;
