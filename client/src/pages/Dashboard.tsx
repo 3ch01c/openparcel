@@ -122,6 +122,7 @@ export default function Dashboard() {
   const [ownerFilter, setOwnerFilter] = useState("");
   const [pendingOwnerFilter, setPendingOwnerFilter] = useState("");
   const [useRegex, setUseRegex] = useState(false);
+  const [isFilterPending, startFilterTransition] = useTransition();
   const rangesInitialized = useRef(false);
   const rangesJustInitialized = useRef(false);
   const pendingRangeUpdateRef = useRef(false); // Flag to trigger range update after user applies categorical filter
@@ -582,7 +583,6 @@ export default function Dashboard() {
   }, [properties, colorMetric]);
 
   const deferredIncluded = useDeferredValue(includedProperties);
-  const isFiltering = deferredIncluded !== includedProperties;
 
   // Calculate filtered data ranges for dynamic slider bounds (from filtered properties)
   const filteredRanges = useMemo(() => {
@@ -1524,26 +1524,28 @@ export default function Dashboard() {
                 </CollapsibleTrigger>
                 <button
                   onClick={() => {
-                    setYear(2025);
-                    setValueRange([sliderBounds.assessedValue.min, sliderBounds.assessedValue.max]);
-                    setTaxRange([sliderBounds.tax.min, sliderBounds.tax.max]);
-                    setParcelAreaRange([sliderBounds.parcelArea.min, sliderBounds.parcelArea.max]);
-                    setLandValueRange([sliderBounds.landValue.min, sliderBounds.landValue.max]);
-                    setImprovementValueRange([sliderBounds.improvementValue.min, sliderBounds.improvementValue.max]);
-                    setLandValuePerSqftRange([sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max]);
-                    setBldgToLandRatioRange([sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max]);
-                    setWaterUsageRange([sliderBounds.waterUsage.min, sliderBounds.waterUsage.max]);
-                    setElectricUsageRange([sliderBounds.electricUsage.min, sliderBounds.electricUsage.max]);
-                    setGasUsageRange([sliderBounds.gasUsage.min, sliderBounds.gasUsage.max]);
-                    setWaterPerSfRange([sliderBounds.waterPerSf?.min ?? 0, sliderBounds.waterPerSf?.max ?? 10]);
-                    setElectricPerSfRange([sliderBounds.electricPerSf?.min ?? 0, sliderBounds.electricPerSf?.max ?? 5]);
-                    setGasPerSfRange([sliderBounds.gasPerSf?.min ?? 0, sliderBounds.gasPerSf?.max ?? 1]);
-                    setSelectedAccountTypes([]);
-                    setSelectedSubdivisions([]);
-                    setSelectedZones([]);
-                    setSelectedOwnerCityStates([]);
-                    setOwnerFilter("");
-                    setUseRegex(false);
+                    startFilterTransition(() => {
+                      setYear(2025);
+                      setValueRange([sliderBounds.assessedValue.min, sliderBounds.assessedValue.max]);
+                      setTaxRange([sliderBounds.tax.min, sliderBounds.tax.max]);
+                      setParcelAreaRange([sliderBounds.parcelArea.min, sliderBounds.parcelArea.max]);
+                      setLandValueRange([sliderBounds.landValue.min, sliderBounds.landValue.max]);
+                      setImprovementValueRange([sliderBounds.improvementValue.min, sliderBounds.improvementValue.max]);
+                      setLandValuePerSqftRange([sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max]);
+                      setBldgToLandRatioRange([sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max]);
+                      setWaterUsageRange([sliderBounds.waterUsage.min, sliderBounds.waterUsage.max]);
+                      setElectricUsageRange([sliderBounds.electricUsage.min, sliderBounds.electricUsage.max]);
+                      setGasUsageRange([sliderBounds.gasUsage.min, sliderBounds.gasUsage.max]);
+                      setWaterPerSfRange([sliderBounds.waterPerSf?.min ?? 0, sliderBounds.waterPerSf?.max ?? 10]);
+                      setElectricPerSfRange([sliderBounds.electricPerSf?.min ?? 0, sliderBounds.electricPerSf?.max ?? 5]);
+                      setGasPerSfRange([sliderBounds.gasPerSf?.min ?? 0, sliderBounds.gasPerSf?.max ?? 1]);
+                      setSelectedAccountTypes([]);
+                      setSelectedSubdivisions([]);
+                      setSelectedZones([]);
+                      setSelectedOwnerCityStates([]);
+                      setOwnerFilter("");
+                      setUseRegex(false);
+                    });
                   }}
                   className="text-xs text-muted-foreground hover:text-primary"
                   data-testid="button-reset-all-filters"
@@ -1807,8 +1809,10 @@ export default function Dashboard() {
                 options={accountTypeOptions}
                 selectedValues={selectedAccountTypes}
                 onApply={(values) => {
-                  setSelectedAccountTypes(values);
-                  triggerRangeUpdate();
+                  startFilterTransition(() => {
+                    setSelectedAccountTypes(values);
+                    triggerRangeUpdate();
+                  });
                 }}
                 testIdPrefix="account-types"
                 emptyMessage="All types shown"
@@ -1821,8 +1825,10 @@ export default function Dashboard() {
                 options={subdivisionOptions}
                 selectedValues={selectedSubdivisions}
                 onApply={(values) => {
-                  setSelectedSubdivisions(values);
-                  triggerRangeUpdate();
+                  startFilterTransition(() => {
+                    setSelectedSubdivisions(values);
+                    triggerRangeUpdate();
+                  });
                 }}
                 testIdPrefix="subdivisions"
                 emptyMessage="All subdivisions shown"
@@ -1835,8 +1841,10 @@ export default function Dashboard() {
                 options={zoneOptions}
                 selectedValues={selectedZones}
                 onApply={(values) => {
-                  setSelectedZones(values);
-                  triggerRangeUpdate();
+                  startFilterTransition(() => {
+                    setSelectedZones(values);
+                    triggerRangeUpdate();
+                  });
                 }}
                 testIdPrefix="zones"
                 emptyMessage="All zones shown"
@@ -1849,8 +1857,10 @@ export default function Dashboard() {
                 options={ownerCityStateOptions}
                 selectedValues={selectedOwnerCityStates}
                 onApply={(values) => {
-                  setSelectedOwnerCityStates(values);
-                  triggerRangeUpdate();
+                  startFilterTransition(() => {
+                    setSelectedOwnerCityStates(values);
+                    triggerRangeUpdate();
+                  });
                 }}
                 testIdPrefix="owner-city-states"
                 emptyMessage="All locations shown"
@@ -1887,8 +1897,10 @@ export default function Dashboard() {
                     onChange={(e) => setPendingOwnerFilter(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        setOwnerFilter(pendingOwnerFilter);
-                        triggerRangeUpdate();
+                        startFilterTransition(() => {
+                          setOwnerFilter(pendingOwnerFilter);
+                          triggerRangeUpdate();
+                        });
                       }
                     }}
                     placeholder={useRegex ? "e.g. ^SMITH|JONES$" : "Search by owner name..."}
@@ -1898,8 +1910,10 @@ export default function Dashboard() {
                   <Button
                     size="sm"
                     onClick={() => {
-                      setOwnerFilter(pendingOwnerFilter);
-                      triggerRangeUpdate();
+                      startFilterTransition(() => {
+                        setOwnerFilter(pendingOwnerFilter);
+                        triggerRangeUpdate();
+                      });
                     }}
                     disabled={pendingOwnerFilter === ownerFilter}
                     data-testid="button-apply-owner-filter"
@@ -1914,9 +1928,11 @@ export default function Dashboard() {
                     </p>
                     <button
                       onClick={() => {
-                        setOwnerFilter("");
-                        setPendingOwnerFilter("");
-                        triggerRangeUpdate();
+                        startFilterTransition(() => {
+                          setOwnerFilter("");
+                          setPendingOwnerFilter("");
+                          triggerRangeUpdate();
+                        });
                       }}
                       className="text-xs text-muted-foreground hover:text-foreground"
                       data-testid="button-clear-owner-filter"
@@ -2403,7 +2419,7 @@ export default function Dashboard() {
         </div>
 
         {/* Filtering spinner overlay */}
-        {isFiltering && (
+        {isFilterPending && (
           <div className="absolute inset-0 z-[450] flex items-center justify-center bg-black/20 backdrop-blur-[1px] pointer-events-none" data-testid="filtering-spinner">
             <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg px-4 py-3">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
