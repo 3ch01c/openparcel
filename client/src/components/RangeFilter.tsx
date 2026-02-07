@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -65,8 +65,16 @@ export function RangeFilter({
   const [tempMin, setTempMin] = useState("");
   const [tempMax, setTempMax] = useState("");
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const [localValue, setLocalValue] = useState<[number, number]>(value);
+  const isDragging = useRef(false);
   const minInputRef = useRef<HTMLInputElement>(null);
   const maxInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isDragging.current) {
+      setLocalValue(value);
+    }
+  }, [value]);
 
   // Smart formatting: show enough precision to display at least one non-zero digit (max 3 decimals)
   const smartFormat = (v: number): string => {
@@ -168,7 +176,7 @@ export function RangeFilter({
               style={{ color: colorHsl }}
               data-testid={`button-edit-${testIdPrefix}-min`}
             >
-              {format(value[0])}
+              {format(localValue[0])}
             </button>
           )}
           <span className="text-muted-foreground">-</span>
@@ -191,7 +199,7 @@ export function RangeFilter({
               style={{ color: colorHsl }}
               data-testid={`button-edit-${testIdPrefix}-max`}
             >
-              {format(value[1])}
+              {format(localValue[1])}
             </button>
           )}
           {unit && <span className="text-muted-foreground text-[10px]">{unit}</span>}
@@ -201,8 +209,15 @@ export function RangeFilter({
         min={sliderMin}
         max={sliderMax}
         step={calculatedStep}
-        value={value}
-        onValueChange={(val) => onChange(val as [number, number])}
+        value={localValue}
+        onValueChange={(val) => {
+          isDragging.current = true;
+          setLocalValue(val as [number, number]);
+        }}
+        onValueCommit={(val) => {
+          isDragging.current = false;
+          onChange(val as [number, number]);
+        }}
         className="py-2"
         rangeClassName={rangeClassName}
         thumbClassName={thumbClassName}
