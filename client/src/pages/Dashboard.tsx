@@ -311,11 +311,16 @@ export default function Dashboard() {
 
   // Filter properties by range filters (without account type filter)
   // Used to calculate account type counts based on current other filters
+  const isRangeActive = (range: [number, number], bounds: { min: number; max: number }) =>
+    range[0] > bounds.min || range[1] < bounds.max;
+
   const propertiesWithoutAccountTypeFilter = useMemo(() => {
     if (!rawProperties) return [];
     
-    const inRange = (val: number | null | undefined, range: [number, number]) =>
-      val == null || (val >= range[0] && val <= range[1]);
+    const inRange = (val: number | null | undefined, range: [number, number], bounds: { min: number; max: number }) => {
+      if (val == null) return !isRangeActive(range, bounds);
+      return val >= range[0] && val <= range[1];
+    };
 
     return rawProperties.filter((p) => {
       const tax = getPropertyTax(p);
@@ -330,21 +335,21 @@ export default function Dashboard() {
         ? p.avgMonthlyGasTherms / bldgSf : null;
       
       return (
-        inRange(tax, taxRange) &&
-        inRange(p.parcelArea, parcelAreaRange) &&
-        inRange(p.landValue, landValueRange) &&
-        inRange(p.improvementValue, improvementValueRange) &&
-        inRange(landPerSqft, landValuePerSqftRange) &&
-        inRange(bldgRatio, bldgToLandRatioRange) &&
-        inRange(p.avgMonthlyWaterKgal, waterUsageRange) &&
-        inRange(p.avgMonthlyElectricKwh, electricUsageRange) &&
-        inRange(p.avgMonthlyGasTherms, gasUsageRange) &&
-        inRange(waterPerSf, waterPerSfRange) &&
-        inRange(electricPerSf, electricPerSfRange) &&
-        inRange(gasPerSf, gasPerSfRange)
+        inRange(tax, taxRange, sliderBounds.tax) &&
+        inRange(p.parcelArea, parcelAreaRange, sliderBounds.parcelArea) &&
+        inRange(p.landValue, landValueRange, sliderBounds.landValue) &&
+        inRange(p.improvementValue, improvementValueRange, sliderBounds.improvementValue) &&
+        inRange(landPerSqft, landValuePerSqftRange, sliderBounds.landPerSqft) &&
+        inRange(bldgRatio, bldgToLandRatioRange, sliderBounds.bldgRatio) &&
+        inRange(p.avgMonthlyWaterKgal, waterUsageRange, sliderBounds.waterUsage) &&
+        inRange(p.avgMonthlyElectricKwh, electricUsageRange, sliderBounds.electricUsage) &&
+        inRange(p.avgMonthlyGasTherms, gasUsageRange, sliderBounds.gasUsage) &&
+        inRange(waterPerSf, waterPerSfRange, sliderBounds.waterPerSf || { min: 0, max: 10 }) &&
+        inRange(electricPerSf, electricPerSfRange, sliderBounds.electricPerSf || { min: 0, max: 5 }) &&
+        inRange(gasPerSf, gasPerSfRange, sliderBounds.gasPerSf || { min: 0, max: 1 })
       );
     });
-  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange, electricUsageRange, gasUsageRange, waterPerSfRange, electricPerSfRange, gasPerSfRange]);
+  }, [rawProperties, taxRange, parcelAreaRange, landValueRange, improvementValueRange, landValuePerSqftRange, bldgToLandRatioRange, waterUsageRange, electricUsageRange, gasUsageRange, waterPerSfRange, electricPerSfRange, gasPerSfRange, sliderBounds]);
 
   // For account type counts: apply subdivision, zone, and owner city/state filters (but not account type)
   const propertiesForAccountTypeCounts = useMemo(() => {
@@ -1472,6 +1477,7 @@ export default function Dashboard() {
                 histogramData={stats?.chartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="value-range"
+                isActive={isRangeActive(valueRange, sliderBounds.assessedValue)}
               />
 
               <RangeFilter
@@ -1488,6 +1494,7 @@ export default function Dashboard() {
                 histogramData={stats?.landChartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="land-value"
+                isActive={isRangeActive(landValueRange, sliderBounds.landValue)}
               />
 
               <RangeFilter
@@ -1504,6 +1511,7 @@ export default function Dashboard() {
                 histogramData={stats?.improvementChartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="improvement-value"
+                isActive={isRangeActive(improvementValueRange, sliderBounds.improvementValue)}
               />
 
               <RangeFilter
@@ -1520,6 +1528,7 @@ export default function Dashboard() {
                 histogramData={stats?.taxChartData}
                 formatValue={formatCurrencyShort}
                 testIdPrefix="tax-range"
+                isActive={isRangeActive(taxRange, sliderBounds.tax)}
               />
 
               <RangeFilter
@@ -1538,6 +1547,7 @@ export default function Dashboard() {
                 unit="ac"
                 testIdPrefix="parcel-area"
                 inputWidth="w-16"
+                isActive={isRangeActive(parcelAreaRange, sliderBounds.parcelArea)}
               />
 
               <RangeFilter
@@ -1557,6 +1567,7 @@ export default function Dashboard() {
                 unit="/sf"
                 testIdPrefix="land-per-sqft"
                 inputWidth="w-16"
+                isActive={isRangeActive(landValuePerSqftRange, sliderBounds.landPerSqft)}
               />
 
               <RangeFilter
@@ -1574,6 +1585,7 @@ export default function Dashboard() {
                 decimals={3}
                 testIdPrefix="bldg-ratio"
                 inputWidth="w-16"
+                isActive={isRangeActive(bldgToLandRatioRange, sliderBounds.bldgRatio)}
               />
 
               <RangeFilter
@@ -1591,6 +1603,7 @@ export default function Dashboard() {
                 decimals={1}
                 testIdPrefix="water-usage"
                 inputWidth="w-16"
+                isActive={isRangeActive(waterUsageRange, sliderBounds.waterUsage)}
               />
 
               <RangeFilter
@@ -1607,6 +1620,7 @@ export default function Dashboard() {
                 histogramData={stats?.electricUsageChartData}
                 decimals={0}
                 testIdPrefix="electric-usage"
+                isActive={isRangeActive(electricUsageRange, sliderBounds.electricUsage)}
               />
 
               <RangeFilter
@@ -1624,6 +1638,7 @@ export default function Dashboard() {
                 decimals={1}
                 testIdPrefix="gas-usage"
                 inputWidth="w-16"
+                isActive={isRangeActive(gasUsageRange, sliderBounds.gasUsage)}
               />
 
               {/* Water Per SF Range Filter */}
@@ -1642,6 +1657,7 @@ export default function Dashboard() {
                 decimals={2}
                 testIdPrefix="water-per-sf"
                 inputWidth="w-16"
+                isActive={isRangeActive(waterPerSfRange, sliderBounds.waterPerSf || { min: 0, max: 10 })}
               />
 
               {/* Electric Per SF Range Filter */}
@@ -1660,6 +1676,7 @@ export default function Dashboard() {
                 decimals={3}
                 testIdPrefix="electric-per-sf"
                 inputWidth="w-16"
+                isActive={isRangeActive(electricPerSfRange, sliderBounds.electricPerSf || { min: 0, max: 5 })}
               />
 
               {/* Gas Per SF Range Filter */}
@@ -1678,6 +1695,7 @@ export default function Dashboard() {
                 decimals={4}
                 testIdPrefix="gas-per-sf"
                 inputWidth="w-16"
+                isActive={isRangeActive(gasPerSfRange, sliderBounds.gasPerSf || { min: 0, max: 1 })}
               />
 
               {/* Account Type Multi-Select */}
@@ -1739,8 +1757,9 @@ export default function Dashboard() {
               {/* Owner Filter */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <label className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Owner
+                    {ownerFilter && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                   </label>
                   <div className="flex items-center gap-2">
                     <button
