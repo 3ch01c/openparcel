@@ -2016,7 +2016,7 @@ export default function Dashboard() {
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsOpen ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
 
-              <CollapsibleContent className="pt-4">
+              <CollapsibleContent className="pt-4 pb-2">
                 {/* Stats Summary */}
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4 text-muted-foreground">
