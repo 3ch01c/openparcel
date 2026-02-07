@@ -1540,10 +1540,10 @@ export default function Dashboard() {
                     setGasPerSfRange([sliderBounds.gasPerSf?.min ?? 0, sliderBounds.gasPerSf?.max ?? 1]);
                     setSelectedAccountTypes([]);
                     setSelectedSubdivisions([]);
+                    setSelectedZones([]);
                     setSelectedOwnerCityStates([]);
                     setOwnerFilter("");
                     setUseRegex(false);
-                    triggerRangeUpdate();
                   }}
                   className="text-xs text-muted-foreground hover:text-primary"
                   data-testid="button-reset-all-filters"
