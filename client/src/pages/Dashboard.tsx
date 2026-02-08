@@ -41,6 +41,8 @@ import {
   Zap,
   Flame,
   Plus,
+  Settings2,
+  ChevronUp,
 } from "lucide-react";
 import {
   Popover,
@@ -140,6 +142,7 @@ export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [mapLayer, setMapLayer] = useState<"dark" | "terrain" | "satellite">("dark");
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
+  const [mapControlsOpen, setMapControlsOpen] = useState(true);
   const [colorMetric, setColorMetric] = useState<ColorMetric>("bldgLandRatio");
   const [ranges, setRanges] = useState<Record<RangeFilterKey, [number, number]>>({ ...INITIAL_RANGES });
   const [activeFilters, setActiveFilters] = useState<RangeFilterKey[]>([...DEFAULT_ACTIVE_FILTERS]);
@@ -2229,61 +2232,75 @@ export default function Dashboard() {
         )}
 
         {/* Map Controls */}
-        <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-          {/* Map Layer Switcher */}
-          <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
-            {(Object.keys(TILE_LAYERS) as Array<keyof typeof TILE_LAYERS>).map((key) => (
-              <button
-                key={key}
-                onClick={() => setMapLayer(key)}
-                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                  mapLayer === key
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
-                data-testid={`button-map-${key}`}
-              >
-                {TILE_LAYERS[key].name}
-              </button>
-            ))}
-          </div>
-          
-          {/* View Mode Switcher */}
-          <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
-            <Button
-              size="sm"
-              variant={mapViewMode === "cluster" ? "default" : "ghost"}
-              onClick={() => setMapViewMode("cluster")}
-              data-testid="button-view-cluster"
-            >
-              Clusters
-            </Button>
-            <Button
-              size="sm"
-              variant={mapViewMode === "polygon" ? "default" : "ghost"}
-              onClick={() => setMapViewMode("polygon")}
-              data-testid="button-view-polygon"
-            >
-              Parcels
-            </Button>
-          </div>
-          
-          {/* Color Metric Selector */}
-          <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-2">
-            <label className="text-xs text-muted-foreground mb-1 block">Color by:</label>
-            <Select value={colorMetric} onValueChange={(value) => setColorMetric(value as ColorMetric)}>
-              <SelectTrigger className="w-[160px] h-8 text-xs" data-testid="select-color-metric">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent side="bottom" className="z-[500]">
-                {(Object.keys(COLOR_METRIC_LABELS) as ColorMetric[]).map((metric) => (
-                  <SelectItem key={metric} value={metric} data-testid={`option-color-metric-${metric}`}>
-                    {COLOR_METRIC_LABELS[metric]}
-                  </SelectItem>
+        <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2 items-end">
+          <Button
+            size="icon"
+            variant="secondary"
+            className="bg-background/90 backdrop-blur-sm border border-border shadow-lg"
+            onClick={() => setMapControlsOpen((v) => !v)}
+            data-testid="button-toggle-map-controls"
+          >
+            {mapControlsOpen ? <ChevronUp className="h-4 w-4" /> : <Settings2 className="h-4 w-4" />}
+          </Button>
+
+          {mapControlsOpen && (
+            <>
+              {/* Map Layer Switcher */}
+              <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
+                {(Object.keys(TILE_LAYERS) as Array<keyof typeof TILE_LAYERS>).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setMapLayer(key)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                      mapLayer === key
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    }`}
+                    data-testid={`button-map-${key}`}
+                  >
+                    {TILE_LAYERS[key].name}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+              
+              {/* View Mode Switcher */}
+              <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1 flex gap-1">
+                <Button
+                  size="sm"
+                  variant={mapViewMode === "cluster" ? "default" : "ghost"}
+                  onClick={() => setMapViewMode("cluster")}
+                  data-testid="button-view-cluster"
+                >
+                  Clusters
+                </Button>
+                <Button
+                  size="sm"
+                  variant={mapViewMode === "polygon" ? "default" : "ghost"}
+                  onClick={() => setMapViewMode("polygon")}
+                  data-testid="button-view-polygon"
+                >
+                  Parcels
+                </Button>
+              </div>
+              
+              {/* Color Metric Selector */}
+              <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-2">
+                <label className="text-xs text-muted-foreground mb-1 block">Color by:</label>
+                <Select value={colorMetric} onValueChange={(value) => setColorMetric(value as ColorMetric)}>
+                  <SelectTrigger className="w-[160px] h-8 text-xs" data-testid="select-color-metric">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="bottom" className="z-[500]">
+                    {(Object.keys(COLOR_METRIC_LABELS) as ColorMetric[]).map((metric) => (
+                      <SelectItem key={metric} value={metric} data-testid={`option-color-metric-${metric}`}>
+                        {COLOR_METRIC_LABELS[metric]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
