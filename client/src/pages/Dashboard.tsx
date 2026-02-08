@@ -109,22 +109,23 @@ interface RangeFilterConfig {
   statsMinKey: string;
   statsMaxKey: string;
   defaultMax: number;
+  statsObjKey: string;
 }
 
 const RANGE_FILTER_CONFIGS: RangeFilterConfig[] = [
-  { key: 'assessedValue', title: 'Assessed Value Range', colorHsl: 'hsl(199 89% 48%)', rangeClassName: 'bg-primary', thumbClassName: 'border-primary', prefix: '$', testIdPrefix: 'value-range', logarithmic: true, chartDataKey: 'chartData', statsMinKey: 'minAssessedValue', statsMaxKey: 'maxAssessedValue', defaultMax: 250000000 },
-  { key: 'landValue', title: 'Land Value', colorHsl: 'hsl(173 80% 40%)', rangeClassName: 'bg-teal-500', thumbClassName: 'border-teal-500', prefix: '$', testIdPrefix: 'land-value', logarithmic: true, chartDataKey: 'landChartData', statsMinKey: 'minLandValue', statsMaxKey: 'maxLandValue', defaultMax: 250000000 },
-  { key: 'improvementValue', title: 'Improvement Value', colorHsl: 'hsl(24 95% 50%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', prefix: '$', testIdPrefix: 'improvement-value', logarithmic: true, chartDataKey: 'improvementChartData', statsMinKey: 'minImprovementValue', statsMaxKey: 'maxImprovementValue', defaultMax: 50000000 },
-  { key: 'tax', title: 'Tax Assessed', colorHsl: 'hsl(142 71% 45%)', rangeClassName: 'bg-green-500', thumbClassName: 'border-green-500', prefix: '$', testIdPrefix: 'tax-range', logarithmic: true, chartDataKey: 'taxChartData', statsMinKey: 'minTaxValue', statsMaxKey: 'maxTaxValue', defaultMax: 500000 },
-  { key: 'area', title: 'Parcel Area (Acres)', colorHsl: 'hsl(271 81% 56%)', rangeClassName: 'bg-purple-500', thumbClassName: 'border-purple-500', decimals: 2, testIdPrefix: 'parcel-area', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'parcelChartData', statsMinKey: 'minParcelArea', statsMaxKey: 'maxParcelArea', defaultMax: 1200 },
-  { key: 'landPerSqft', title: 'Land Value/Sqft', colorHsl: 'hsl(173 80% 40%)', rangeClassName: 'bg-teal-500', thumbClassName: 'border-teal-500', prefix: '$', decimals: 2, testIdPrefix: 'land-per-sqft', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'landPerSqftChartData', statsMinKey: 'minLandPerSqft', statsMaxKey: 'maxLandPerSqft', defaultMax: 150 },
-  { key: 'bldgRatio', title: 'Bldg/Land Sqft Ratio', colorHsl: 'hsl(330 81% 60%)', rangeClassName: 'bg-pink-500', thumbClassName: 'border-pink-500', decimals: 3, testIdPrefix: 'bldg-ratio', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'bldgRatioChartData', statsMinKey: 'minBldgRatio', statsMaxKey: 'maxBldgRatio', defaultMax: 2 },
-  { key: 'waterUsage', title: 'Avg Water (kgal/mo)', colorHsl: 'hsl(187 85% 53%)', rangeClassName: 'bg-cyan-500', thumbClassName: 'border-cyan-500', decimals: 1, testIdPrefix: 'water-usage', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'waterUsageChartData', statsMinKey: 'minWaterUsage', statsMaxKey: 'maxWaterUsage', defaultMax: 100 },
-  { key: 'electricUsage', title: 'Avg Electric (kWh/mo)', colorHsl: 'hsl(48 96% 53%)', rangeClassName: 'bg-yellow-500', thumbClassName: 'border-yellow-500', decimals: 0, testIdPrefix: 'electric-usage', logarithmic: true, chartDataKey: 'electricUsageChartData', statsMinKey: 'minElectricUsage', statsMaxKey: 'maxElectricUsage', defaultMax: 5000 },
-  { key: 'gasUsage', title: 'Avg Gas (therms/mo)', colorHsl: 'hsl(24 95% 53%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', decimals: 1, testIdPrefix: 'gas-usage', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'gasUsageChartData', statsMinKey: 'minGasUsage', statsMaxKey: 'maxGasUsage', defaultMax: 500 },
-  { key: 'waterPerSf', title: 'Water/Bldg SF (gal/mo)', colorHsl: 'hsl(187 100% 42%)', rangeClassName: 'bg-cyan-500', thumbClassName: 'border-cyan-500', decimals: 2, testIdPrefix: 'water-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'waterPerSfChartData', statsMinKey: 'minWaterPerSf', statsMaxKey: 'maxWaterPerSf', defaultMax: 10 },
-  { key: 'electricPerSf', title: 'Electric/Bldg SF (kWh/mo)', colorHsl: 'hsl(48 96% 53%)', rangeClassName: 'bg-yellow-400', thumbClassName: 'border-yellow-400', decimals: 3, testIdPrefix: 'electric-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'electricPerSfChartData', statsMinKey: 'minElectricPerSf', statsMaxKey: 'maxElectricPerSf', defaultMax: 5 },
-  { key: 'gasPerSf', title: 'Gas/Bldg SF (therms/mo)', colorHsl: 'hsl(24 95% 53%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', decimals: 4, testIdPrefix: 'gas-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'gasPerSfChartData', statsMinKey: 'minGasPerSf', statsMaxKey: 'maxGasPerSf', defaultMax: 1 },
+  { key: 'assessedValue', title: 'Assessed Value Range', colorHsl: 'hsl(199 89% 48%)', rangeClassName: 'bg-primary', thumbClassName: 'border-primary', prefix: '$', testIdPrefix: 'value-range', logarithmic: true, chartDataKey: 'chartData', statsMinKey: 'minAssessedValue', statsMaxKey: 'maxAssessedValue', defaultMax: 250000000, statsObjKey: 'assessedStats' },
+  { key: 'landValue', title: 'Land Value', colorHsl: 'hsl(173 80% 40%)', rangeClassName: 'bg-teal-500', thumbClassName: 'border-teal-500', prefix: '$', testIdPrefix: 'land-value', logarithmic: true, chartDataKey: 'landChartData', statsMinKey: 'minLandValue', statsMaxKey: 'maxLandValue', defaultMax: 250000000, statsObjKey: 'landValueStats' },
+  { key: 'improvementValue', title: 'Improvement Value', colorHsl: 'hsl(24 95% 50%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', prefix: '$', testIdPrefix: 'improvement-value', logarithmic: true, chartDataKey: 'improvementChartData', statsMinKey: 'minImprovementValue', statsMaxKey: 'maxImprovementValue', defaultMax: 50000000, statsObjKey: 'improvementStats' },
+  { key: 'tax', title: 'Tax Assessed', colorHsl: 'hsl(142 71% 45%)', rangeClassName: 'bg-green-500', thumbClassName: 'border-green-500', prefix: '$', testIdPrefix: 'tax-range', logarithmic: true, chartDataKey: 'taxChartData', statsMinKey: 'minTaxValue', statsMaxKey: 'maxTaxValue', defaultMax: 500000, statsObjKey: 'taxStats' },
+  { key: 'area', title: 'Parcel Area (Acres)', colorHsl: 'hsl(271 81% 56%)', rangeClassName: 'bg-purple-500', thumbClassName: 'border-purple-500', decimals: 2, testIdPrefix: 'parcel-area', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'parcelChartData', statsMinKey: 'minParcelArea', statsMaxKey: 'maxParcelArea', defaultMax: 1200, statsObjKey: 'acreageStats' },
+  { key: 'landPerSqft', title: 'Land Value/Sqft', colorHsl: 'hsl(173 80% 40%)', rangeClassName: 'bg-teal-500', thumbClassName: 'border-teal-500', prefix: '$', decimals: 2, testIdPrefix: 'land-per-sqft', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'landPerSqftChartData', statsMinKey: 'minLandPerSqft', statsMaxKey: 'maxLandPerSqft', defaultMax: 150, statsObjKey: 'landPerSqftStats' },
+  { key: 'bldgRatio', title: 'Bldg/Land Sqft Ratio', colorHsl: 'hsl(330 81% 60%)', rangeClassName: 'bg-pink-500', thumbClassName: 'border-pink-500', decimals: 3, testIdPrefix: 'bldg-ratio', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'bldgRatioChartData', statsMinKey: 'minBldgRatio', statsMaxKey: 'maxBldgRatio', defaultMax: 2, statsObjKey: 'bldgRatioStats' },
+  { key: 'waterUsage', title: 'Avg Water (kgal/mo)', colorHsl: 'hsl(187 85% 53%)', rangeClassName: 'bg-cyan-500', thumbClassName: 'border-cyan-500', decimals: 1, testIdPrefix: 'water-usage', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'waterUsageChartData', statsMinKey: 'minWaterUsage', statsMaxKey: 'maxWaterUsage', defaultMax: 100, statsObjKey: 'waterStats' },
+  { key: 'electricUsage', title: 'Avg Electric (kWh/mo)', colorHsl: 'hsl(48 96% 53%)', rangeClassName: 'bg-yellow-500', thumbClassName: 'border-yellow-500', decimals: 0, testIdPrefix: 'electric-usage', logarithmic: true, chartDataKey: 'electricUsageChartData', statsMinKey: 'minElectricUsage', statsMaxKey: 'maxElectricUsage', defaultMax: 5000, statsObjKey: 'electricStats' },
+  { key: 'gasUsage', title: 'Avg Gas (therms/mo)', colorHsl: 'hsl(24 95% 53%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', decimals: 1, testIdPrefix: 'gas-usage', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'gasUsageChartData', statsMinKey: 'minGasUsage', statsMaxKey: 'maxGasUsage', defaultMax: 500, statsObjKey: 'gasStats' },
+  { key: 'waterPerSf', title: 'Water/Bldg SF (gal/mo)', colorHsl: 'hsl(187 100% 42%)', rangeClassName: 'bg-cyan-500', thumbClassName: 'border-cyan-500', decimals: 2, testIdPrefix: 'water-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'waterPerSfChartData', statsMinKey: 'minWaterPerSf', statsMaxKey: 'maxWaterPerSf', defaultMax: 10, statsObjKey: 'waterPerSfStats' },
+  { key: 'electricPerSf', title: 'Electric/Bldg SF (kWh/mo)', colorHsl: 'hsl(48 96% 53%)', rangeClassName: 'bg-yellow-400', thumbClassName: 'border-yellow-400', decimals: 3, testIdPrefix: 'electric-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'electricPerSfChartData', statsMinKey: 'minElectricPerSf', statsMaxKey: 'maxElectricPerSf', defaultMax: 5, statsObjKey: 'electricPerSfStats' },
+  { key: 'gasPerSf', title: 'Gas/Bldg SF (therms/mo)', colorHsl: 'hsl(24 95% 53%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', decimals: 4, testIdPrefix: 'gas-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'gasPerSfChartData', statsMinKey: 'minGasPerSf', statsMaxKey: 'maxGasPerSf', defaultMax: 1, statsObjKey: 'gasPerSfStats' },
 ];
 
 const DEFAULT_ACTIVE_FILTERS: RangeFilterKey[] = [
@@ -1078,6 +1079,12 @@ export default function Dashboard() {
     const waterStats = computeStats(waterValues);
     const electricStats = computeStats(electricValues);
     const gasStats = computeStats(gasValues);
+    const improvementStats = computeStats(improvementValues);
+    const landPerSqftStats = computeStats(landPerSqftValues);
+    const bldgRatioStats = computeStats(bldgRatioValues);
+    const waterPerSfStats = computeStats(waterPerSfValues);
+    const electricPerSfStats = computeStats(electricPerSfValues);
+    const gasPerSfStats = computeStats(gasPerSfValues);
 
     return {
       totalValue,
@@ -1157,6 +1164,12 @@ export default function Dashboard() {
       electricStats,
       gasStats,
       exemptionStats,
+      improvementStats,
+      landPerSqftStats,
+      bldgRatioStats,
+      waterPerSfStats,
+      electricPerSfStats,
+      gasPerSfStats,
     };
   }, [includedProperties, excludedProperties, colorMetric]);
 
@@ -1555,6 +1568,7 @@ export default function Dashboard() {
                         setRange(cfg.key, [b.min, b.max]);
                         commitRange(cfg.key, [b.min, b.max]);
                       }}
+                      statMarkers={stats ? (stats as any)[cfg.statsObjKey] : undefined}
                     />
                   </div>
                 );

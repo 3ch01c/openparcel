@@ -18,6 +18,13 @@ interface HistogramBin {
   binMax: number;
 }
 
+interface StatMarkers {
+  mean: number;
+  median: number;
+  q1: number;
+  q3: number;
+}
+
 interface RangeFilterProps {
   title: string;
   colorHsl: string;
@@ -41,6 +48,7 @@ interface RangeFilterProps {
   defaultExpanded?: boolean;
   logarithmic?: boolean;
   onRemove?: () => void;
+  statMarkers?: StatMarkers;
 }
 
 const LOG_STEPS = 1000;
@@ -87,6 +95,7 @@ export function RangeFilter({
   defaultExpanded = false,
   logarithmic = false,
   onRemove,
+  statMarkers,
 }: RangeFilterProps) {
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
@@ -198,6 +207,16 @@ export function RangeFilter({
     }
   };
 
+  const valToPercent = useCallback((val: number): number => {
+    if (sliderMax <= sliderMin) return 0;
+    if (isLog) {
+      return (valueToLogPos(val, sliderMin, sliderMax) / LOG_STEPS) * 100;
+    }
+    return ((val - sliderMin) / (sliderMax - sliderMin)) * 100;
+  }, [isLog, sliderMin, sliderMax]);
+
+  const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
+
   const sliderProps = isLog ? {
     min: 0,
     max: LOG_STEPS,
@@ -303,13 +322,97 @@ export function RangeFilter({
           {unit && <span className="text-muted-foreground text-[10px]">{unit}</span>}
         </div>
       </div>
-      <Slider
-        {...sliderProps}
-        className="py-2"
-        rangeClassName={rangeClassName}
-        thumbClassName={thumbClassName}
-        data-testid={`slider-${testIdPrefix}`}
-      />
+      <div className="relative">
+        {statMarkers && sliderMax > sliderMin && (() => {
+          const q1Pct = valToPercent(Math.max(statMarkers.q1, sliderMin));
+          const q3Pct = valToPercent(Math.min(statMarkers.q3, sliderMax));
+          const meanPct = valToPercent(Math.max(sliderMin, Math.min(statMarkers.mean, sliderMax)));
+          const medianPct = valToPercent(Math.max(sliderMin, Math.min(statMarkers.median, sliderMax)));
+          const meanInRange = statMarkers.mean >= sliderMin && statMarkers.mean <= sliderMax;
+          const medianInRange = statMarkers.median >= sliderMin && statMarkers.median <= sliderMax;
+          return (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 h-2 rounded-sm pointer-events-none"
+                style={{
+                  left: `${q1Pct}%`,
+                  width: `${Math.max(0, q3Pct - q1Pct)}%`,
+                  backgroundColor: colorHsl,
+                  opacity: 0.18,
+                  zIndex: 1,
+                }}
+                data-testid={`iqr-band-${testIdPrefix}`}
+              />
+              {medianInRange && (
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 pointer-events-auto cursor-default"
+                  style={{
+                    left: `${medianPct}%`,
+                    zIndex: 2,
+                    transform: `translateX(-50%) translateY(-50%)`,
+                  }}
+                  onMouseEnter={() => setHoveredMarker('median')}
+                  onMouseLeave={() => setHoveredMarker(null)}
+                  data-testid={`median-marker-${testIdPrefix}`}
+                >
+                  <div
+                    className="w-0.5 rounded-full"
+                    style={{
+                      height: '14px',
+                      backgroundColor: colorHsl,
+                      opacity: 0.9,
+                    }}
+                  />
+                  {hoveredMarker === 'median' && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 rounded text-[10px] font-mono whitespace-nowrap bg-popover border border-border shadow-md" style={{ zIndex: 50 }}>
+                      <span className="text-muted-foreground">Mdn: </span>
+                      <span style={{ color: colorHsl }}>{format(statMarkers.median)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {meanInRange && (
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 pointer-events-auto cursor-default"
+                  style={{
+                    left: `${meanPct}%`,
+                    zIndex: 2,
+                    transform: `translateX(-50%) translateY(-50%)`,
+                  }}
+                  onMouseEnter={() => setHoveredMarker('mean')}
+                  onMouseLeave={() => setHoveredMarker(null)}
+                  data-testid={`mean-marker-${testIdPrefix}`}
+                >
+                  <div
+                    className="rounded-full"
+                    style={{
+                      width: '5px',
+                      height: '5px',
+                      backgroundColor: colorHsl,
+                      opacity: 0.9,
+                      border: `1px solid hsl(var(--background))`,
+                    }}
+                  />
+                  {hoveredMarker === 'mean' && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 rounded text-[10px] font-mono whitespace-nowrap bg-popover border border-border shadow-md" style={{ zIndex: 50 }}>
+                      <span className="text-muted-foreground">Mean: </span>
+                      <span style={{ color: colorHsl }}>{format(statMarkers.mean)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          );
+        })()}
+        <Slider
+          {...sliderProps}
+          className="py-2 relative"
+          rangeClassName={rangeClassName}
+          thumbClassName={thumbClassName}
+          style={{ zIndex: 3 }}
+          data-testid={`slider-${testIdPrefix}`}
+        />
+      </div>
       {expanded && histogramData && histogramData.length > 0 && (
         <div className="h-20 mt-2">
           <ResponsiveContainer width="100%" height="100%">
