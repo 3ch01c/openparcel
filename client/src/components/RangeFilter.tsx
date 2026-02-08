@@ -345,8 +345,8 @@ export function RangeFilter({
                   left: `${q1Pct}%`,
                   width: `${Math.max(0, q3Pct - q1Pct)}%`,
                   height: '10px',
-                  backgroundColor: colorHsl,
-                  opacity: 0.3,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  border: '1px solid rgba(255,255,255,0.4)',
                 }}
                 data-testid={`iqr-band-${testIdPrefix}`}
               />
@@ -362,10 +362,12 @@ export function RangeFilter({
                   data-testid={`median-marker-${testIdPrefix}`}
                 >
                   <div
-                    className="w-0.5 rounded-full"
                     style={{
+                      width: '2px',
                       height: '16px',
-                      backgroundColor: colorHsl,
+                      backgroundColor: 'white',
+                      borderRadius: '1px',
+                      boxShadow: '0 0 2px rgba(0,0,0,0.6)',
                     }}
                   />
                   {hoveredMarker === 'median' && (
@@ -391,9 +393,10 @@ export function RangeFilter({
                     style={{
                       width: 0,
                       height: 0,
-                      borderLeft: '4px solid transparent',
-                      borderRight: '4px solid transparent',
-                      borderBottom: `7px solid ${colorHsl}`,
+                      borderLeft: '5px solid transparent',
+                      borderRight: '5px solid transparent',
+                      borderBottom: '8px solid white',
+                      filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.7))',
                     }}
                   />
                   {hoveredMarker === 'mean' && (
