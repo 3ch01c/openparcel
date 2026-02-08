@@ -323,6 +323,13 @@ export function RangeFilter({
         </div>
       </div>
       <div className="relative">
+        <Slider
+          {...sliderProps}
+          className="py-2"
+          rangeClassName={rangeClassName}
+          thumbClassName={thumbClassName}
+          data-testid={`slider-${testIdPrefix}`}
+        />
         {statMarkers && sliderMax > sliderMin && (() => {
           const q1Pct = valToPercent(Math.max(statMarkers.q1, sliderMin));
           const q3Pct = valToPercent(Math.min(statMarkers.q3, sliderMax));
@@ -331,24 +338,23 @@ export function RangeFilter({
           const meanInRange = statMarkers.mean >= sliderMin && statMarkers.mean <= sliderMax;
           const medianInRange = statMarkers.median >= sliderMin && statMarkers.median <= sliderMax;
           return (
-            <>
+            <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
               <div
-                className="absolute top-1/2 -translate-y-1/2 h-2 rounded-sm pointer-events-none"
+                className="absolute top-1/2 -translate-y-1/2 rounded-sm"
                 style={{
                   left: `${q1Pct}%`,
                   width: `${Math.max(0, q3Pct - q1Pct)}%`,
+                  height: '10px',
                   backgroundColor: colorHsl,
-                  opacity: 0.18,
-                  zIndex: 1,
+                  opacity: 0.3,
                 }}
                 data-testid={`iqr-band-${testIdPrefix}`}
               />
               {medianInRange && (
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 pointer-events-auto cursor-default"
+                  className="absolute top-1/2 pointer-events-auto cursor-default"
                   style={{
                     left: `${medianPct}%`,
-                    zIndex: 2,
                     transform: `translateX(-50%) translateY(-50%)`,
                   }}
                   onMouseEnter={() => setHoveredMarker('median')}
@@ -358,9 +364,8 @@ export function RangeFilter({
                   <div
                     className="w-0.5 rounded-full"
                     style={{
-                      height: '14px',
+                      height: '16px',
                       backgroundColor: colorHsl,
-                      opacity: 0.9,
                     }}
                   />
                   {hoveredMarker === 'median' && (
@@ -373,10 +378,9 @@ export function RangeFilter({
               )}
               {meanInRange && (
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 pointer-events-auto cursor-default"
+                  className="absolute top-1/2 pointer-events-auto cursor-default"
                   style={{
                     left: `${meanPct}%`,
-                    zIndex: 2,
                     transform: `translateX(-50%) translateY(-50%)`,
                   }}
                   onMouseEnter={() => setHoveredMarker('mean')}
@@ -384,13 +388,12 @@ export function RangeFilter({
                   data-testid={`mean-marker-${testIdPrefix}`}
                 >
                   <div
-                    className="rounded-full"
                     style={{
-                      width: '5px',
-                      height: '5px',
-                      backgroundColor: colorHsl,
-                      opacity: 0.9,
-                      border: `1px solid hsl(var(--background))`,
+                      width: 0,
+                      height: 0,
+                      borderLeft: '4px solid transparent',
+                      borderRight: '4px solid transparent',
+                      borderBottom: `7px solid ${colorHsl}`,
                     }}
                   />
                   {hoveredMarker === 'mean' && (
@@ -401,17 +404,9 @@ export function RangeFilter({
                   )}
                 </div>
               )}
-            </>
+            </div>
           );
         })()}
-        <Slider
-          {...sliderProps}
-          className="py-2 relative"
-          rangeClassName={rangeClassName}
-          thumbClassName={thumbClassName}
-          style={{ zIndex: 3 }}
-          data-testid={`slider-${testIdPrefix}`}
-        />
       </div>
       {expanded && histogramData && histogramData.length > 0 && (
         <div className="h-20 mt-2">
