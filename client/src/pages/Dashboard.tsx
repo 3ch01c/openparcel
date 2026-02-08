@@ -2275,7 +2275,7 @@ export default function Dashboard() {
               <SelectTrigger className="w-[160px] h-8 text-xs" data-testid="select-color-metric">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent side="bottom" className="z-[500]">
                 {(Object.keys(COLOR_METRIC_LABELS) as ColorMetric[]).map((metric) => (
                   <SelectItem key={metric} value={metric} data-testid={`option-color-metric-${metric}`}>
                     {COLOR_METRIC_LABELS[metric]}
