@@ -40,7 +40,13 @@ import {
   Droplets,
   Zap,
   Flame,
+  Plus,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { CursorTooltip } from "@/components/CursorTooltip";
 import {
@@ -86,24 +92,57 @@ const TILE_LAYERS = {
   }
 };
 
+type RangeFilterKey = 'assessedValue' | 'landValue' | 'improvementValue' | 'tax' | 'area' | 'landPerSqft' | 'bldgRatio' | 'waterUsage' | 'electricUsage' | 'gasUsage' | 'waterPerSf' | 'electricPerSf' | 'gasPerSf';
+
+interface RangeFilterConfig {
+  key: RangeFilterKey;
+  title: string;
+  colorHsl: string;
+  rangeClassName: string;
+  thumbClassName: string;
+  prefix?: string;
+  decimals?: number;
+  inputWidth?: string;
+  testIdPrefix: string;
+  logarithmic?: boolean;
+  chartDataKey: string;
+  statsMinKey: string;
+  statsMaxKey: string;
+  defaultMax: number;
+}
+
+const RANGE_FILTER_CONFIGS: RangeFilterConfig[] = [
+  { key: 'assessedValue', title: 'Assessed Value Range', colorHsl: 'hsl(199 89% 48%)', rangeClassName: 'bg-primary', thumbClassName: 'border-primary', prefix: '$', testIdPrefix: 'value-range', logarithmic: true, chartDataKey: 'chartData', statsMinKey: 'minAssessedValue', statsMaxKey: 'maxAssessedValue', defaultMax: 250000000 },
+  { key: 'landValue', title: 'Land Value', colorHsl: 'hsl(173 80% 40%)', rangeClassName: 'bg-teal-500', thumbClassName: 'border-teal-500', prefix: '$', testIdPrefix: 'land-value', logarithmic: true, chartDataKey: 'landChartData', statsMinKey: 'minLandValue', statsMaxKey: 'maxLandValue', defaultMax: 250000000 },
+  { key: 'improvementValue', title: 'Improvement Value', colorHsl: 'hsl(24 95% 50%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', prefix: '$', testIdPrefix: 'improvement-value', logarithmic: true, chartDataKey: 'improvementChartData', statsMinKey: 'minImprovementValue', statsMaxKey: 'maxImprovementValue', defaultMax: 50000000 },
+  { key: 'tax', title: 'Tax Assessed', colorHsl: 'hsl(142 71% 45%)', rangeClassName: 'bg-green-500', thumbClassName: 'border-green-500', prefix: '$', testIdPrefix: 'tax-range', logarithmic: true, chartDataKey: 'taxChartData', statsMinKey: 'minTaxValue', statsMaxKey: 'maxTaxValue', defaultMax: 500000 },
+  { key: 'area', title: 'Parcel Area (Acres)', colorHsl: 'hsl(271 81% 56%)', rangeClassName: 'bg-purple-500', thumbClassName: 'border-purple-500', decimals: 2, testIdPrefix: 'parcel-area', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'parcelChartData', statsMinKey: 'minParcelArea', statsMaxKey: 'maxParcelArea', defaultMax: 1200 },
+  { key: 'landPerSqft', title: 'Land Value/Sqft', colorHsl: 'hsl(173 80% 40%)', rangeClassName: 'bg-teal-500', thumbClassName: 'border-teal-500', prefix: '$', decimals: 2, testIdPrefix: 'land-per-sqft', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'landPerSqftChartData', statsMinKey: 'minLandPerSqft', statsMaxKey: 'maxLandPerSqft', defaultMax: 150 },
+  { key: 'bldgRatio', title: 'Bldg/Land Sqft Ratio', colorHsl: 'hsl(330 81% 60%)', rangeClassName: 'bg-pink-500', thumbClassName: 'border-pink-500', decimals: 3, testIdPrefix: 'bldg-ratio', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'bldgRatioChartData', statsMinKey: 'minBldgRatio', statsMaxKey: 'maxBldgRatio', defaultMax: 2 },
+  { key: 'waterUsage', title: 'Avg Water (kgal/mo)', colorHsl: 'hsl(187 85% 53%)', rangeClassName: 'bg-cyan-500', thumbClassName: 'border-cyan-500', decimals: 1, testIdPrefix: 'water-usage', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'waterUsageChartData', statsMinKey: 'minWaterUsage', statsMaxKey: 'maxWaterUsage', defaultMax: 100 },
+  { key: 'electricUsage', title: 'Avg Electric (kWh/mo)', colorHsl: 'hsl(48 96% 53%)', rangeClassName: 'bg-yellow-500', thumbClassName: 'border-yellow-500', decimals: 0, testIdPrefix: 'electric-usage', logarithmic: true, chartDataKey: 'electricUsageChartData', statsMinKey: 'minElectricUsage', statsMaxKey: 'maxElectricUsage', defaultMax: 5000 },
+  { key: 'gasUsage', title: 'Avg Gas (therms/mo)', colorHsl: 'hsl(24 95% 53%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', decimals: 1, testIdPrefix: 'gas-usage', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'gasUsageChartData', statsMinKey: 'minGasUsage', statsMaxKey: 'maxGasUsage', defaultMax: 500 },
+  { key: 'waterPerSf', title: 'Water/Bldg SF (gal/mo)', colorHsl: 'hsl(187 100% 42%)', rangeClassName: 'bg-cyan-500', thumbClassName: 'border-cyan-500', decimals: 2, testIdPrefix: 'water-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'waterPerSfChartData', statsMinKey: 'minWaterPerSf', statsMaxKey: 'maxWaterPerSf', defaultMax: 10 },
+  { key: 'electricPerSf', title: 'Electric/Bldg SF (kWh/mo)', colorHsl: 'hsl(48 96% 53%)', rangeClassName: 'bg-yellow-400', thumbClassName: 'border-yellow-400', decimals: 3, testIdPrefix: 'electric-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'electricPerSfChartData', statsMinKey: 'minElectricPerSf', statsMaxKey: 'maxElectricPerSf', defaultMax: 5 },
+  { key: 'gasPerSf', title: 'Gas/Bldg SF (therms/mo)', colorHsl: 'hsl(24 95% 53%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', decimals: 4, testIdPrefix: 'gas-per-sf', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'gasPerSfChartData', statsMinKey: 'minGasPerSf', statsMaxKey: 'maxGasPerSf', defaultMax: 1 },
+];
+
+const DEFAULT_ACTIVE_FILTERS: RangeFilterKey[] = [
+  'landValue', 'improvementValue', 'tax', 'area', 'landPerSqft', 'bldgRatio', 'waterUsage',
+];
+
+const INITIAL_RANGES: Record<RangeFilterKey, [number, number]> = Object.fromEntries(
+  RANGE_FILTER_CONFIGS.map(c => [c.key, [0, c.defaultMax] as [number, number]])
+) as Record<RangeFilterKey, [number, number]>;
+
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [mapLayer, setMapLayer] = useState<"dark" | "terrain" | "satellite">("dark");
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
   const [colorMetric, setColorMetric] = useState<ColorMetric>("bldgLandRatio");
-  const [valueRange, setValueRange] = useState<[number, number]>([0, 250000000]);
-  const [taxRange, setTaxRange] = useState<[number, number]>([0, 500000]);
-  const [parcelAreaRange, setParcelAreaRange] = useState<[number, number]>([0, 1200]);
-  const [landValueRange, setLandValueRange] = useState<[number, number]>([0, 250000000]);
-  const [improvementValueRange, setImprovementValueRange] = useState<[number, number]>([0, 50000000]);
-  const [landValuePerSqftRange, setLandValuePerSqftRange] = useState<[number, number]>([0, 150]);
-  const [bldgToLandRatioRange, setBldgToLandRatioRange] = useState<[number, number]>([0, 2]);
-  const [waterUsageRange, setWaterUsageRange] = useState<[number, number]>([0, 100]);
-  const [electricUsageRange, setElectricUsageRange] = useState<[number, number]>([0, 5000]);
-  const [gasUsageRange, setGasUsageRange] = useState<[number, number]>([0, 500]);
-  const [waterPerSfRange, setWaterPerSfRange] = useState<[number, number]>([0, 10]);
-  const [electricPerSfRange, setElectricPerSfRange] = useState<[number, number]>([0, 5]);
-  const [gasPerSfRange, setGasPerSfRange] = useState<[number, number]>([0, 1]);
+  const [ranges, setRanges] = useState<Record<RangeFilterKey, [number, number]>>({ ...INITIAL_RANGES });
+  const [activeFilters, setActiveFilters] = useState<RangeFilterKey[]>([...DEFAULT_ACTIVE_FILTERS]);
+  const [addFilterOpen, setAddFilterOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{ success: boolean; message: string } | null>(null);
@@ -127,45 +166,20 @@ export default function Dashboard() {
   const rangesJustInitialized = useRef(false);
   const pendingRangeUpdateRef = useRef(false);
   const [rangeFilterVersion, setRangeFilterVersion] = useState(0);
-  const committedRanges = useRef({
-    assessedValue: [0, 250000000] as [number, number],
-    tax: [0, 500000] as [number, number],
-    area: [0, 1200] as [number, number],
-    landValue: [0, 250000000] as [number, number],
-    improvementValue: [0, 50000000] as [number, number],
-    landPerSqft: [0, 150] as [number, number],
-    bldgRatio: [0, 2] as [number, number],
-    waterUsage: [0, 100] as [number, number],
-    electricUsage: [0, 5000] as [number, number],
-    gasUsage: [0, 500] as [number, number],
-    waterPerSf: [0, 10] as [number, number],
-    electricPerSf: [0, 5] as [number, number],
-    gasPerSf: [0, 1] as [number, number],
-  });
-  const commitRange = (key: keyof typeof committedRanges.current, value: [number, number]) => {
+  const committedRanges = useRef<Record<RangeFilterKey, [number, number]>>({ ...INITIAL_RANGES });
+  const commitRange = (key: RangeFilterKey, value: [number, number]) => {
     committedRanges.current[key] = value;
     setRangeFilterVersion(v => v + 1);
+  };
+  const setRange = (key: RangeFilterKey, value: [number, number]) => {
+    setRanges(prev => ({ ...prev, [key]: value }));
   };
   const initialTotalParcelsRef = useRef<number | null>(null);
   const initialAccountTypesRef = useRef<string[] | null>(null);
   const initialSubdivisionsRef = useRef<string[] | null>(null);
   const initialZonesRef = useRef<string[] | null>(null);
   const initialOwnerCityStatesRef = useRef<string[] | null>(null);
-  const initialBoundsRef = useRef<{
-    assessedValue: { min: number; max: number };
-    tax: { min: number; max: number };
-    area: { min: number; max: number };
-    landValue: { min: number; max: number };
-    improvementValue: { min: number; max: number };
-    landPerSqft: { min: number; max: number };
-    bldgRatio: { min: number; max: number };
-    waterUsage: { min: number; max: number };
-    electricUsage: { min: number; max: number };
-    gasUsage: { min: number; max: number };
-    waterPerSf: { min: number; max: number };
-    electricPerSf: { min: number; max: number };
-    gasPerSf: { min: number; max: number };
-  } | null>(null);
+  const initialBoundsRef = useRef<Record<RangeFilterKey, { min: number; max: number }> | null>(null);
   const getLandValuePerSqft = (p: PropertyResponse): number | null => {
     if (p.landValue == null) return null;
     const landSqft = p.landSqft || (p.area != null ? p.area * 43560 : null);
@@ -284,22 +298,12 @@ export default function Dashboard() {
       // Store initial total parcel count - this will never change after first load
       initialTotalParcelsRef.current = rawProperties.length;
       // Store initial bounds permanently - these will never change after first load
-      initialBoundsRef.current = {
-        assessedValue: { min: unfilteredRanges.assessedValue.min, max: unfilteredRanges.assessedValue.max },
-        tax: { min: unfilteredRanges.tax.min, max: unfilteredRanges.tax.max },
-        area: { min: unfilteredRanges.area.min, max: unfilteredRanges.area.max },
-        landValue: { min: unfilteredRanges.landValue.min, max: unfilteredRanges.landValue.max },
-        improvementValue: { min: unfilteredRanges.improvementValue.min, max: unfilteredRanges.improvementValue.max },
-        landPerSqft: { min: unfilteredRanges.landPerSqft.min, max: unfilteredRanges.landPerSqft.max },
-        bldgRatio: { min: unfilteredRanges.bldgRatio.min, max: unfilteredRanges.bldgRatio.max },
-        waterUsage: { min: unfilteredRanges.waterUsage.min, max: unfilteredRanges.waterUsage.max },
-        electricUsage: { min: unfilteredRanges.electricUsage.min, max: unfilteredRanges.electricUsage.max },
-        gasUsage: { min: unfilteredRanges.gasUsage.min, max: unfilteredRanges.gasUsage.max },
-        waterPerSf: { min: unfilteredRanges.waterPerSf?.min ?? 0, max: unfilteredRanges.waterPerSf?.max ?? 10 },
-        electricPerSf: { min: unfilteredRanges.electricPerSf?.min ?? 0, max: unfilteredRanges.electricPerSf?.max ?? 5 },
-        gasPerSf: { min: unfilteredRanges.gasPerSf?.min ?? 0, max: unfilteredRanges.gasPerSf?.max ?? 1 },
-      };
-      // Store initial multi-choice options permanently - these will never change after first load
+      const bounds = {} as Record<RangeFilterKey, { min: number; max: number }>;
+      for (const cfg of RANGE_FILTER_CONFIGS) {
+        const ur = unfilteredRanges[cfg.key];
+        bounds[cfg.key] = { min: ur?.min ?? 0, max: ur?.max ?? cfg.defaultMax };
+      }
+      initialBoundsRef.current = bounds;
       const accountTypes = new Set<string>();
       const subdivisions = new Set<string>();
       const zones = new Set<string>();
@@ -320,35 +324,13 @@ export default function Dashboard() {
       initialZonesRef.current = Array.from(zones).sort();
       initialOwnerCityStatesRef.current = Array.from(ownerCityStates).sort();
       
-      const initRanges = {
-        assessedValue: [unfilteredRanges.assessedValue.min, unfilteredRanges.assessedValue.max] as [number, number],
-        tax: [unfilteredRanges.tax.min, unfilteredRanges.tax.max] as [number, number],
-        area: [unfilteredRanges.area.min, unfilteredRanges.area.max] as [number, number],
-        landValue: [unfilteredRanges.landValue.min, unfilteredRanges.landValue.max] as [number, number],
-        improvementValue: [unfilteredRanges.improvementValue.min, unfilteredRanges.improvementValue.max] as [number, number],
-        landPerSqft: [unfilteredRanges.landPerSqft.min, unfilteredRanges.landPerSqft.max] as [number, number],
-        bldgRatio: [unfilteredRanges.bldgRatio.min, unfilteredRanges.bldgRatio.max] as [number, number],
-        waterUsage: [unfilteredRanges.waterUsage.min, unfilteredRanges.waterUsage.max] as [number, number],
-        electricUsage: [unfilteredRanges.electricUsage.min, unfilteredRanges.electricUsage.max] as [number, number],
-        gasUsage: [unfilteredRanges.gasUsage.min, unfilteredRanges.gasUsage.max] as [number, number],
-        waterPerSf: [unfilteredRanges.waterPerSf?.min ?? 0, unfilteredRanges.waterPerSf?.max ?? 10] as [number, number],
-        electricPerSf: [unfilteredRanges.electricPerSf?.min ?? 0, unfilteredRanges.electricPerSf?.max ?? 5] as [number, number],
-        gasPerSf: [unfilteredRanges.gasPerSf?.min ?? 0, unfilteredRanges.gasPerSf?.max ?? 1] as [number, number],
-      };
+      const initRanges = {} as Record<RangeFilterKey, [number, number]>;
+      for (const cfg of RANGE_FILTER_CONFIGS) {
+        const ur = unfilteredRanges[cfg.key];
+        initRanges[cfg.key] = [ur?.min ?? 0, ur?.max ?? cfg.defaultMax];
+      }
       committedRanges.current = { ...initRanges };
-      setValueRange(initRanges.assessedValue);
-      setTaxRange(initRanges.tax);
-      setParcelAreaRange(initRanges.area);
-      setLandValueRange(initRanges.landValue);
-      setImprovementValueRange(initRanges.improvementValue);
-      setLandValuePerSqftRange(initRanges.landPerSqft);
-      setBldgToLandRatioRange(initRanges.bldgRatio);
-      setWaterUsageRange(initRanges.waterUsage);
-      setElectricUsageRange(initRanges.electricUsage);
-      setGasUsageRange(initRanges.gasUsage);
-      setWaterPerSfRange(initRanges.waterPerSf);
-      setElectricPerSfRange(initRanges.electricPerSf);
-      setGasPerSfRange(initRanges.gasPerSf);
+      setRanges(initRanges);
       rangesInitialized.current = true;
       rangesJustInitialized.current = true;
     }
@@ -1193,53 +1175,19 @@ export default function Dashboard() {
       maximumFractionDigits: 0,
     }).format(val);
 
-  // Update range sliders to match filtered data bounds
-  // Only called when pendingRangeUpdateRef is set (triggered by user action)
   useEffect(() => {
     if (!stats || !rangesInitialized.current || !pendingRangeUpdateRef.current) return;
-    
-    // Clear the flag immediately to prevent re-triggering
     pendingRangeUpdateRef.current = false;
-    
-    // Update all range filter values to match the filtered data bounds
-    if (stats.minAssessedValue !== undefined && stats.maxAssessedValue !== undefined) {
-      setValueRange([stats.minAssessedValue, stats.maxAssessedValue]);
+    const updated = {} as Record<string, [number, number]>;
+    for (const cfg of RANGE_FILTER_CONFIGS) {
+      const minVal = (stats as any)[cfg.statsMinKey];
+      const maxVal = (stats as any)[cfg.statsMaxKey];
+      if (minVal !== undefined && maxVal !== undefined) {
+        updated[cfg.key] = [minVal, maxVal];
+      }
     }
-    if (stats.minTaxValue !== undefined && stats.maxTaxValue !== undefined) {
-      setTaxRange([stats.minTaxValue, stats.maxTaxValue]);
-    }
-    if (stats.minParcelArea !== undefined && stats.maxParcelArea !== undefined) {
-      setParcelAreaRange([stats.minParcelArea, stats.maxParcelArea]);
-    }
-    if (stats.minLandValue !== undefined && stats.maxLandValue !== undefined) {
-      setLandValueRange([stats.minLandValue, stats.maxLandValue]);
-    }
-    if (stats.minImprovementValue !== undefined && stats.maxImprovementValue !== undefined) {
-      setImprovementValueRange([stats.minImprovementValue, stats.maxImprovementValue]);
-    }
-    if (stats.minLandPerSqft !== undefined && stats.maxLandPerSqft !== undefined) {
-      setLandValuePerSqftRange([stats.minLandPerSqft, stats.maxLandPerSqft]);
-    }
-    if (stats.minBldgRatio !== undefined && stats.maxBldgRatio !== undefined) {
-      setBldgToLandRatioRange([stats.minBldgRatio, stats.maxBldgRatio]);
-    }
-    if (stats.minWaterUsage !== undefined && stats.maxWaterUsage !== undefined) {
-      setWaterUsageRange([stats.minWaterUsage, stats.maxWaterUsage]);
-    }
-    if (stats.minElectricUsage !== undefined && stats.maxElectricUsage !== undefined) {
-      setElectricUsageRange([stats.minElectricUsage, stats.maxElectricUsage]);
-    }
-    if (stats.minGasUsage !== undefined && stats.maxGasUsage !== undefined) {
-      setGasUsageRange([stats.minGasUsage, stats.maxGasUsage]);
-    }
-    if (stats.minWaterPerSf !== undefined && stats.maxWaterPerSf !== undefined) {
-      setWaterPerSfRange([stats.minWaterPerSf, stats.maxWaterPerSf]);
-    }
-    if (stats.minElectricPerSf !== undefined && stats.maxElectricPerSf !== undefined) {
-      setElectricPerSfRange([stats.minElectricPerSf, stats.maxElectricPerSf]);
-    }
-    if (stats.minGasPerSf !== undefined && stats.maxGasPerSf !== undefined) {
-      setGasPerSfRange([stats.minGasPerSf, stats.maxGasPerSf]);
+    if (Object.keys(updated).length > 0) {
+      setRanges(prev => ({ ...prev, ...updated }));
     }
   }, [stats]);
   
@@ -1414,7 +1362,7 @@ export default function Dashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `los_alamos_parcels_${year}_${valueRange[0]}-${valueRange[1]}.${extension}`;
+    link.download = `los_alamos_parcels_${year}_${ranges.assessedValue[0]}-${ranges.assessedValue[1]}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1528,36 +1476,14 @@ export default function Dashboard() {
                   onClick={() => {
                     startFilterTransition(() => {
                       setYear(2025);
-                      const resetRanges = {
-                        assessedValue: [sliderBounds.assessedValue.min, sliderBounds.assessedValue.max] as [number, number],
-                        tax: [sliderBounds.tax.min, sliderBounds.tax.max] as [number, number],
-                        area: [sliderBounds.area.min, sliderBounds.area.max] as [number, number],
-                        landValue: [sliderBounds.landValue.min, sliderBounds.landValue.max] as [number, number],
-                        improvementValue: [sliderBounds.improvementValue.min, sliderBounds.improvementValue.max] as [number, number],
-                        landPerSqft: [sliderBounds.landPerSqft.min, sliderBounds.landPerSqft.max] as [number, number],
-                        bldgRatio: [sliderBounds.bldgRatio.min, sliderBounds.bldgRatio.max] as [number, number],
-                        waterUsage: [sliderBounds.waterUsage.min, sliderBounds.waterUsage.max] as [number, number],
-                        electricUsage: [sliderBounds.electricUsage.min, sliderBounds.electricUsage.max] as [number, number],
-                        gasUsage: [sliderBounds.gasUsage.min, sliderBounds.gasUsage.max] as [number, number],
-                        waterPerSf: [sliderBounds.waterPerSf?.min ?? 0, sliderBounds.waterPerSf?.max ?? 10] as [number, number],
-                        electricPerSf: [sliderBounds.electricPerSf?.min ?? 0, sliderBounds.electricPerSf?.max ?? 5] as [number, number],
-                        gasPerSf: [sliderBounds.gasPerSf?.min ?? 0, sliderBounds.gasPerSf?.max ?? 1] as [number, number],
-                      };
+                      const resetRanges = {} as Record<RangeFilterKey, [number, number]>;
+                      for (const cfg of RANGE_FILTER_CONFIGS) {
+                        const b = sliderBounds[cfg.key] || { min: 0, max: cfg.defaultMax };
+                        resetRanges[cfg.key] = [b.min, b.max];
+                      }
                       committedRanges.current = { ...resetRanges };
                       setRangeFilterVersion(v => v + 1);
-                      setValueRange(resetRanges.assessedValue);
-                      setTaxRange(resetRanges.tax);
-                      setParcelAreaRange(resetRanges.area);
-                      setLandValueRange(resetRanges.landValue);
-                      setImprovementValueRange(resetRanges.improvementValue);
-                      setLandValuePerSqftRange(resetRanges.landPerSqft);
-                      setBldgToLandRatioRange(resetRanges.bldgRatio);
-                      setWaterUsageRange(resetRanges.waterUsage);
-                      setElectricUsageRange(resetRanges.electricUsage);
-                      setGasUsageRange(resetRanges.gasUsage);
-                      setWaterPerSfRange(resetRanges.waterPerSf);
-                      setElectricPerSfRange(resetRanges.electricPerSf);
-                      setGasPerSfRange(resetRanges.gasPerSf);
+                      setRanges(resetRanges);
                       setSelectedAccountTypes([]);
                       setSelectedSubdivisions([]);
                       setSelectedZones([]);
@@ -1600,238 +1526,78 @@ export default function Dashboard() {
                 </Select>
               </div>
 
-              <RangeFilter
-                title="Assessed Value Range"
-                colorHsl="hsl(199 89% 48%)"
-                rangeClassName="bg-primary"
-                thumbClassName="border-primary"
-                sliderMin={sliderBounds.assessedValue.min}
-                sliderMax={sliderBounds.assessedValue.max}
-                filteredMin={stats?.chartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.chartData?.[stats.chartData.length - 1]?.binMax ?? 5000000}
-                value={valueRange}
-                onChange={(v) => { setValueRange(v); commitRange('assessedValue', v); }}
-                histogramData={stats?.chartData}
-                prefix="$"
-                testIdPrefix="value-range"
-                logarithmic
-              />
+              {RANGE_FILTER_CONFIGS.filter(cfg => activeFilters.includes(cfg.key)).map(cfg => {
+                const bounds = sliderBounds[cfg.key] || { min: 0, max: cfg.defaultMax };
+                const chartData = stats ? (stats as any)[cfg.chartDataKey] : undefined;
+                const lastIdx = chartData?.length ? chartData.length - 1 : 0;
+                return (
+                  <div key={cfg.key} className="relative group/filter" data-testid={`filter-container-${cfg.testIdPrefix}`}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute right-0 top-0 z-10 h-6 w-6 opacity-0 group-hover/filter:opacity-100 transition-opacity"
+                      onClick={() => {
+                        setActiveFilters(prev => prev.filter(k => k !== cfg.key));
+                        const b = sliderBounds[cfg.key] || { min: 0, max: cfg.defaultMax };
+                        setRange(cfg.key, [b.min, b.max]);
+                        commitRange(cfg.key, [b.min, b.max]);
+                      }}
+                      data-testid={`remove-filter-${cfg.testIdPrefix}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <RangeFilter
+                      title={cfg.title}
+                      colorHsl={cfg.colorHsl}
+                      rangeClassName={cfg.rangeClassName}
+                      thumbClassName={cfg.thumbClassName}
+                      sliderMin={bounds.min}
+                      sliderMax={bounds.max}
+                      filteredMin={chartData?.[0]?.binMin ?? 0}
+                      filteredMax={chartData?.[lastIdx]?.binMax ?? cfg.defaultMax}
+                      value={ranges[cfg.key]}
+                      onChange={(v) => { setRange(cfg.key, v); commitRange(cfg.key, v); }}
+                      histogramData={chartData}
+                      prefix={cfg.prefix}
+                      decimals={cfg.decimals}
+                      testIdPrefix={cfg.testIdPrefix}
+                      inputWidth={cfg.inputWidth}
+                      logarithmic={cfg.logarithmic}
+                    />
+                  </div>
+                );
+              })}
 
-              <RangeFilter
-                title="Land Value"
-                colorHsl="hsl(173 80% 40%)"
-                rangeClassName="bg-teal-500"
-                thumbClassName="border-teal-500"
-                sliderMin={sliderBounds.landValue.min}
-                sliderMax={sliderBounds.landValue.max}
-                filteredMin={stats?.landChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.landChartData?.[stats.landChartData?.length - 1]?.binMax ?? 2000000}
-                value={landValueRange}
-                onChange={(v) => { setLandValueRange(v); commitRange('landValue', v); }}
-                histogramData={stats?.landChartData}
-                prefix="$"
-                testIdPrefix="land-value"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Improvement Value"
-                colorHsl="hsl(24 95% 50%)"
-                rangeClassName="bg-orange-500"
-                thumbClassName="border-orange-500"
-                sliderMin={sliderBounds.improvementValue.min}
-                sliderMax={sliderBounds.improvementValue.max}
-                filteredMin={stats?.improvementChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.improvementChartData?.[stats.improvementChartData?.length - 1]?.binMax ?? 5000000}
-                value={improvementValueRange}
-                onChange={(v) => { setImprovementValueRange(v); commitRange('improvementValue', v); }}
-                histogramData={stats?.improvementChartData}
-                prefix="$"
-                testIdPrefix="improvement-value"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Tax Assessed"
-                colorHsl="hsl(142 71% 45%)"
-                rangeClassName="bg-green-500"
-                thumbClassName="border-green-500"
-                sliderMin={sliderBounds.tax.min}
-                sliderMax={sliderBounds.tax.max}
-                filteredMin={stats?.taxChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.taxChartData?.[stats.taxChartData?.length - 1]?.binMax ?? 50000}
-                value={taxRange}
-                onChange={(v) => { setTaxRange(v); commitRange('tax', v); }}
-                histogramData={stats?.taxChartData}
-                prefix="$"
-                testIdPrefix="tax-range"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Parcel Area (Acres)"
-                colorHsl="hsl(271 81% 56%)"
-                rangeClassName="bg-purple-500"
-                thumbClassName="border-purple-500"
-                sliderMin={sliderBounds.area.min}
-                sliderMax={sliderBounds.area.max}
-                filteredMin={stats?.parcelChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.parcelChartData?.[stats.parcelChartData?.length - 1]?.binMax ?? 1200}
-                value={parcelAreaRange}
-                onChange={(v) => { setParcelAreaRange(v); commitRange('area', v); }}
-                histogramData={stats?.parcelChartData}
-                decimals={2}
-                testIdPrefix="parcel-area"
-                inputWidth="w-16"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Land Value/Sqft"
-                colorHsl="hsl(173 80% 40%)"
-                rangeClassName="bg-teal-500"
-                thumbClassName="border-teal-500"
-                sliderMin={sliderBounds.landPerSqft.min}
-                sliderMax={sliderBounds.landPerSqft.max}
-                filteredMin={stats?.landPerSqftChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.landPerSqftChartData?.[stats.landPerSqftChartData?.length - 1]?.binMax ?? 150}
-                value={landValuePerSqftRange}
-                onChange={(v) => { setLandValuePerSqftRange(v); commitRange('landPerSqft', v); }}
-                histogramData={stats?.landPerSqftChartData}
-                prefix="$"
-                decimals={2}
-                testIdPrefix="land-per-sqft"
-                inputWidth="w-16"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Bldg/Land Sqft Ratio"
-                colorHsl="hsl(330 81% 60%)"
-                rangeClassName="bg-pink-500"
-                thumbClassName="border-pink-500"
-                sliderMin={sliderBounds.bldgRatio.min}
-                sliderMax={sliderBounds.bldgRatio.max}
-                filteredMin={stats?.bldgRatioChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.bldgRatioChartData?.[stats.bldgRatioChartData?.length - 1]?.binMax ?? 2}
-                value={bldgToLandRatioRange}
-                onChange={(v) => { setBldgToLandRatioRange(v); commitRange('bldgRatio', v); }}
-                histogramData={stats?.bldgRatioChartData}
-                decimals={3}
-                testIdPrefix="bldg-ratio"
-                inputWidth="w-16"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Avg Water (kgal/mo)"
-                colorHsl="hsl(187 85% 53%)"
-                rangeClassName="bg-cyan-500"
-                thumbClassName="border-cyan-500"
-                sliderMin={sliderBounds.waterUsage.min}
-                sliderMax={sliderBounds.waterUsage.max}
-                filteredMin={stats?.waterUsageChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.waterUsageChartData?.[stats.waterUsageChartData?.length - 1]?.binMax ?? 100}
-                value={waterUsageRange}
-                onChange={(v) => { setWaterUsageRange(v); commitRange('waterUsage', v); }}
-                histogramData={stats?.waterUsageChartData}
-                decimals={1}
-                testIdPrefix="water-usage"
-                inputWidth="w-16"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Avg Electric (kWh/mo)"
-                colorHsl="hsl(48 96% 53%)"
-                rangeClassName="bg-yellow-500"
-                thumbClassName="border-yellow-500"
-                sliderMin={sliderBounds.electricUsage.min}
-                sliderMax={sliderBounds.electricUsage.max}
-                filteredMin={stats?.electricUsageChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.electricUsageChartData?.[stats.electricUsageChartData?.length - 1]?.binMax ?? 5000}
-                value={electricUsageRange}
-                onChange={(v) => { setElectricUsageRange(v); commitRange('electricUsage', v); }}
-                histogramData={stats?.electricUsageChartData}
-                decimals={0}
-                testIdPrefix="electric-usage"
-                logarithmic
-              />
-
-              <RangeFilter
-                title="Avg Gas (therms/mo)"
-                colorHsl="hsl(24 95% 53%)"
-                rangeClassName="bg-orange-500"
-                thumbClassName="border-orange-500"
-                sliderMin={sliderBounds.gasUsage.min}
-                sliderMax={sliderBounds.gasUsage.max}
-                filteredMin={stats?.gasUsageChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.gasUsageChartData?.[stats.gasUsageChartData?.length - 1]?.binMax ?? 500}
-                value={gasUsageRange}
-                onChange={(v) => { setGasUsageRange(v); commitRange('gasUsage', v); }}
-                histogramData={stats?.gasUsageChartData}
-                decimals={1}
-                testIdPrefix="gas-usage"
-                inputWidth="w-16"
-                logarithmic
-              />
-
-              {/* Water Per SF Range Filter */}
-              <RangeFilter
-                title="Water/Bldg SF (gal/mo)"
-                colorHsl="hsl(187 100% 42%)"
-                rangeClassName="bg-cyan-500"
-                thumbClassName="border-cyan-500"
-                sliderMin={sliderBounds.waterPerSf?.min ?? 0}
-                sliderMax={sliderBounds.waterPerSf?.max ?? 10}
-                filteredMin={stats?.waterPerSfChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.waterPerSfChartData?.[4]?.binMax ?? 10}
-                value={waterPerSfRange}
-                onChange={(v) => { setWaterPerSfRange(v); commitRange('waterPerSf', v); }}
-                histogramData={stats?.waterPerSfChartData}
-                decimals={2}
-                testIdPrefix="water-per-sf"
-                inputWidth="w-16"
-                logarithmic
-              />
-
-              {/* Electric Per SF Range Filter */}
-              <RangeFilter
-                title="Electric/Bldg SF (kWh/mo)"
-                colorHsl="hsl(48 96% 53%)"
-                rangeClassName="bg-yellow-400"
-                thumbClassName="border-yellow-400"
-                sliderMin={sliderBounds.electricPerSf?.min ?? 0}
-                sliderMax={sliderBounds.electricPerSf?.max ?? 5}
-                filteredMin={stats?.electricPerSfChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.electricPerSfChartData?.[4]?.binMax ?? 5}
-                value={electricPerSfRange}
-                onChange={(v) => { setElectricPerSfRange(v); commitRange('electricPerSf', v); }}
-                histogramData={stats?.electricPerSfChartData}
-                decimals={3}
-                testIdPrefix="electric-per-sf"
-                inputWidth="w-16"
-                logarithmic
-              />
-
-              {/* Gas Per SF Range Filter */}
-              <RangeFilter
-                title="Gas/Bldg SF (therms/mo)"
-                colorHsl="hsl(24 95% 53%)"
-                rangeClassName="bg-orange-500"
-                thumbClassName="border-orange-500"
-                sliderMin={sliderBounds.gasPerSf?.min ?? 0}
-                sliderMax={sliderBounds.gasPerSf?.max ?? 1}
-                filteredMin={stats?.gasPerSfChartData?.[0]?.binMin ?? 0}
-                filteredMax={stats?.gasPerSfChartData?.[4]?.binMax ?? 1}
-                value={gasPerSfRange}
-                onChange={(v) => { setGasPerSfRange(v); commitRange('gasPerSf', v); }}
-                histogramData={stats?.gasPerSfChartData}
-                decimals={4}
-                testIdPrefix="gas-per-sf"
-                inputWidth="w-16"
-                logarithmic
-              />
+              {activeFilters.length < RANGE_FILTER_CONFIGS.length && (
+                <Popover open={addFilterOpen} onOpenChange={setAddFilterOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full gap-1" data-testid="button-add-filter">
+                      <Plus className="h-3.5 w-3.5" />
+                      Add a filter
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="start">
+                    <div className="flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+                      {RANGE_FILTER_CONFIGS.filter(cfg => !activeFilters.includes(cfg.key)).map(cfg => (
+                        <Button
+                          key={cfg.key}
+                          variant="ghost"
+                          size="sm"
+                          className="justify-start text-xs h-7"
+                          onClick={() => {
+                            setActiveFilters(prev => [...prev, cfg.key]);
+                            setAddFilterOpen(false);
+                          }}
+                          data-testid={`add-filter-${cfg.testIdPrefix}`}
+                        >
+                          <span className="w-2 h-2 rounded-full mr-2 flex-shrink-0" style={{ backgroundColor: cfg.colorHsl }} />
+                          {cfg.title}
+                        </Button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
 
               {/* Account Type Multi-Select */}
               <MultiSelectFilter
