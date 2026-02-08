@@ -1531,21 +1531,7 @@ export default function Dashboard() {
                 const chartData = stats ? (stats as any)[cfg.chartDataKey] : undefined;
                 const lastIdx = chartData?.length ? chartData.length - 1 : 0;
                 return (
-                  <div key={cfg.key} className="relative group/filter" data-testid={`filter-container-${cfg.testIdPrefix}`}>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute right-0 top-0 z-10 h-6 w-6 opacity-0 group-hover/filter:opacity-100 transition-opacity"
-                      onClick={() => {
-                        setActiveFilters(prev => prev.filter(k => k !== cfg.key));
-                        const b = sliderBounds[cfg.key] || { min: 0, max: cfg.defaultMax };
-                        setRange(cfg.key, [b.min, b.max]);
-                        commitRange(cfg.key, [b.min, b.max]);
-                      }}
-                      data-testid={`remove-filter-${cfg.testIdPrefix}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
+                  <div key={cfg.key} className="group/filter" data-testid={`filter-container-${cfg.testIdPrefix}`}>
                     <RangeFilter
                       title={cfg.title}
                       colorHsl={cfg.colorHsl}
@@ -1563,6 +1549,12 @@ export default function Dashboard() {
                       testIdPrefix={cfg.testIdPrefix}
                       inputWidth={cfg.inputWidth}
                       logarithmic={cfg.logarithmic}
+                      onRemove={() => {
+                        setActiveFilters(prev => prev.filter(k => k !== cfg.key));
+                        const b = sliderBounds[cfg.key] || { min: 0, max: cfg.defaultMax };
+                        setRange(cfg.key, [b.min, b.max]);
+                        commitRange(cfg.key, [b.min, b.max]);
+                      }}
                     />
                   </div>
                 );

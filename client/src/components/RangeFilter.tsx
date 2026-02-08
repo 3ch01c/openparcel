@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 import {
   BarChart,
   Bar,
@@ -39,6 +40,7 @@ interface RangeFilterProps {
   inputWidth?: string;
   defaultExpanded?: boolean;
   logarithmic?: boolean;
+  onRemove?: () => void;
 }
 
 const LOG_STEPS = 1000;
@@ -84,6 +86,7 @@ export function RangeFilter({
   inputWidth = "w-20",
   defaultExpanded = false,
   logarithmic = false,
+  onRemove,
 }: RangeFilterProps) {
   const [editingMin, setEditingMin] = useState(false);
   const [editingMax, setEditingMax] = useState(false);
@@ -229,15 +232,28 @@ export function RangeFilter({
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-          data-testid={`button-toggle-${testIdPrefix}`}
-        >
-          {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          {title}
-        </button>
+      <div className="flex justify-between items-center gap-1">
+        <div className="flex items-center gap-0.5 min-w-0">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            data-testid={`button-toggle-${testIdPrefix}`}
+          >
+            {expanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+            {title}
+          </button>
+          {onRemove && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-5 w-5 opacity-0 group-hover/filter:opacity-100 transition-opacity shrink-0"
+              onClick={onRemove}
+              data-testid={`remove-filter-${testIdPrefix}`}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
         <div className="flex items-center gap-1 text-xs font-mono">
           {editingMin ? (
             <input
