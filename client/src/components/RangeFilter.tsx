@@ -340,7 +340,7 @@ export function RangeFilter({
           return (
             <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
               <div
-                className="absolute top-1/2 -translate-y-1/2 rounded-sm"
+                className="absolute top-1/2 -translate-y-1/2 rounded-sm pointer-events-auto cursor-default overflow-visible"
                 style={{
                   left: `${q1Pct}%`,
                   width: `${Math.max(0, q3Pct - q1Pct)}%`,
@@ -348,8 +348,19 @@ export function RangeFilter({
                   backgroundColor: 'rgba(255,255,255,0.25)',
                   border: '1px solid rgba(255,255,255,0.4)',
                 }}
+                onMouseEnter={() => setHoveredMarker('iqr')}
+                onMouseLeave={() => setHoveredMarker(null)}
                 data-testid={`iqr-band-${testIdPrefix}`}
-              />
+              >
+                {hoveredMarker === 'iqr' && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 rounded text-[10px] font-mono whitespace-nowrap bg-popover border border-border shadow-md" style={{ zIndex: 50 }}>
+                    <span className="text-muted-foreground">IQR: </span>
+                    <span style={{ color: colorHsl }}>{format(statMarkers.q1)}</span>
+                    <span className="text-muted-foreground"> – </span>
+                    <span style={{ color: colorHsl }}>{format(statMarkers.q3)}</span>
+                  </div>
+                )}
+              </div>
               {medianInRange && (
                 <div
                   className="absolute top-1/2 pointer-events-auto cursor-default"

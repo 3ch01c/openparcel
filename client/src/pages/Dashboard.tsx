@@ -43,6 +43,8 @@ import {
   Plus,
   Settings2,
   ChevronUp,
+  Ruler,
+  Building2,
 } from "lucide-react";
 import {
   Popover,
@@ -94,7 +96,7 @@ const TILE_LAYERS = {
   }
 };
 
-type RangeFilterKey = 'assessedValue' | 'landValue' | 'improvementValue' | 'tax' | 'area' | 'landPerSqft' | 'bldgRatio' | 'waterUsage' | 'electricUsage' | 'gasUsage' | 'waterPerSf' | 'electricPerSf' | 'gasPerSf';
+type RangeFilterKey = 'assessedValue' | 'landValue' | 'improvementValue' | 'tax' | 'area' | 'buildingSqft' | 'landPerSqft' | 'bldgRatio' | 'waterUsage' | 'electricUsage' | 'gasUsage' | 'waterPerSf' | 'electricPerSf' | 'gasPerSf';
 
 interface RangeFilterConfig {
   key: RangeFilterKey;
@@ -120,6 +122,7 @@ const RANGE_FILTER_CONFIGS: RangeFilterConfig[] = [
   { key: 'improvementValue', title: 'Improvement Value', colorHsl: 'hsl(24 95% 50%)', rangeClassName: 'bg-orange-500', thumbClassName: 'border-orange-500', prefix: '$', testIdPrefix: 'improvement-value', logarithmic: true, chartDataKey: 'improvementChartData', statsMinKey: 'minImprovementValue', statsMaxKey: 'maxImprovementValue', defaultMax: 50000000, statsObjKey: 'improvementStats' },
   { key: 'tax', title: 'Tax Assessed', colorHsl: 'hsl(142 71% 45%)', rangeClassName: 'bg-green-500', thumbClassName: 'border-green-500', prefix: '$', testIdPrefix: 'tax-range', logarithmic: true, chartDataKey: 'taxChartData', statsMinKey: 'minTaxValue', statsMaxKey: 'maxTaxValue', defaultMax: 500000, statsObjKey: 'taxStats' },
   { key: 'area', title: 'Parcel Area (Acres)', colorHsl: 'hsl(271 81% 56%)', rangeClassName: 'bg-purple-500', thumbClassName: 'border-purple-500', decimals: 2, testIdPrefix: 'parcel-area', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'parcelChartData', statsMinKey: 'minParcelArea', statsMaxKey: 'maxParcelArea', defaultMax: 1200, statsObjKey: 'acreageStats' },
+  { key: 'buildingSqft', title: 'Improvement Area (SF)', colorHsl: 'hsl(220 70% 55%)', rangeClassName: 'bg-blue-500', thumbClassName: 'border-blue-500', decimals: 0, testIdPrefix: 'building-sqft', logarithmic: true, chartDataKey: 'buildingSqftChartData', statsMinKey: 'minBuildingSqft', statsMaxKey: 'maxBuildingSqft', defaultMax: 100000, statsObjKey: 'buildingSqftStats' },
   { key: 'landPerSqft', title: 'Land Value/Sqft', colorHsl: 'hsl(173 80% 40%)', rangeClassName: 'bg-teal-500', thumbClassName: 'border-teal-500', prefix: '$', decimals: 2, testIdPrefix: 'land-per-sqft', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'landPerSqftChartData', statsMinKey: 'minLandPerSqft', statsMaxKey: 'maxLandPerSqft', defaultMax: 150, statsObjKey: 'landPerSqftStats' },
   { key: 'bldgRatio', title: 'Bldg/Land Sqft Ratio', colorHsl: 'hsl(330 81% 60%)', rangeClassName: 'bg-pink-500', thumbClassName: 'border-pink-500', decimals: 3, testIdPrefix: 'bldg-ratio', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'bldgRatioChartData', statsMinKey: 'minBldgRatio', statsMaxKey: 'maxBldgRatio', defaultMax: 2, statsObjKey: 'bldgRatioStats' },
   { key: 'waterUsage', title: 'Avg Water (kgal/mo)', colorHsl: 'hsl(187 85% 53%)', rangeClassName: 'bg-cyan-500', thumbClassName: 'border-cyan-500', decimals: 1, testIdPrefix: 'water-usage', inputWidth: 'w-16', logarithmic: true, chartDataKey: 'waterUsageChartData', statsMinKey: 'minWaterUsage', statsMaxKey: 'maxWaterUsage', defaultMax: 100, statsObjKey: 'waterStats' },
@@ -138,11 +141,37 @@ const INITIAL_RANGES: Record<RangeFilterKey, [number, number]> = Object.fromEntr
   RANGE_FILTER_CONFIGS.map(c => [c.key, [0, c.defaultMax] as [number, number]])
 ) as Record<RangeFilterKey, [number, number]>;
 
+type StatsCardKey = 'parcels' | 'acreage' | 'assessedValue' | 'landValue' | 'taxAssessed' | 'taxExemptions' | 'landValuePerSf' | 'bldgLandRatio' | 'improvementArea';
+
+interface StatsCardConfig {
+  key: StatsCardKey;
+  title: string;
+  icon: React.ElementType;
+}
+
+const STATS_CARD_CONFIGS: StatsCardConfig[] = [
+  { key: 'parcels', title: 'Parcels', icon: Home },
+  { key: 'acreage', title: 'Acreage', icon: TrendingUp },
+  { key: 'assessedValue', title: 'Total Assessed Value', icon: DollarSign },
+  { key: 'landValue', title: 'Total Land Value', icon: DollarSign },
+  { key: 'taxAssessed', title: 'Total Tax Assessed', icon: DollarSign },
+  { key: 'taxExemptions', title: 'Total Tax Exemptions', icon: DollarSign },
+  { key: 'landValuePerSf', title: 'Land Value / SF', icon: Ruler },
+  { key: 'bldgLandRatio', title: 'Bldg/Land SF Ratio', icon: Building2 },
+  { key: 'improvementArea', title: 'Improvement Area', icon: Building2 },
+];
+
+const DEFAULT_ACTIVE_STATS: StatsCardKey[] = [
+  'parcels', 'acreage', 'assessedValue', 'landValue', 'taxAssessed', 'taxExemptions',
+];
+
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
   const [mapLayer, setMapLayer] = useState<"dark" | "terrain" | "satellite">("dark");
   const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
   const [mapControlsOpen, setMapControlsOpen] = useState(true);
+  const [activeStats, setActiveStats] = useState<StatsCardKey[]>([...DEFAULT_ACTIVE_STATS]);
+  const [addStatOpen, setAddStatOpen] = useState(false);
   const [colorMetric, setColorMetric] = useState<ColorMetric>("bldgLandRatio");
   const [ranges, setRanges] = useState<Record<RangeFilterKey, [number, number]>>({ ...INITIAL_RANGES });
   const [activeFilters, setActiveFilters] = useState<RangeFilterKey[]>([...DEFAULT_ACTIVE_FILTERS]);
@@ -251,6 +280,7 @@ export default function Dashboard() {
         area: { min: 0, max: 1200 },
         landValue: { min: 0, max: 250000000 },
         improvementValue: { min: 0, max: 50000000 },
+        buildingSqft: { min: 0, max: 100000 },
         landPerSqft: { min: 0, max: 150 },
         bldgRatio: { min: 0, max: 2 },
         waterUsage: { min: 0, max: 100 },
@@ -285,6 +315,7 @@ export default function Dashboard() {
       area: rangeOf(nn(rawProperties.map(p => p.area))),
       landValue: rangeOf(nn(rawProperties.map(p => p.landValue))),
       improvementValue: rangeOf(nn(rawProperties.map(p => p.improvementValue))),
+      buildingSqft: rangeOf(nn(rawProperties.map(p => p.buildingSqft))),
       landPerSqft: rangeOf(landPerSqftValues),
       bldgRatio: rangeOf(bldgRatioValues),
       waterUsage: rangeOf(nn(rawProperties.map(p => p.avgMonthlyWaterKgal))),
@@ -375,6 +406,7 @@ export default function Dashboard() {
         inRange(p.area, cr.area, sliderBounds.area) &&
         inRange(p.landValue, cr.landValue, sliderBounds.landValue) &&
         inRange(p.improvementValue, cr.improvementValue, sliderBounds.improvementValue) &&
+        inRange(p.buildingSqft, cr.buildingSqft, sliderBounds.buildingSqft) &&
         inRange(landPerSqft, cr.landPerSqft, sliderBounds.landPerSqft) &&
         inRange(bldgRatio, cr.bldgRatio, sliderBounds.bldgRatio) &&
         inRange(p.avgMonthlyWaterKgal, cr.waterUsage, sliderBounds.waterUsage) &&
@@ -788,6 +820,23 @@ export default function Dashboard() {
       binMax: actualLandPerSqftMin + (i + 1) * landPerSqftStep,
     }));
 
+    // Building sqft (improvement area) histogram
+    const buildingSqftValues = nnf(statsProps.map(p => p.buildingSqft));
+    const actualBldgSqftMin = buildingSqftValues.length > 0 ? Math.min(...buildingSqftValues) : 0;
+    const actualBldgSqftMax = buildingSqftValues.length > 0 ? Math.max(...buildingSqftValues) : 1;
+    const bldgSqftDistribution = [0, 0, 0, 0, 0];
+    const bldgSqftStep = (actualBldgSqftMax - actualBldgSqftMin) / 5;
+    buildingSqftValues.forEach(val => {
+      const bucket = bldgSqftStep > 0 ? Math.min(Math.floor((val - actualBldgSqftMin) / bldgSqftStep), 4) : 0;
+      bldgSqftDistribution[bucket]++;
+    });
+    const buildingSqftChartData = bldgSqftDistribution.map((count, i) => ({
+      range: `${Math.round(actualBldgSqftMin + i * bldgSqftStep).toLocaleString()} - ${Math.round(actualBldgSqftMin + (i + 1) * bldgSqftStep).toLocaleString()} sf`,
+      count,
+      binMin: Math.round(actualBldgSqftMin + i * bldgSqftStep),
+      binMax: Math.round(actualBldgSqftMin + (i + 1) * bldgSqftStep),
+    }));
+
     // Building sqft to land sqft ratio histogram
     const bldgRatioValues = nnf(statsProps.map(p => getBldgToLandRatio(p)));
     const actualBldgRatioMin = bldgRatioValues.length > 0 ? Math.min(...bldgRatioValues) : 0;
@@ -1083,6 +1132,7 @@ export default function Dashboard() {
     const electricStats = computeStats(electricValues);
     const gasStats = computeStats(gasValues);
     const improvementStats = computeStats(improvementValues);
+    const buildingSqftStats = computeStats(buildingSqftValues);
     const landPerSqftStats = computeStats(landPerSqftValues);
     const bldgRatioStats = computeStats(bldgRatioValues);
     const waterPerSfStats = computeStats(waterPerSfValues);
@@ -1105,6 +1155,8 @@ export default function Dashboard() {
       maxImprovementValue: actualImpMax,
       minParcelArea: actualParcelMin,
       maxParcelArea: actualParcelMax,
+      minBuildingSqft: actualBldgSqftMin,
+      maxBuildingSqft: actualBldgSqftMax,
       minLandPerSqft: actualLandPerSqftMin,
       maxLandPerSqft: actualLandPerSqftMax,
       minBldgRatio: actualBldgRatioMin,
@@ -1140,6 +1192,7 @@ export default function Dashboard() {
       parcelChartData,
       landChartData,
       improvementChartData,
+      buildingSqftChartData,
       landPerSqftChartData,
       bldgRatioChartData,
       waterUsageChartData,
@@ -1168,6 +1221,7 @@ export default function Dashboard() {
       gasStats,
       exemptionStats,
       improvementStats,
+      buildingSqftStats,
       landPerSqftStats,
       bldgRatioStats,
       waterPerSfStats,
@@ -1771,100 +1825,168 @@ export default function Dashboard() {
           ) : stats ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-2 gap-4">
-                <CursorTooltip content={
-                  <div className="text-xs space-y-1">
-                    <div>{Math.max(0, (initialTotalParcelsRef.current || 0) - (includedProperties?.length || 0) - totalMetricMissingCount).toLocaleString()} hidden by filters</div>
-                    <div>{totalMetricMissingCount.toLocaleString()} hidden for missing metric</div>
-                  </div>
-                }>
-                  <StatsCard
-                    title="Parcels"
-                    value={stats.count.toLocaleString()}
-                    icon={Home}
-                    description={`out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`}
-                  />
-                </CursorTooltip>
-                <CursorTooltip content={
-                  <div className="text-xs space-y-1">
-                    <div>Mean: {stats.acreageStats.mean.toFixed(2)} ac</div>
-                    <div>Median: {stats.acreageStats.median.toFixed(2)} ac</div>
+                {activeStats.map((cardKey) => {
+                  const cfg = STATS_CARD_CONFIGS.find(c => c.key === cardKey);
+                  if (!cfg) return null;
+                  const removeBtn = (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveStats(prev => prev.filter(k => k !== cardKey)); }}
+                      className="absolute top-1 right-1 p-0.5 rounded-full text-muted-foreground hover:text-foreground opacity-0 group-hover/stat:opacity-100 transition-opacity"
+                      data-testid={`button-remove-stat-${cardKey}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  );
 
+                  const cardProps = (() => {
+                    switch (cardKey) {
+                      case 'parcels': return {
+                        value: stats.count.toLocaleString(),
+                        description: `out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>{Math.max(0, (initialTotalParcelsRef.current || 0) - (includedProperties?.length || 0) - totalMetricMissingCount).toLocaleString()} hidden by filters</div>
+                            <div>{totalMetricMissingCount.toLocaleString()} hidden for missing metric</div>
+                          </div>
+                        ),
+                      };
+                      case 'acreage': return {
+                        value: stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0}),
+                        description: `Median: ${stats.acreageStats.median.toFixed(2)} ac`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: {stats.acreageStats.mean.toFixed(2)} ac</div>
+                            <div>Median: {stats.acreageStats.median.toFixed(2)} ac</div>
+                            <div>IQR: {stats.acreageStats.q1.toFixed(2)}–{stats.acreageStats.q3.toFixed(2)} ac ({stats.acreageStats.iqr.toFixed(2)})</div>
+                          </div>
+                        ),
+                      };
+                      case 'assessedValue': return {
+                        value: formatCurrencyShort(stats.totalValue),
+                        description: `Median: ${formatCurrencyShort(stats.assessedStats.median)}`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: {formatCurrencyShort(stats.assessedStats.mean)}</div>
+                            <div>Median: {formatCurrencyShort(stats.assessedStats.median)}</div>
+                            <div>IQR: {formatCurrencyShort(stats.assessedStats.q1)}–{formatCurrencyShort(stats.assessedStats.q3)} ({formatCurrencyShort(stats.assessedStats.iqr)})</div>
+                          </div>
+                        ),
+                      };
+                      case 'landValue': return {
+                        value: formatCurrencyShort(stats.totalLandValue),
+                        description: `Median: ${formatCurrencyShort(stats.landValueStats.median)}`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: {formatCurrencyShort(stats.landValueStats.mean)}</div>
+                            <div>Median: {formatCurrencyShort(stats.landValueStats.median)}</div>
+                            <div>IQR: {formatCurrencyShort(stats.landValueStats.q1)}–{formatCurrencyShort(stats.landValueStats.q3)} ({formatCurrencyShort(stats.landValueStats.iqr)})</div>
+                          </div>
+                        ),
+                      };
+                      case 'taxAssessed': return {
+                        value: formatCurrencyShort(stats.totalTaxes),
+                        description: `Median: ${formatCurrencyShort(stats.taxStats.median)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: {formatCurrencyShort(stats.taxStats.mean)} ({stats.assessedStats.mean > 0 ? ((stats.taxStats.mean / stats.assessedStats.mean) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
+                            <div>Median: {formatCurrencyShort(stats.taxStats.median)} ({stats.assessedStats.median > 0 ? ((stats.taxStats.median / stats.assessedStats.median) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
+                            <div>IQR: {formatCurrencyShort(stats.taxStats.q1)}–{formatCurrencyShort(stats.taxStats.q3)} ({formatCurrencyShort(stats.taxStats.iqr)})</div>
+                          </div>
+                        ),
+                      };
+                      case 'taxExemptions': return {
+                        value: formatCurrencyShort(stats.totalTaxExemptions),
+                        description: `Median: ${formatCurrencyShort(stats.exemptionStats.median)}`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: {formatCurrencyShort(stats.exemptionStats.mean)}</div>
+                            <div>Median: {formatCurrencyShort(stats.exemptionStats.median)}</div>
+                            <div>IQR: {formatCurrencyShort(stats.exemptionStats.q1)}–{formatCurrencyShort(stats.exemptionStats.q3)} ({formatCurrencyShort(stats.exemptionStats.iqr)})</div>
+                          </div>
+                        ),
+                      };
+                      case 'landValuePerSf': return {
+                        value: `$${stats.landPerSqftStats.median.toFixed(2)}`,
+                        description: `Mean: $${stats.landPerSqftStats.mean.toFixed(2)}/sf`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: ${stats.landPerSqftStats.mean.toFixed(2)}/sf</div>
+                            <div>Median: ${stats.landPerSqftStats.median.toFixed(2)}/sf</div>
+                            <div>IQR: ${stats.landPerSqftStats.q1.toFixed(2)}–${stats.landPerSqftStats.q3.toFixed(2)}/sf ({stats.landPerSqftStats.iqr.toFixed(2)})</div>
+                          </div>
+                        ),
+                      };
+                      case 'bldgLandRatio': return {
+                        value: stats.bldgRatioStats.median.toFixed(3),
+                        description: `Mean: ${stats.bldgRatioStats.mean.toFixed(3)}`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: {stats.bldgRatioStats.mean.toFixed(3)}</div>
+                            <div>Median: {stats.bldgRatioStats.median.toFixed(3)}</div>
+                            <div>IQR: {stats.bldgRatioStats.q1.toFixed(3)}–{stats.bldgRatioStats.q3.toFixed(3)} ({stats.bldgRatioStats.iqr.toFixed(3)})</div>
+                          </div>
+                        ),
+                      };
+                      case 'improvementArea': return {
+                        value: stats.buildingSqftStats.median.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' sf',
+                        description: `Mean: ${stats.buildingSqftStats.mean.toLocaleString(undefined, {maximumFractionDigits: 0})} sf`,
+                        tooltip: (
+                          <div className="text-xs space-y-1">
+                            <div>Mean: {stats.buildingSqftStats.mean.toLocaleString(undefined, {maximumFractionDigits: 0})} sf</div>
+                            <div>Median: {stats.buildingSqftStats.median.toLocaleString(undefined, {maximumFractionDigits: 0})} sf</div>
+                            <div>IQR: {stats.buildingSqftStats.q1.toLocaleString(undefined, {maximumFractionDigits: 0})}–{stats.buildingSqftStats.q3.toLocaleString(undefined, {maximumFractionDigits: 0})} sf ({stats.buildingSqftStats.iqr.toLocaleString(undefined, {maximumFractionDigits: 0})})</div>
+                          </div>
+                        ),
+                      };
+                      default: return null;
+                    }
+                  })();
 
-                    <div>IQR: {stats.acreageStats.q1.toFixed(2)}–{stats.acreageStats.q3.toFixed(2)} ac ({stats.acreageStats.iqr.toFixed(2)})</div>
-                  </div>
-                }>
-                  <StatsCard
-                    title="Acreage"
-                    value={stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0})}
-                    icon={TrendingUp}
-                    description={`Median: ${stats.acreageStats.median.toFixed(2)} ac`}
-                  />
-                </CursorTooltip>
+                  if (!cardProps) return null;
+
+                  return (
+                    <CursorTooltip key={cardKey} content={cardProps.tooltip}>
+                      <div className="relative group/stat">
+                        {removeBtn}
+                        <StatsCard
+                          title={cfg.title}
+                          value={cardProps.value}
+                          icon={cfg.icon}
+                          description={cardProps.description}
+                        />
+                      </div>
+                    </CursorTooltip>
+                  );
+                })}
+                <Popover open={addStatOpen} onOpenChange={setAddStatOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="flex items-center justify-center gap-1 border border-dashed border-border rounded-lg p-4 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                      data-testid="button-add-stat-card"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add card
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2" align="start">
+                    <div className="space-y-1">
+                      {STATS_CARD_CONFIGS.filter(c => !activeStats.includes(c.key)).map(c => (
+                        <button
+                          key={c.key}
+                          onClick={() => { setActiveStats(prev => [...prev, c.key]); setAddStatOpen(false); }}
+                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-secondary transition-colors"
+                          data-testid={`button-add-stat-${c.key}`}
+                        >
+                          {c.title}
+                        </button>
+                      ))}
+                      {activeStats.length === STATS_CARD_CONFIGS.length && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">All cards active</div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
-              <CursorTooltip content={
-                <div className="text-xs space-y-1">
-                  <div>Mean: {formatCurrencyShort(stats.assessedStats.mean)}</div>
-                  <div>Median: {formatCurrencyShort(stats.assessedStats.median)}</div>
-
-
-                  <div>IQR: {formatCurrencyShort(stats.assessedStats.q1)}–{formatCurrencyShort(stats.assessedStats.q3)} ({formatCurrencyShort(stats.assessedStats.iqr)})</div>
-                </div>
-              }>
-                <StatsCard
-                  title="Total Assessed Value"
-                  value={formatCurrencyShort(stats.totalValue)}
-                  icon={DollarSign}
-                  description={`Median: ${formatCurrencyShort(stats.assessedStats.median)}`}
-                />
-              </CursorTooltip>
-              <CursorTooltip content={
-                <div className="text-xs space-y-1">
-                  <div>Mean: {formatCurrencyShort(stats.landValueStats.mean)}</div>
-                  <div>Median: {formatCurrencyShort(stats.landValueStats.median)}</div>
-
-
-                  <div>IQR: {formatCurrencyShort(stats.landValueStats.q1)}–{formatCurrencyShort(stats.landValueStats.q3)} ({formatCurrencyShort(stats.landValueStats.iqr)})</div>
-                </div>
-              }>
-                <StatsCard
-                  title="Total Land Value"
-                  value={formatCurrencyShort(stats.totalLandValue)}
-                  icon={DollarSign}
-                  description={`Median: ${formatCurrencyShort(stats.landValueStats.median)}`}
-                />
-              </CursorTooltip>
-              <CursorTooltip content={
-                <div className="text-xs space-y-1">
-                  <div>Mean: {formatCurrencyShort(stats.taxStats.mean)} ({stats.assessedStats.mean > 0 ? ((stats.taxStats.mean / stats.assessedStats.mean) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
-                  <div>Median: {formatCurrencyShort(stats.taxStats.median)} ({stats.assessedStats.median > 0 ? ((stats.taxStats.median / stats.assessedStats.median) * 100).toFixed(2) : '0.00'}% eff. rate)</div>
-
-
-                  <div>IQR: {formatCurrencyShort(stats.taxStats.q1)}–{formatCurrencyShort(stats.taxStats.q3)} ({formatCurrencyShort(stats.taxStats.iqr)})</div>
-                </div>
-              }>
-                <StatsCard
-                  title="Total Tax Assessed"
-                  value={formatCurrencyShort(stats.totalTaxes)}
-                  icon={DollarSign}
-                  description={`Median: ${formatCurrencyShort(stats.taxStats.median)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`}
-                />
-              </CursorTooltip>
-              <CursorTooltip content={
-                <div className="text-xs space-y-1">
-                  <div>Mean: {formatCurrencyShort(stats.exemptionStats.mean)}</div>
-                  <div>Median: {formatCurrencyShort(stats.exemptionStats.median)}</div>
-
-
-                  <div>IQR: {formatCurrencyShort(stats.exemptionStats.q1)}–{formatCurrencyShort(stats.exemptionStats.q3)} ({formatCurrencyShort(stats.exemptionStats.iqr)})</div>
-                </div>
-              }>
-                <StatsCard
-                  title="Total Tax Exemptions"
-                  value={formatCurrencyShort(stats.totalTaxExemptions)}
-                  icon={DollarSign}
-                  description={`Median: ${formatCurrencyShort(stats.exemptionStats.median)}`}
-                />
-              </CursorTooltip>
 
               {/* Utility Usage Stats */}
               {(stats.waterParcelCount > 0 || stats.electricParcelCount > 0 || stats.gasParcelCount > 0) && (
