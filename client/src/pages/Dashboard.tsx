@@ -1841,6 +1841,7 @@ export default function Dashboard() {
                   const cardProps = (() => {
                     switch (cardKey) {
                       case 'parcels': return {
+                        rawValue: stats.count,
                         value: stats.count.toLocaleString(),
                         description: `out of ${(initialTotalParcelsRef.current || 0).toLocaleString()}`,
                         tooltip: (
@@ -1851,6 +1852,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'acreage': return {
+                        rawValue: stats.totalParcelAcres,
                         value: stats.totalParcelAcres.toLocaleString(undefined, {maximumFractionDigits: 0}),
                         description: `Median: ${stats.acreageStats.median.toFixed(2)} ac`,
                         tooltip: (
@@ -1862,6 +1864,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'assessedValue': return {
+                        rawValue: stats.totalValue,
                         value: formatCurrencyShort(stats.totalValue),
                         description: `Median: ${formatCurrencyShort(stats.assessedStats.median)}`,
                         tooltip: (
@@ -1873,6 +1876,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'landValue': return {
+                        rawValue: stats.totalLandValue,
                         value: formatCurrencyShort(stats.totalLandValue),
                         description: `Median: ${formatCurrencyShort(stats.landValueStats.median)}`,
                         tooltip: (
@@ -1884,6 +1888,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'taxAssessed': return {
+                        rawValue: stats.totalTaxes,
                         value: formatCurrencyShort(stats.totalTaxes),
                         description: `Median: ${formatCurrencyShort(stats.taxStats.median)} (${stats.taxPctOfTotal.toFixed(2)}% eff. rate)`,
                         tooltip: (
@@ -1895,6 +1900,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'taxExemptions': return {
+                        rawValue: stats.totalTaxExemptions,
                         value: formatCurrencyShort(stats.totalTaxExemptions),
                         description: `Median: ${formatCurrencyShort(stats.exemptionStats.median)}`,
                         tooltip: (
@@ -1906,6 +1912,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'landValuePerSf': return {
+                        rawValue: stats.landPerSqftStats.median,
                         value: `$${stats.landPerSqftStats.median.toFixed(2)}`,
                         description: `Mean: $${stats.landPerSqftStats.mean.toFixed(2)}/sf`,
                         tooltip: (
@@ -1917,6 +1924,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'bldgLandRatio': return {
+                        rawValue: stats.bldgRatioStats.median,
                         value: stats.bldgRatioStats.median.toFixed(3),
                         description: `Mean: ${stats.bldgRatioStats.mean.toFixed(3)}`,
                         tooltip: (
@@ -1928,6 +1936,7 @@ export default function Dashboard() {
                         ),
                       };
                       case 'improvementArea': return {
+                        rawValue: stats.buildingSqftStats.median,
                         value: stats.buildingSqftStats.median.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' sf',
                         description: `Mean: ${stats.buildingSqftStats.mean.toLocaleString(undefined, {maximumFractionDigits: 0})} sf`,
                         tooltip: (
@@ -1943,10 +1952,11 @@ export default function Dashboard() {
                   })();
 
                   if (!cardProps) return null;
+                  const isWide = cardProps.rawValue > 99999;
 
                   return (
                     <CursorTooltip key={cardKey} content={cardProps.tooltip}>
-                      <div className="relative group/stat">
+                      <div className={`relative group/stat ${isWide ? 'col-span-2' : ''}`}>
                         {removeBtn}
                         <StatsCard
                           title={cfg.title}
