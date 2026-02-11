@@ -4,9 +4,10 @@ import { createPortal } from "react-dom";
 interface CursorTooltipProps {
   children: React.ReactNode;
   content: React.ReactNode;
+  className?: string;
 }
 
-export function CursorTooltip({ children, content }: CursorTooltipProps) {
+export function CursorTooltip({ children, content, className }: CursorTooltipProps) {
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
 
@@ -16,7 +17,7 @@ export function CursorTooltip({ children, content }: CursorTooltipProps) {
 
   return (
     <div
-      className="min-w-0"
+      className={`min-w-0 ${className || ''}`}
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
       onMouseMove={handleMouseMove}

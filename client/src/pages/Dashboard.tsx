@@ -1955,8 +1955,8 @@ export default function Dashboard() {
                   const isWide = cardProps.rawValue > 99999;
 
                   return (
-                    <CursorTooltip key={cardKey} content={cardProps.tooltip}>
-                      <div className={`relative group/stat ${isWide ? 'col-span-2' : ''}`}>
+                    <CursorTooltip key={cardKey} content={cardProps.tooltip} className={isWide ? 'col-span-2' : ''}>
+                      <div className="relative group/stat">
                         {removeBtn}
                         <StatsCard
                           title={cfg.title}
