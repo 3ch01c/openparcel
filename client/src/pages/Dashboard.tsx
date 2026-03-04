@@ -1596,7 +1596,7 @@ export default function Dashboard() {
                 </Select>
               </div>
 
-              {RANGE_FILTER_CONFIGS.filter(cfg => activeFilters.includes(cfg.key)).map(cfg => {
+              {activeFilters.map(key => RANGE_FILTER_CONFIGS.find(c => c.key === key)!).filter(Boolean).map(cfg => {
                 const bounds = sliderBounds[cfg.key] || { min: 0, max: cfg.defaultMax };
                 const chartData = stats ? (stats as any)[cfg.chartDataKey] : undefined;
                 const lastIdx = chartData?.length ? chartData.length - 1 : 0;

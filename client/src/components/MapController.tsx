@@ -7,7 +7,7 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { PropertyResponse } from "@shared/schema";
 import { type ColorMetric, getMetricValue, getZoneColor, isCategoricalMetric } from "@/lib/map-metrics";
 
-const fmtCur = (v: number | null | undefined) => v != null ? `$${v.toLocaleString()}` : "N/A";
+const fmtCur = (v: number | null | undefined) => v != null ? v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "N/A";
 const fmtNum = (v: number | null | undefined, decimals = 2) => v != null ? v.toFixed(decimals) : "N/A";
 const perSqft = (value: number | null | undefined, sqft: number | null | undefined): string | null => {
   if (value == null || sqft == null || sqft <= 0) return null;
