@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useTransition, useDeferredValue }
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useProperties, invalidatePropertyCache, PROPERTIES_QUERY_PREFIX } from "@/hooks/use-properties";
 import { queryClient } from "@/lib/queryClient";
+import { setCachedProperties } from "@/lib/indexeddb-cache";
 import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
 import { type ColorMetric, COLOR_METRIC_LABELS, getMetricValue, isCategoricalMetric } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
@@ -181,6 +182,9 @@ export default function Dashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{ success: boolean; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const jsonFileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoadingJson, setIsLoadingJson] = useState(false);
+  const [jsonUploadStatus, setJsonUploadStatus] = useState<{ success: boolean; message: string } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [statsOpen, setStatsOpen] = useState(true);
   const [chartAccountTypesOpen, setChartAccountTypesOpen] = useState(false);
@@ -1498,6 +1502,99 @@ export default function Dashboard() {
     }
   };
 
+  const handleJsonDataUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoadingJson(true);
+    setJsonUploadStatus(null);
+
+    try {
+      const text = await file.text();
+      const jsonData = JSON.parse(text);
+
+      if (!Array.isArray(jsonData)) {
+        setJsonUploadStatus({ success: false, message: "Invalid format: expected a JSON array of properties" });
+        return;
+      }
+
+      const converted: PropertyResponse[] = jsonData.filter((item: any) => {
+        const lat = item.latitude ?? item.lat;
+        const lng = item.longitude ?? item.lng;
+        return lat != null && lng != null && lat !== 0 && lng !== 0;
+      }).map((item: any, idx: number) => ({
+        id: item.id ?? -(idx + 1),
+        upc: item.upc ?? "",
+        address: item.address ?? "",
+        mapid: item.mapid ?? null,
+        legaldesc: item.legaldesc ?? null,
+        accountType: item.accountType ?? null,
+        ownerType: item.ownerType ?? null,
+        zone: item.zone ?? null,
+        subdivision: item.subdivision ?? null,
+        owner: item.owner ?? null,
+        ownerAddress1: item.ownerAddress1 ?? null,
+        ownerCity: item.ownerCity ?? null,
+        ownerState: item.ownerState ?? null,
+        ownerZip: item.ownerZip ?? null,
+        assessedValue: item.assessedValue ?? 0,
+        landValue: item.landValue ?? null,
+        improvementValue: item.improvementValue ?? null,
+        landTaxable: item.landTaxable ?? null,
+        buildingTaxable: item.buildingTaxable ?? null,
+        totalTaxable: item.totalTaxable ?? null,
+        hhExemption: item.hhExemption ?? null,
+        vetExemption: item.vetExemption ?? null,
+        area: item.area ?? null,
+        landSqft: item.landSqft ?? null,
+        buildingSqft: item.buildingSqft ?? null,
+        millLevy: item.millLevy ?? null,
+        lat: item.latitude ?? item.lat ?? 0,
+        lng: item.longitude ?? item.lng ?? 0,
+        assessmentYear: item.assessmentYear ?? null,
+        avgMonthlyWaterKgal: item.avgMonthlyWaterKgal ?? null,
+        avgMonthlyElectricKwh: item.avgMonthlyElectricKwh ?? null,
+        avgMonthlyGasTherms: item.avgMonthlyGasTherms ?? null,
+        township: item.township ?? null,
+        townshipdir: item.townshipdir ?? null,
+        range: item.range ?? null,
+        rangedir: item.rangedir ?? null,
+        section: item.section ?? null,
+        perimeter: item.perimeter ?? null,
+        lastupdate: item.lastupdate ?? null,
+        geometry: item.geometry != null ? (typeof item.geometry === "string" ? item.geometry : JSON.stringify(item.geometry)) : null,
+      }));
+
+      const paramsKey = JSON.stringify({ year });
+      const cacheKey = `properties_${paramsKey}`;
+      const queryKey = [PROPERTIES_QUERY_PREFIX, paramsKey] as const;
+
+      await setCachedProperties(cacheKey, converted);
+
+      rangesInitialized.current = false;
+      initialTotalParcelsRef.current = null;
+      initialAccountTypesRef.current = null;
+      initialSubdivisionsRef.current = null;
+      initialZonesRef.current = null;
+      initialOwnerCityStatesRef.current = null;
+
+      queryClient.setQueryData([...queryKey], converted);
+
+      const skipped = jsonData.length - converted.length;
+      const msg = skipped > 0
+        ? `Loaded ${converted.length} parcels from JSON (${skipped} skipped due to missing coordinates)`
+        : `Loaded ${converted.length} parcels from JSON`;
+      setJsonUploadStatus({ success: true, message: msg });
+    } catch (error) {
+      setJsonUploadStatus({ success: false, message: error instanceof SyntaxError ? "Invalid JSON file" : "Failed to load data" });
+    } finally {
+      setIsLoadingJson(false);
+      if (jsonFileInputRef.current) {
+        jsonFileInputRef.current.value = "";
+      }
+    }
+  };
+
   if (isError) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
@@ -2300,6 +2397,48 @@ export default function Dashboard() {
                     <Download className="w-4 h-4 mr-2" />
                     Download {properties?.length || 0} Parcels
                   </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Load Data from JSON</label>
+                  <input
+                    ref={jsonFileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleJsonDataUpload}
+                    className="hidden"
+                    data-testid="input-json-upload"
+                  />
+                  <Button
+                    onClick={() => jsonFileInputRef.current?.click()}
+                    disabled={isLoadingJson}
+                    className="w-full"
+                    size="sm"
+                    variant="outline"
+                    data-testid="button-upload-json"
+                  >
+                    {isLoadingJson ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    {isLoadingJson ? "Loading..." : "Upload Data (JSON)"}
+                  </Button>
+                  {jsonUploadStatus && (
+                    <div
+                      className={`text-xs p-2 rounded ${
+                        jsonUploadStatus.success
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                      data-testid="text-json-upload-status"
+                    >
+                      {jsonUploadStatus.message}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Load a previously exported JSON dataset into the browser cache. Does not modify the server database.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

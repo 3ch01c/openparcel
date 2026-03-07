@@ -40,6 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Module**: `client/src/lib/indexeddb-cache.ts` - get/set/clear operations
 - **Hook Integration**: `useProperties` seeds React Query cache from IndexedDB on mount, saves fetched data to IndexedDB after each successful server fetch
 - **Cache Invalidation**: `invalidatePropertyCache()` clears IndexedDB; also invalidates React Query cache when utility CSV is uploaded
+- **JSON Data Upload**: "Upload Data (JSON)" button loads a previously exported JSON file into IndexedDB and React Query cache only (no backend write). Resets all filter initialization refs so new dataset drives filters/stats correctly. Filters out items with missing coordinates.
 - **Capacity**: IndexedDB handles the full ~55MB dataset; localStorage/sessionStorage would not (5-10MB limit)
 
 ### Utility Data Upload
