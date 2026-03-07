@@ -2441,46 +2441,6 @@ export default function Dashboard() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Import Utility Data</label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleUtilityUpload}
-                    className="hidden"
-                    data-testid="input-utility-csv"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="w-full"
-                    size="sm"
-                    data-testid="button-upload-utility"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    {isUploading ? "Uploading..." : "Upload Utility CSV"}
-                  </Button>
-                  {uploadStatus && (
-                    <div
-                      className={`text-xs p-2 rounded ${
-                        uploadStatus.success
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
-                      data-testid="text-upload-status"
-                    >
-                      {uploadStatus.message}
-                    </div>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Upload CSV with Parcel, Service, Bill Date, Actual Usage columns. Water (30000) data will be averaged in kgal.
-                  </p>
-                </div>
               </CollapsibleContent>
             </div>
           </Collapsible>
