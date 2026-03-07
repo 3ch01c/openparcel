@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { z } from "zod";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getCachedProperties, setCachedProperties, clearPropertiesCache } from "@/lib/indexeddb-cache";
 
 type PropertyQueryParams = z.infer<typeof api.properties.list.input>;
@@ -11,16 +11,31 @@ export function useProperties(params?: PropertyQueryParams) {
   const cacheKey = `properties_${paramsKey}`;
   const queryKey = [api.properties.list.path, paramsKey] as const;
   const queryClient = useQueryClient();
-  const seededKeysRef = useRef<Set<string>>(new Set());
+  const [idbChecked, setIdbChecked] = useState(false);
+  const [idbHasData, setIdbHasData] = useState(false);
+  const checkedKeysRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (seededKeysRef.current.has(cacheKey)) return;
-    seededKeysRef.current.add(cacheKey);
+    if (checkedKeysRef.current.has(cacheKey)) {
+      setIdbChecked(true);
+      return;
+    }
+    let cancelled = false;
     getCachedProperties(cacheKey).then((cached) => {
-      if (cached && !queryClient.getQueryData(queryKey)) {
-        queryClient.setQueryData(queryKey, cached.data);
+      if (cancelled) return;
+      checkedKeysRef.current.add(cacheKey);
+      if (cached) {
+        queryClient.setQueryData([...queryKey], cached.data);
+        setIdbHasData(true);
       }
-    }).catch(() => {});
+      setIdbChecked(true);
+    }).catch(() => {
+      if (!cancelled) {
+        checkedKeysRef.current.add(cacheKey);
+        setIdbChecked(true);
+      }
+    });
+    return () => { cancelled = true; };
   }, [cacheKey]);
 
   return useQuery({
@@ -43,7 +58,8 @@ export function useProperties(params?: PropertyQueryParams) {
 
       return parsed;
     },
-    staleTime: 1000 * 60 * 5,
+    enabled: idbChecked && !idbHasData,
+    staleTime: Infinity,
   });
 }
 
