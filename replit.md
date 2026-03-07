@@ -31,9 +31,16 @@ Preferred communication style: Simple, everyday language.
 1. Server fetches property data from Los Alamos ArcGIS REST API on startup
 2. Data is stored in PostgreSQL using Drizzle ORM
 3. Frontend queries /api/properties with optional filters (year, min/max value)
-4. React Query caches responses for 5 minutes
+4. React Query caches responses for 5 minutes; IndexedDB provides persistent browser cache across sessions
 5. Map displays properties as clustered heatmap markers or individual parcel polygons (toggleable view modes)
 6. Utility consumption data can be uploaded via CSV to join water usage to parcels
+
+### IndexedDB Caching
+- **Database**: `losalamos-properties` with `properties` and `meta` object stores
+- **Module**: `client/src/lib/indexeddb-cache.ts` - get/set/clear operations
+- **Hook Integration**: `useProperties` seeds React Query cache from IndexedDB on mount, saves fetched data to IndexedDB after each successful server fetch
+- **Cache Invalidation**: `invalidatePropertyCache()` clears IndexedDB; also invalidates React Query cache when utility CSV is uploaded
+- **Capacity**: IndexedDB handles the full ~55MB dataset; localStorage/sessionStorage would not (5-10MB limit)
 
 ### Utility Data Upload
 - **Endpoint**: POST /api/upload-utility-csv

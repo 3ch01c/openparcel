@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useTransition, useDeferredValue } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import { useProperties } from "@/hooks/use-properties";
+import { useProperties, invalidatePropertyCache, PROPERTIES_QUERY_PREFIX } from "@/hooks/use-properties";
+import { queryClient } from "@/lib/queryClient";
 import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
 import { type ColorMetric, COLOR_METRIC_LABELS, getMetricValue, isCategoricalMetric } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
@@ -1481,6 +1482,8 @@ export default function Dashboard() {
 
       if (result.success) {
         setUploadStatus({ success: true, message: result.message });
+        await invalidatePropertyCache();
+        queryClient.invalidateQueries({ queryKey: [PROPERTIES_QUERY_PREFIX] });
         refetch();
       } else {
         setUploadStatus({ success: false, message: result.message || "Upload failed" });

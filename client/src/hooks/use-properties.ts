@@ -1,17 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { z } from "zod";
+import { useEffect, useRef } from "react";
+import { getCachedProperties, setCachedProperties, clearPropertiesCache } from "@/lib/indexeddb-cache";
 
 type PropertyQueryParams = z.infer<typeof api.properties.list.input>;
 
 export function useProperties(params?: PropertyQueryParams) {
-  // Serialize params to string for query key stability
   const paramsKey = JSON.stringify(params);
+  const cacheKey = `properties_${paramsKey}`;
+  const queryKey = [api.properties.list.path, paramsKey] as const;
+  const queryClient = useQueryClient();
+  const seededKeysRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (seededKeysRef.current.has(cacheKey)) return;
+    seededKeysRef.current.add(cacheKey);
+    getCachedProperties(cacheKey).then((cached) => {
+      if (cached && !queryClient.getQueryData(queryKey)) {
+        queryClient.setQueryData(queryKey, cached.data);
+      }
+    }).catch(() => {});
+  }, [cacheKey]);
 
   return useQuery({
-    queryKey: [api.properties.list.path, paramsKey],
+    queryKey: [...queryKey],
     queryFn: async () => {
-      // Build URL with query parameters
       const url = new URL(api.properties.list.path, window.location.origin);
       if (params) {
         if (params.minValue) url.searchParams.set("minValue", String(params.minValue));
@@ -21,13 +35,23 @@ export function useProperties(params?: PropertyQueryParams) {
 
       const res = await fetch(url.toString(), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch properties");
-      
+
       const data = await res.json();
-      return api.properties.list.responses[200].parse(data);
+      const parsed = api.properties.list.responses[200].parse(data);
+
+      setCachedProperties(cacheKey, parsed).catch(() => {});
+
+      return parsed;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes (data doesn't change often)
+    staleTime: 1000 * 60 * 5,
   });
 }
+
+export async function invalidatePropertyCache() {
+  await clearPropertiesCache();
+}
+
+export const PROPERTIES_QUERY_PREFIX = api.properties.list.path;
 
 export function useProperty(id: number) {
   return useQuery({
@@ -35,10 +59,10 @@ export function useProperty(id: number) {
     queryFn: async () => {
       const url = buildUrl(api.properties.get.path, { id });
       const res = await fetch(url, { credentials: "include" });
-      
+
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch property details");
-      
+
       return api.properties.get.responses[200].parse(await res.json());
     },
   });
