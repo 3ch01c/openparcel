@@ -180,7 +180,7 @@ function parseFeature(feature: ArcGISFeature): InsertProperty | null {
 }
 
 export async function fetchArcGISData(): Promise<number> {
-  console.log("Starting Los Alamos property data fetch from ArcGIS...");
+  console.log("Starting property data fetch from ArcGIS...");
   
   let offset = 0;
   let totalFetched = 0;

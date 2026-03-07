@@ -64,7 +64,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Los Alamos County Center (calculated from actual data bounds)
+// Map center (calculated from actual data bounds)
 const CENTER_LAT = 35.875;
 const CENTER_LNG = -106.295;
 
@@ -1614,7 +1614,7 @@ export default function Dashboard() {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Los Alamos Assessor
+                OpenParcel
               </h1>
               <a
                 href="https://nmdirtbag.substack.com"

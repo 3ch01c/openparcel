@@ -1,4 +1,4 @@
-const DB_NAME = "losalamos-properties";
+const DB_NAME = "openparcel-properties";
 const DB_VERSION = 1;
 const PROPERTIES_STORE = "properties";
 const META_STORE = "meta";

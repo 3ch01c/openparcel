@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Los Alamos property assessment visualization dashboard that displays real estate data on an interactive map with heatmap overlays. The application fetches property data from Los Alamos County ArcGIS services, stores it in PostgreSQL, and presents it through a React frontend with filtering capabilities and statistical charts.
+OpenParcel is a property assessment visualization dashboard that displays real estate data on an interactive map with heatmap overlays. The application fetches property data from county ArcGIS services, stores it in PostgreSQL, and presents it through a React frontend with filtering capabilities and statistical charts.
 
 ## User Preferences
 
@@ -28,7 +28,7 @@ Preferred communication style: Simple, everyday language.
 - **Development**: tsx for TypeScript execution, Vite dev server with HMR
 
 ### Data Flow
-1. Server fetches property data from Los Alamos ArcGIS REST API on startup
+1. Server fetches property data from ArcGIS REST API on startup
 2. Data is stored in PostgreSQL using Drizzle ORM
 3. Frontend queries /api/properties with optional filters (year, min/max value)
 4. React Query caches responses for 5 minutes; IndexedDB provides persistent browser cache across sessions
@@ -36,7 +36,7 @@ Preferred communication style: Simple, everyday language.
 6. Utility consumption data can be uploaded via CSV to join water usage to parcels
 
 ### IndexedDB Caching
-- **Database**: `losalamos-properties` with `properties` and `meta` object stores
+- **Database**: `openparcel-properties` with `properties` and `meta` object stores
 - **Module**: `client/src/lib/indexeddb-cache.ts` - get/set/clear operations
 - **Hook Integration**: `useProperties` checks IndexedDB first; if cached data exists, it seeds React Query and skips the server fetch entirely (`enabled: false`). If no cached data, it fetches from the backend and saves to IndexedDB.
 - **Cache Invalidation**: `invalidatePropertyCache()` clears IndexedDB; also invalidates React Query cache when utility CSV is uploaded
@@ -89,12 +89,12 @@ Preferred communication style: Simple, everyday language.
 - **connect-pg-simple**: Session storage (configured but may not be active)
 
 ### External APIs
-- **Los Alamos ArcGIS REST Services**: Primary data source for property information
+- **ArcGIS REST Services**: Primary data source for property information
   - Endpoint: `https://gis.losalamosnm.us/securegis/rest/services/parcelviewer/ParcelViewerBaseLayers_AGOL/MapServer/2/query`
   - Layer 2 contains parcel data with assessment values joined from Eagle_PARCEL_2025_SUM table
   - Field prefixes: `LAC_GIS.LACGIS.Parcels.*` and `LAC_GIS.LACGIS.Eagle_PARCEL_2025_SUM.*`
   - Pagination: 1000 records per batch with resultOffset parameter
-  - Data includes ~8,674 parcels covering Los Alamos and White Rock areas
+  - Data includes ~8,674 parcels
   - **Parcel attributes stored** (NM Standard field names): upc (PIN), mapid (ACCT), legaldesc (LEGAL), accountType, ownerType, zone, subdivision (SUBDIV), owner, ownerAddress1, ownerCity, ownerState, ownerZip, assessedValue, landValue, improvementValue, landTaxable, buildingTaxable, totalTaxable, hhExemption, vetExemption, buildingSqft, landSqft, assessmentYear, millLevy, area (acres), perimeter, lastupdate
   - **NM Standard Compliance**: Field names aligned with New Mexico Parcel Mapping Technical Manual Version 2024.01 (PTD Data Exchange schema)
   - **Polygon geometry**: Parcel boundary coordinates stored as JSON text field containing coordinate rings in [lng, lat] format

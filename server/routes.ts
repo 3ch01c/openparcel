@@ -254,12 +254,12 @@ async function seedDatabase() {
     console.log(`Database has ${existing.length} properties but missing account types. Clearing and refetching...`);
     await storage.clearAllProperties();
   } else {
-    console.log("Database empty, fetching Los Alamos property data from ArcGIS...");
+    console.log("Database empty, fetching property data from ArcGIS...");
   }
   
   try {
     const count = await fetchArcGISData();
-    console.log(`Successfully loaded ${count} properties from Los Alamos ArcGIS.`);
+    console.log(`Successfully loaded ${count} properties from ArcGIS.`);
   } catch (error) {
     console.error("Failed to fetch ArcGIS data:", error);
     console.log("Falling back to mock data generation...");
@@ -273,11 +273,11 @@ async function seedDatabase() {
 
 async function generateMockData() {
   const neighborhoods = [
-    { name: "Downtown Los Alamos", lat: 35.8814, lng: -106.2989, radius: 0.015, avgValue: 450000, count: 100 },
+    { name: "Downtown", lat: 35.8814, lng: -106.2989, radius: 0.015, avgValue: 450000, count: 100 },
     { name: "North Community", lat: 35.8950, lng: -106.2900, radius: 0.012, avgValue: 520000, count: 80 },
     { name: "Western Area", lat: 35.8780, lng: -106.3200, radius: 0.018, avgValue: 380000, count: 60 },
     { name: "White Rock", lat: 35.8280, lng: -106.2100, radius: 0.020, avgValue: 350000, count: 100 },
-    { name: "Eastern Los Alamos", lat: 35.8850, lng: -106.2600, radius: 0.015, avgValue: 410000, count: 60 }
+    { name: "Eastern Area", lat: 35.8850, lng: -106.2600, radius: 0.015, avgValue: 410000, count: 60 }
   ];
 
   const streets = [
