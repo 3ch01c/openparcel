@@ -4,6 +4,7 @@ import { useProperties, invalidatePropertyCache, PROPERTIES_QUERY_PREFIX } from 
 import { queryClient } from "@/lib/queryClient";
 import { setCachedProperties } from "@/lib/indexeddb-cache";
 import { ClusterLayer, PolygonLayer, type MapViewMode } from "@/components/MapController";
+import { type ExternalLink, getExternalLinks, setExternalLinks, resetExternalLinks, AVAILABLE_PLACEHOLDERS } from "@/lib/external-links";
 import { type ColorMetric, COLOR_METRIC_LABELS, getMetricValue, isCategoricalMetric } from "@/lib/map-metrics";
 import type { PropertyResponse } from "@shared/schema";
 import { StatsCard } from "@/components/StatsCard";
@@ -47,6 +48,9 @@ import {
   ChevronUp,
   Ruler,
   Building2,
+  Link2,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 import {
   Popover,
@@ -191,6 +195,8 @@ export default function Dashboard() {
   const [chartExemptionsOpen, setChartExemptionsOpen] = useState(false);
   const [chartLandHoldersOpen, setChartLandHoldersOpen] = useState(false);
   const [dataIOOpen, setDataIOOpen] = useState(false);
+  const [linksConfigOpen, setLinksConfigOpen] = useState(false);
+  const [externalLinks, setExternalLinksState] = useState<ExternalLink[]>(() => getExternalLinks());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const [selectedSubdivisions, setSelectedSubdivisions] = useState<string[]>([]);
@@ -2336,6 +2342,94 @@ export default function Dashboard() {
             </div>
           </Collapsible>
 
+          {/* External Links Config Section - Collapsible */}
+          <Collapsible open={linksConfigOpen} onOpenChange={setLinksConfigOpen}>
+            <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
+              <CollapsibleTrigger className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors" data-testid="button-toggle-links-config">
+                <Link2 className="w-4 h-4" />
+                <span>Popup Links</span>
+                {linksConfigOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </CollapsibleTrigger>
+
+              <CollapsibleContent className="pt-4 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Configure links shown in parcel popups. Use placeholders: {AVAILABLE_PLACEHOLDERS.map(p => `{${p.key}}`).join(", ")}
+                </p>
+                {externalLinks.map((link, idx) => (
+                  <div key={idx} className="space-y-1 bg-background/30 p-2 rounded-lg border border-white/5">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={link.label}
+                        onChange={(e) => {
+                          const updated = [...externalLinks];
+                          updated[idx] = { ...updated[idx], label: e.target.value };
+                          setExternalLinksState(updated);
+                          setExternalLinks(updated);
+                        }}
+                        className="flex-1 text-xs bg-background/50 border border-border rounded px-2 py-1 text-foreground"
+                        placeholder="Label"
+                        data-testid={`input-link-label-${idx}`}
+                      />
+                      <button
+                        onClick={() => {
+                          const updated = externalLinks.filter((_, i) => i !== idx);
+                          setExternalLinksState(updated);
+                          setExternalLinks(updated);
+                        }}
+                        className="p-1 text-muted-foreground hover:text-red-400 transition-colors"
+                        data-testid={`button-remove-link-${idx}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={link.urlTemplate}
+                      onChange={(e) => {
+                        const updated = [...externalLinks];
+                        updated[idx] = { ...updated[idx], urlTemplate: e.target.value };
+                        setExternalLinksState(updated);
+                        setExternalLinks(updated);
+                      }}
+                      className="w-full text-xs bg-background/50 border border-border rounded px-2 py-1 text-foreground font-mono"
+                      placeholder="URL template"
+                      data-testid={`input-link-url-${idx}`}
+                    />
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const updated = [...externalLinks, { label: "", urlTemplate: "" }];
+                      setExternalLinksState(updated);
+                      setExternalLinks(updated);
+                    }}
+                    data-testid="button-add-link"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Link
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      resetExternalLinks();
+                      setExternalLinksState(getExternalLinks());
+                    }}
+                    data-testid="button-reset-links"
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                    Reset
+                  </Button>
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+
           {/* Import/Export Data Section - Collapsible */}
           <Collapsible open={dataIOOpen} onOpenChange={setDataIOOpen}>
             <div className="bg-secondary/30 p-4 rounded-xl border border-white/5">
@@ -2450,8 +2544,8 @@ export default function Dashboard() {
               url={TILE_LAYERS[mapLayer].url}
             />
 
-            {deferredIncluded && mapViewMode === "cluster" && <ClusterLayer points={deferredIncluded} colorMetric={colorMetric} />}
-            {deferredIncluded && mapViewMode === "polygon" && <PolygonLayer points={deferredIncluded} colorMetric={colorMetric} />}
+            {deferredIncluded && mapViewMode === "cluster" && <ClusterLayer points={deferredIncluded} colorMetric={colorMetric} externalLinks={externalLinks} />}
+            {deferredIncluded && mapViewMode === "polygon" && <PolygonLayer points={deferredIncluded} colorMetric={colorMetric} externalLinks={externalLinks} />}
           </MapContainer>
         </div>
 

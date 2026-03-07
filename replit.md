@@ -43,6 +43,14 @@ Preferred communication style: Simple, everyday language.
 - **JSON Data Upload**: "Upload Data (JSON)" button loads a previously exported JSON file into IndexedDB and React Query cache only (no backend write). Resets all filter initialization refs so new dataset drives filters/stats correctly. Filters out items with missing coordinates.
 - **Capacity**: IndexedDB handles the full ~55MB dataset; localStorage/sessionStorage would not (5-10MB limit)
 
+### Configurable External Links
+- **Module**: `client/src/lib/external-links.ts` - link template management
+- **Storage**: localStorage key `openparcel-external-links`
+- **UI**: "Popup Links" collapsible section in sidebar — add, remove, edit, reset links
+- **Template Placeholders**: `{address}`, `{owner}`, `{upc}`, `{mapid}`, `{ownerCity}`, `{ownerState}`, `{ownerZip}`, `{zone}`, `{subdivision}`, `{legaldesc}`
+- **Default Links**: Zillow (with `{address}`, `{ownerCity}`, `{ownerState}`), County Assessor, County Clerk (Los Alamos defaults)
+- **Reset**: "Reset" button restores defaults; removing localStorage key also restores defaults
+
 ### Utility Data Upload
 - **Endpoint**: POST /api/upload-utility-csv
 - **CSV Format**: Columns for Parcel, Service, Bill Date, and Actual Usage (case-insensitive headers)

@@ -6,6 +6,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { PropertyResponse } from "@shared/schema";
 import { type ColorMetric, getMetricValue, getZoneColor, isCategoricalMetric } from "@/lib/map-metrics";
+import { type ExternalLink, buildPopupLinksHtml } from "@/lib/external-links";
 
 const fmtCur = (v: number | null | undefined) => v != null ? v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "N/A";
 const fmtNum = (v: number | null | undefined, decimals = 2) => v != null ? v.toFixed(decimals) : "N/A";
@@ -36,12 +37,14 @@ interface ClusterLayerProps {
   points: PropertyResponse[];
   onPropertyClick?: (property: PropertyResponse) => void;
   colorMetric?: ColorMetric;
+  externalLinks?: ExternalLink[];
 }
 
 interface PolygonLayerProps {
   points: PropertyResponse[];
   onPropertyClick?: (property: PropertyResponse) => void;
   colorMetric?: ColorMetric;
+  externalLinks?: ExternalLink[];
 }
 
 
@@ -57,7 +60,7 @@ function getMarkerColor(value: number, minValue: number, maxValue: number): stri
   return "#fde725";
 }
 
-export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft" }: ClusterLayerProps) {
+export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft", externalLinks = [] }: ClusterLayerProps) {
   const map = useMap();
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -264,24 +267,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
                 <div style="font-weight: 500;">${fmtCur(taxExemptAmount)}</div>
               ` : ""}
             </div>
-            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-Los-Alamos-NM_rb/" 
-                 target="_blank" rel="noopener noreferrer"
-                 style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                Zillow
-              </a>
-              <a href="https://eagleweb.losalamosnm.us/assessor/taxweb/search.jsp" 
-                 target="_blank" rel="noopener noreferrer"
-                 style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                County Assessor
-              </a>
-              <a href="https://eaglerecorderselfservice.losalamosnm.us/web/search/DOCSEARCH138S1" 
-                 target="_blank" rel="noopener noreferrer"
-                 style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                County Clerk
-              </a>
-            </div>
+            ${buildPopupLinksHtml(externalLinks, property)}
           </div>
         `;
 
@@ -314,7 +300,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
   return null;
 }
 
-export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft" }: PolygonLayerProps) {
+export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValuePerSqft", externalLinks = [] }: PolygonLayerProps) {
   const map = useMap();
   const polygonLayerRef = useRef<L.LayerGroup | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -488,24 +474,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
                   <div style="font-weight: 500;">${fmtCur(taxExemptAmount)}</div>
                 ` : ""}
               </div>
-              <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="https://www.zillow.com/homes/${encodeURIComponent(property.address || "")},-Los-Alamos-NM_rb/" 
-                   target="_blank" rel="noopener noreferrer"
-                   style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                  Zillow
-                </a>
-                <a href="https://eagleweb.losalamosnm.us/assessor/taxweb/search.jsp" 
-                   target="_blank" rel="noopener noreferrer"
-                   style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                  County Assessor
-                </a>
-                <a href="https://eaglerecorderselfservice.losalamosnm.us/web/search/DOCSEARCH138S1" 
-                   target="_blank" rel="noopener noreferrer"
-                   style="font-size: 11px; color: #3b82f6; text-decoration: none;">
-                  County Clerk
-                </a>
-              </div>
+              ${buildPopupLinksHtml(externalLinks, property)}
             </div>
           `;
 
