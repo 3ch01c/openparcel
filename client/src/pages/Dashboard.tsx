@@ -1437,7 +1437,7 @@ export default function Dashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `los_alamos_parcels_${year}_${ranges.assessedValue[0]}-${ranges.assessedValue[1]}.${extension}`;
+    link.download = `openparcel_${year}_${ranges.assessedValue[0]}-${ranges.assessedValue[1]}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
