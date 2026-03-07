@@ -169,12 +169,12 @@ const DEFAULT_ACTIVE_STATS: StatsCardKey[] = [
 
 export default function Dashboard() {
   const [year, setYear] = useState<number>(2025);
-  const [mapLayer, setMapLayer] = useState<"dark" | "terrain" | "satellite">("dark");
-  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("cluster");
+  const [mapLayer, setMapLayer] = useState<"dark" | "terrain" | "satellite">("terrain");
+  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("polygon");
   const [mapControlsOpen, setMapControlsOpen] = useState(true);
   const [activeStats, setActiveStats] = useState<StatsCardKey[]>([...DEFAULT_ACTIVE_STATS]);
   const [addStatOpen, setAddStatOpen] = useState(false);
-  const [colorMetric, setColorMetric] = useState<ColorMetric>("bldgLandRatio");
+  const [colorMetric, setColorMetric] = useState<ColorMetric>("zone");
   const [ranges, setRanges] = useState<Record<RangeFilterKey, [number, number]>>({ ...INITIAL_RANGES });
   const [activeFilters, setActiveFilters] = useState<RangeFilterKey[]>([...DEFAULT_ACTIVE_FILTERS]);
   const [addFilterOpen, setAddFilterOpen] = useState(false);
