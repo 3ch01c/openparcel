@@ -207,6 +207,16 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/utility-readings", async (req, res) => {
+    try {
+      const readings = await storage.getUtilityReadings();
+      res.json(readings);
+    } catch (error) {
+      console.error("Failed to fetch utility readings:", error);
+      res.status(500).json({ message: "Failed to fetch utility readings" });
+    }
+  });
+
   // Clear utility data endpoint
   app.post("/api/clear-utility-data", async (req, res) => {
     try {

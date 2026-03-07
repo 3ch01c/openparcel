@@ -52,6 +52,8 @@ Preferred communication style: Simple, everyday language.
   - Range filters with dual-thumb sliders, editable inputs, and clickable histogram bars for each utility type
   - Color-by metric options for water, electric, and gas usage on map visualization
   - All three utility fields included in CSV/JSON exports
+  - JSON export includes full monthly utility readings per property (billDate, service, serviceCode, actualUsage)
+- **Utility Readings API**: GET /api/utility-readings returns all raw utility readings from the database
 
 ### Project Structure
 - `client/` - React frontend application

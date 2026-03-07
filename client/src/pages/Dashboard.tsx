@@ -1283,7 +1283,7 @@ export default function Dashboard() {
     return Math.max(0, grossTax - hhExemptionAmount - vetExemptionAmount);
   };
 
-  const downloadData = () => {
+  const downloadData = async () => {
     if (!properties || properties.length === 0) return;
 
     let content: string;
@@ -1291,6 +1291,27 @@ export default function Dashboard() {
     let extension: string;
 
     if (exportFormat === "json") {
+      const SERVICE_NAMES: Record<number, string> = { 10000: "electric", 20000: "gas", 30000: "water" };
+      let readingsByUpc: Record<string, Array<{ billDate: string; service: string; serviceCode: number; actualUsage: number }>> = {};
+      try {
+        const resp = await fetch("/api/utility-readings");
+        if (resp.ok) {
+          const readings: Array<{ upc: string; billDate: string; serviceCode: number; actualUsage: number }> = await resp.json();
+          for (const r of readings) {
+            if (!readingsByUpc[r.upc]) readingsByUpc[r.upc] = [];
+            readingsByUpc[r.upc].push({
+              billDate: r.billDate,
+              service: SERVICE_NAMES[r.serviceCode] || `service_${r.serviceCode}`,
+              serviceCode: r.serviceCode,
+              actualUsage: r.actualUsage,
+            });
+          }
+          for (const upc of Object.keys(readingsByUpc)) {
+            readingsByUpc[upc].sort((a, b) => a.billDate.localeCompare(b.billDate) || a.serviceCode - b.serviceCode);
+          }
+        }
+      } catch { }
+
       const jsonData = properties.map((p) => {
         let geometry = null;
         if (p.geometry) {
@@ -1332,6 +1353,7 @@ export default function Dashboard() {
           avgMonthlyWaterKgal: p.avgMonthlyWaterKgal,
           avgMonthlyElectricKwh: p.avgMonthlyElectricKwh,
           avgMonthlyGasTherms: p.avgMonthlyGasTherms,
+          utilityReadings: readingsByUpc[p.upc] || [],
           plss: p.township && p.range && p.section ? `T${p.township}${p.townshipdir || "N"} R${p.range}${p.rangedir || "E"} S${p.section}` : null,
           township: p.township,
           townshipdir: p.townshipdir,
