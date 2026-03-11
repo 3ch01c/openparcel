@@ -162,8 +162,15 @@ export function RangeFilter({
   const format = formatValue || smartFormat;
 
   const parse = parseValue || ((s: string) => {
-    const cleaned = s.replace(/[^0-9.-]/g, "");
-    return parseFloat(cleaned);
+    const trimmed = s.trim();
+    const match = trimmed.match(/^[^0-9.-]*(-?[0-9]*\.?[0-9]+)\s*([KkMmBb]?)$/);
+    if (!match) return NaN;
+    const num = parseFloat(match[1]);
+    const suffix = match[2].toUpperCase();
+    if (suffix === "K") return num * 1_000;
+    if (suffix === "M") return num * 1_000_000;
+    if (suffix === "B") return num * 1_000_000_000;
+    return num;
   });
 
   const linearStep = step || Math.max(
@@ -172,13 +179,13 @@ export function RangeFilter({
   );
 
   const handleMinClick = () => {
-    setTempMin(format(value[0]));
+    setTempMin(format(localValue[0]));
     setEditingMin(true);
     setTimeout(() => minInputRef.current?.select(), 0);
   };
 
   const handleMaxClick = () => {
-    setTempMax(format(value[1]));
+    setTempMax(format(localValue[1]));
     setEditingMax(true);
     setTimeout(() => maxInputRef.current?.select(), 0);
   };
