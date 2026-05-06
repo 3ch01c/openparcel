@@ -48,11 +48,32 @@ interface PolygonLayerProps {
 }
 
 
-function getMarkerColor(value: number, minValue: number, maxValue: number): string {
+function computeQuartiles(sortedValues: number[]): { q1: number; q3: number } {
+  const n = sortedValues.length;
+  if (n === 0) return { q1: 0, q3: 0 };
+  return {
+    q1: sortedValues[Math.floor(n * 0.25)],
+    q3: sortedValues[Math.floor(n * 0.75)],
+  };
+}
+
+function iqrNormalize(value: number, min: number, q1: number, q3: number, max: number): number {
+  if (value <= q1) {
+    const range = q1 - min;
+    return range > 0 ? 0.25 * (value - min) / range : 0;
+  } else if (value <= q3) {
+    const range = q3 - q1;
+    return range > 0 ? 0.25 + 0.5 * (value - q1) / range : 0.5;
+  } else {
+    const range = max - q3;
+    return range > 0 ? 0.75 + 0.25 * (value - q3) / range : 1.0;
+  }
+}
+
+function getMarkerColor(value: number, minValue: number, maxValue: number, q1: number, q3: number): string {
   // Viridis colorblind-safe palette (purple → teal → yellow)
-  // Normalize value to 0-1 range based on min/max of filtered data
-  const range = maxValue - minValue;
-  const ratio = range > 0 ? (value - minValue) / range : 0;
+  // IQR-normalized: min-Q1 maps to 0-25%, Q1-Q3 to 25-75%, Q3-max to 75-100%
+  const ratio = iqrNormalize(value, minValue, q1, q3, maxValue);
   if (ratio < 0.2) return "#440154";
   if (ratio < 0.4) return "#3b528b";
   if (ratio < 0.6) return "#21918c";
@@ -116,12 +137,14 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
       ? Array.from(new Set(validPoints.map(p => p.zone).filter(Boolean) as string[])).sort()
       : [];
 
-    // Calculate min/max values for numeric metrics (only from non-null values)
+    // Calculate min/max/Q1/Q3 for numeric metrics (only from non-null values)
     const metricValues = !isCategoricalMetric(colorMetric) 
       ? validPoints.map(p => getMetricValue(p, colorMetric)).filter((v): v is number => v != null)
       : [];
-    const minMetricValue = metricValues.length > 0 ? Math.min(...metricValues) : 0;
-    const maxMetricValue = metricValues.length > 0 ? Math.max(...metricValues) : 1;
+    const sortedMetricValues = [...metricValues].sort((a, b) => a - b);
+    const minMetricValue = sortedMetricValues.length > 0 ? sortedMetricValues[0] : 0;
+    const maxMetricValue = sortedMetricValues.length > 0 ? sortedMetricValues[sortedMetricValues.length - 1] : 1;
+    const { q1: q1MetricValue, q3: q3MetricValue } = computeQuartiles(sortedMetricValues);
 
     try {
       const clusterGroup = L.markerClusterGroup({
@@ -167,7 +190,7 @@ export function ClusterLayer({ points, onPropertyClick, colorMetric = "landValue
           ? "transparent"
           : isCategoricalMetric(colorMetric)
             ? getZoneColor(property.zone, zoneList)
-            : getMarkerColor(metricVal!, minMetricValue, maxMetricValue);
+            : getMarkerColor(metricVal!, minMetricValue, maxMetricValue, q1MetricValue, q3MetricValue);
         
         const markerIcon = L.divIcon({
           className: "custom-marker",
@@ -357,12 +380,14 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
       ? Array.from(new Set(validPoints.map(p => p.zone).filter(Boolean) as string[])).sort()
       : [];
 
-    // Calculate min/max values for numeric metrics (only from non-null values)
+    // Calculate min/max/Q1/Q3 for numeric metrics (only from non-null values)
     const metricValues = !isCategoricalMetric(colorMetric) 
       ? validPoints.map(p => getMetricValue(p, colorMetric)).filter((v): v is number => v != null)
       : [];
-    const minMetricValue = metricValues.length > 0 ? Math.min(...metricValues) : 0;
-    const maxMetricValue = metricValues.length > 0 ? Math.max(...metricValues) : 1;
+    const sortedMetricValues = [...metricValues].sort((a, b) => a - b);
+    const minMetricValue = sortedMetricValues.length > 0 ? sortedMetricValues[0] : 0;
+    const maxMetricValue = sortedMetricValues.length > 0 ? sortedMetricValues[sortedMetricValues.length - 1] : 1;
+    const { q1: q1MetricValue, q3: q3MetricValue } = computeQuartiles(sortedMetricValues);
 
     try {
       const layerGroup = L.layerGroup();
@@ -382,7 +407,7 @@ export function PolygonLayer({ points, onPropertyClick, colorMetric = "landValue
             ? "transparent"
             : isCategoricalMetric(colorMetric)
               ? getZoneColor(property.zone, zoneList)
-              : getMarkerColor(metricVal!, minMetricValue, maxMetricValue);
+              : getMarkerColor(metricVal!, minMetricValue, maxMetricValue, q1MetricValue, q3MetricValue);
 
           const polygon = L.polygon(latLngs, {
             color: hasMetricData ? color : "rgba(128,128,128,0.3)",
