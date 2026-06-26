@@ -1596,10 +1596,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="h-screen w-full bg-background flex flex-col md:flex-row overflow-hidden relative">
-      {/* Sidebar Control Panel */}
+    <div className="h-screen w-full bg-background relative overflow-hidden">
+      {/* Sidebar Control Panel - overlays map on all screen sizes */}
       <div 
-        className={`z-20 flex flex-col h-full bg-card/95 backdrop-blur-md border-r border-border shadow-2xl shrink-0 overflow-y-auto transition-all duration-300 ${
+        className={`absolute top-0 left-0 z-20 flex flex-col h-full bg-card/95 backdrop-blur-md border-r border-border shadow-2xl overflow-y-auto transition-all duration-300 ${
           sidebarCollapsed ? "w-14" : "w-full md:w-[400px]"
         }`}
       >
@@ -2527,8 +2527,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Map Area */}
-      <div className="flex-1 relative h-[50vh] md:h-full w-full bg-slate-900">
+      {/* Map Area - always full screen behind sidebar */}
+      <div className="absolute inset-0 z-0 bg-slate-900">
         <div className="absolute inset-0 z-0">
           <MapContainer
             center={[CENTER_LAT, CENTER_LNG]}
