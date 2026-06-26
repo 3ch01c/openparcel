@@ -1,6 +1,6 @@
 import type { PropertyResponse } from "@shared/schema";
 
-export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio" | "zone" | "waterUsage" | "electricUsage" | "gasUsage" | "waterPerBldgSf" | "electricPerBldgSf" | "gasPerBldgSf";
+export type ColorMetric = "assessedValue" | "landValue" | "improvementValue" | "taxAssessed" | "landValuePerSqft" | "bldgLandRatio" | "parcelArea" | "zone" | "waterUsage" | "electricUsage" | "gasUsage" | "waterPerBldgSf" | "electricPerBldgSf" | "gasPerBldgSf";
 
 export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   assessedValue: "Assessed Value",
@@ -9,6 +9,7 @@ export const COLOR_METRIC_LABELS: Record<ColorMetric, string> = {
   taxAssessed: "Tax Assessed",
   landValuePerSqft: "Land Value/Sqft",
   bldgLandRatio: "Bldg/Land Sqft Ratio",
+  parcelArea: "Parcel Area (acres)",
   zone: "Zone",
   waterUsage: "Avg Water (kgal/mo)",
   electricUsage: "Avg Electric (kWh/mo)",
@@ -63,6 +64,8 @@ export function getMetricValue(property: PropertyResponse, metric: ColorMetric):
     case "bldgLandRatio":
       if (buildingSqft == null || landSqft == null) return null;
       return landSqft > 0 ? buildingSqft / landSqft : null;
+    case "parcelArea":
+      return property.area ?? (landSqft != null ? landSqft / 43560 : null);
     case "waterUsage":
       return property.avgMonthlyWaterKgal ?? null;
     case "electricUsage":
