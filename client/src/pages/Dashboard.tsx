@@ -266,9 +266,12 @@ export default function Dashboard() {
     isLoading,
     isError,
     refetch,
+    idbChecked,
   } = useProperties({
     year,
   });
+
+  const isInitialLoading = !idbChecked || (idbChecked && isLoading && !rawProperties);
 
   // Get unique account types from initial data load (never changes after first load)
   const uniqueAccountTypes = initialAccountTypesRef.current || [];
@@ -2549,8 +2552,28 @@ export default function Dashboard() {
           </MapContainer>
         </div>
 
+        {/* Initial data loading overlay */}
+        {isInitialLoading && (
+          <div className="absolute inset-0 z-[450] flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm" data-testid="initial-loading-overlay">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full border-4 border-border" />
+                <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {!idbChecked ? "Checking local cache…" : "Loading parcel data…"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {!idbChecked ? "Looking for previously saved data" : "Fetching from server, this may take a moment"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filtering spinner overlay */}
-        {isFilterPending && (
+        {isFilterPending && !isInitialLoading && (
           <div className="absolute inset-0 z-[450] flex items-center justify-center bg-black/20 backdrop-blur-[1px] pointer-events-none" data-testid="filtering-spinner">
             <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg px-4 py-3">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />

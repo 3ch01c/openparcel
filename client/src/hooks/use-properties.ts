@@ -38,7 +38,7 @@ export function useProperties(params?: PropertyQueryParams) {
     return () => { cancelled = true; };
   }, [cacheKey]);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: [...queryKey],
     queryFn: async () => {
       const url = new URL(api.properties.list.path, window.location.origin);
@@ -61,6 +61,8 @@ export function useProperties(params?: PropertyQueryParams) {
     enabled: idbChecked && !idbHasData,
     staleTime: Infinity,
   });
+
+  return { ...query, idbChecked };
 }
 
 export async function invalidatePropertyCache() {
