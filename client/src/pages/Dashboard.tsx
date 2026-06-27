@@ -2523,9 +2523,6 @@ export default function Dashboard() {
                       {jsonUploadStatus.message}
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    Load a previously exported JSON dataset into the browser cache. Does not modify the server database.
-                  </p>
                 </div>
 
               </CollapsibleContent>
