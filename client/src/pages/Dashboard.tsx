@@ -2688,14 +2688,13 @@ export default function Dashboard() {
                       { timeout: 10000 }
                     );
                   }}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary w-full"
+                  className="flex items-center justify-center px-3 py-1.5 rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary"
                   title="Zoom to my location"
                   data-testid="button-locate-me"
                 >
                   {locating
-                    ? <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                    : <LocateFixed className="h-3.5 w-3.5 shrink-0" />}
-                  My location
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <LocateFixed className="h-4 w-4" />}
                 </button>
                 {locateError && (
                   <div className="text-destructive text-xs px-2 py-1">
