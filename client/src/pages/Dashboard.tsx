@@ -2597,45 +2597,6 @@ export default function Dashboard() {
 
         {/* Map Controls */}
         <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2 items-end">
-          {/* Locate Me button */}
-          <Button
-            size="icon"
-            variant="secondary"
-            className="bg-background/90 backdrop-blur-sm border border-border shadow-lg"
-            onClick={() => {
-              if (!navigator.geolocation) {
-                setLocateError("Geolocation not supported by your browser");
-                setTimeout(() => setLocateError(null), 3000);
-                return;
-              }
-              setLocating(true);
-              setLocateError(null);
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  setLocating(false);
-                  mapFlyToRef.current?.(pos.coords.latitude, pos.coords.longitude, 16);
-                },
-                () => {
-                  setLocating(false);
-                  setLocateError("Location access denied");
-                  setTimeout(() => setLocateError(null), 3000);
-                },
-                { timeout: 10000 }
-              );
-            }}
-            title="Zoom to my location"
-            data-testid="button-locate-me"
-          >
-            {locating
-              ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <LocateFixed className="h-4 w-4" />}
-          </Button>
-          {locateError && (
-            <div className="bg-destructive/90 text-destructive-foreground text-xs px-3 py-1.5 rounded-lg shadow-lg max-w-[180px] text-center">
-              {locateError}
-            </div>
-          )}
-
           <Button
             size="icon"
             variant="secondary"
@@ -2701,6 +2662,46 @@ export default function Dashboard() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Locate Me */}
+              <div className="bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg p-1">
+                <button
+                  onClick={() => {
+                    if (!navigator.geolocation) {
+                      setLocateError("Geolocation not supported by your browser");
+                      setTimeout(() => setLocateError(null), 3000);
+                      return;
+                    }
+                    setLocating(true);
+                    setLocateError(null);
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        setLocating(false);
+                        mapFlyToRef.current?.(pos.coords.latitude, pos.coords.longitude, 16);
+                      },
+                      () => {
+                        setLocating(false);
+                        setLocateError("Location access denied");
+                        setTimeout(() => setLocateError(null), 3000);
+                      },
+                      { timeout: 10000 }
+                    );
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary w-full"
+                  title="Zoom to my location"
+                  data-testid="button-locate-me"
+                >
+                  {locating
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                    : <LocateFixed className="h-3.5 w-3.5 shrink-0" />}
+                  My location
+                </button>
+                {locateError && (
+                  <div className="text-destructive text-xs px-2 py-1">
+                    {locateError}
+                  </div>
+                )}
               </div>
             </>
           )}
