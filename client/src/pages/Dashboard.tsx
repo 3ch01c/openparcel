@@ -2487,7 +2487,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Load Data from JSON</label>
+                  <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Import</label>
                   <input
                     ref={jsonFileInputRef}
                     type="file"
