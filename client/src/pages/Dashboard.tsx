@@ -51,6 +51,7 @@ import {
   Link2,
   Trash2,
   RotateCcw,
+  LocateFixed,
 } from "lucide-react";
 import {
   Popover,
@@ -81,6 +82,14 @@ function MapResizeHandler({ collapsed }: { collapsed: boolean }) {
     }, 350);
   }, [collapsed, map]);
   
+  return null;
+}
+
+function MapFlyToHandler({ flyToRef }: { flyToRef: React.MutableRefObject<((lat: number, lng: number, zoom: number) => void) | null> }) {
+  const map = useMap();
+  useEffect(() => {
+    flyToRef.current = (lat, lng, zoom) => map.flyTo([lat, lng], zoom, { duration: 1.2 });
+  }, [map, flyToRef]);
   return null;
 }
 
@@ -198,6 +207,9 @@ export default function Dashboard() {
   const [linksConfigOpen, setLinksConfigOpen] = useState(false);
   const [externalLinks, setExternalLinksState] = useState<ExternalLink[]>(() => getExternalLinks());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
+  const mapFlyToRef = useRef<((lat: number, lng: number, zoom: number) => void) | null>(null);
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([]);
   const [selectedSubdivisions, setSelectedSubdivisions] = useState<string[]>([]);
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
@@ -2541,6 +2553,7 @@ export default function Dashboard() {
             data-testid="map-container"
           >
             <MapResizeHandler collapsed={sidebarCollapsed} />
+            <MapFlyToHandler flyToRef={mapFlyToRef} />
             <TileLayer
               key={mapLayer}
               attribution={TILE_LAYERS[mapLayer].attribution}
@@ -2584,6 +2597,45 @@ export default function Dashboard() {
 
         {/* Map Controls */}
         <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2 items-end">
+          {/* Locate Me button */}
+          <Button
+            size="icon"
+            variant="secondary"
+            className="bg-background/90 backdrop-blur-sm border border-border shadow-lg"
+            onClick={() => {
+              if (!navigator.geolocation) {
+                setLocateError("Geolocation not supported by your browser");
+                setTimeout(() => setLocateError(null), 3000);
+                return;
+              }
+              setLocating(true);
+              setLocateError(null);
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  setLocating(false);
+                  mapFlyToRef.current?.(pos.coords.latitude, pos.coords.longitude, 16);
+                },
+                () => {
+                  setLocating(false);
+                  setLocateError("Location access denied");
+                  setTimeout(() => setLocateError(null), 3000);
+                },
+                { timeout: 10000 }
+              );
+            }}
+            title="Zoom to my location"
+            data-testid="button-locate-me"
+          >
+            {locating
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <LocateFixed className="h-4 w-4" />}
+          </Button>
+          {locateError && (
+            <div className="bg-destructive/90 text-destructive-foreground text-xs px-3 py-1.5 rounded-lg shadow-lg max-w-[180px] text-center">
+              {locateError}
+            </div>
+          )}
+
           <Button
             size="icon"
             variant="secondary"
